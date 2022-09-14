@@ -1,11 +1,19 @@
-import { GameServer } from "@pip-pip/core";
+import { NibblerServer } from "@pip-pip/core";
 
-const gameServer = new GameServer()
+class PipPip{
+    nibbler: NibblerServer
 
-gameServer.app.get("/test", (req, res) => {
-    res.json({ok: true})
-})
+    constructor(port = 3000){
+        this.nibbler = new NibblerServer({ port })
 
-gameServer.start().then(() => {
-    console.log("Server started")
-})
+        this.nibbler.app.get("/", (req, res) => {
+            res.json({ok: true})
+        })
+
+        this.nibbler.start().then(() => {
+            console.log(`NibblerServer started in port ${port}`)
+        })
+    }
+}
+
+new PipPip(3000)

@@ -1,2 +1,2 @@
 export * from "./lib/utils"
-export * from "./networking/GameServer"
+export * from "./networking/NibblerServer"
