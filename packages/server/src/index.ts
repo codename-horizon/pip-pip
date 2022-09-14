@@ -1,7 +1,7 @@
-import { generateId, HelloWorld } from "@pip-pip/core"
+import { GameServer } from "@pip-pip/core";
 
-const sayHello: HelloWorld = () => {
-    console.log("hello!", generateId())
-}
+const gameServer = new GameServer()
 
-sayHello()
+gameServer.start().then(() => {
+    console.log("Server started")
+})
