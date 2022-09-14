@@ -2,14 +2,22 @@ import http from "http"
 import express, { Express, Request, Response, NextFunction } from "express"
 import { asyncHandler, handle404Error, handleError } from "../lib/express"
 
+export type GameServerOptions = {
+    baseRoute: "/horizon/"
+}
+
 export class GameServer{
     app: Express
     server: http.Server
 
-    constructor(){
+    constructor(options: Partial<GameServerOptions> = {}){
         this.app = express()
         this.server = http.createServer(this.app)
 
+        this.initializeRoutes()
+    }
+
+    initializeRoutes(){
         this.app.get("/", asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
             res.json({
                 ok: true
