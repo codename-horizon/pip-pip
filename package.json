@@ -6,5 +6,9 @@
   "author": "mikedelcastillo <johnmichaeldc@gmail.com>",
   "license": "MIT",
   "workspaces": [ "./packages/*" ],
-  "private": true
+  "private": true,
+  "scripts": {
+    "server": "yarn workspace @pip-pip/server",
+    "server:dev": "yarn server dev"
+  }
 }

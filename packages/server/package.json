@@ -7,7 +7,8 @@
     "dev": "nodemon ./src/index.ts"
   },
   "peerDependencies": {
-    "@pip-pip/core": "*"
+    "@pip-pip/core": "*",
+    "@pip-pip/game": "*"
   },
   "devDependencies": {
     "nodemon": "^2.0.19",

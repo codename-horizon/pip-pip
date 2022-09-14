@@ -1,0 +1,9 @@
+{
+  "name": "@pip-pip/game",
+  "version": "0.0.1",
+  "main": "./src/index.ts",
+  "license": "MIT",
+  "peerDependencies": {
+    "@pip-pip/core": "*"
+  }
+}
