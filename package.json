@@ -1,0 +1,10 @@
+{
+  "name": "pip-pip",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": "git@github.com:codename-horizon/pip-pip.git",
+  "author": "mikedelcastillo <johnmichaeldc@gmail.com>",
+  "license": "MIT",
+  "workspaces": [ "./packages/*" ],
+  "private": true
+}
