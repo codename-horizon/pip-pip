@@ -1,4 +1,4 @@
-import { ConnectionManager, NumberPacket, PacketManager, StringPacket } from "@pip-pip/core"
+import { BasePacket, ConnectionManager, NumberPacket, PacketManager, StringPacket } from "@pip-pip/core"
 import { PipPipServer } from "@pip-pip/game"
 
 const instance = new PipPipServer()
@@ -28,15 +28,18 @@ instance.start().then(() => {
 
 
 const packetManager = new PacketManager({
+    "game-start": new BasePacket("0"),
     "name-update": new StringPacket("n"),
     "update-score": new NumberPacket("s"),
 })
 
 const messages = [
+    packetManager.code("game-start"),
     packetManager.encode("name-update", "mike"),
     packetManager.encode("update-score", 0),
     packetManager.encode("name-update", "diego"),
     packetManager.encode("update-score", 100),
+    packetManager.encode("name-update", "meggy")
 ]
 
 for(const message of messages){

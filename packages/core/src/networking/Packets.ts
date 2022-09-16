@@ -12,6 +12,10 @@ export class PacketManager<T extends Record<string, BasePacket>>{
         }
     }
 
+    code(key: keyof T){
+        return this.packets[key].code
+    }
+
     encode<K extends keyof T, R extends ReturnType<T[K]["decode"]>>(key: K, value: R){
         return this.packets[key].encode(value)
     }
