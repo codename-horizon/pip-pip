@@ -23,7 +23,10 @@ const a = new GameStateData<number, string>(0, {
     serialize: n => "num-" + n.toString(),
     deserialize: s => Number(s.substring(3)),
 })
-a.subscribe(console.log)
+a.subscribe(() => {
+    console.log(a.get(), a.getSerialized())
+})
+
 setInterval(() => {
     a.set((n) => n + 1)
 }, 1000)

@@ -18,8 +18,8 @@ export type GameStateDataOptions<T, K> = {
 
 export class GameStateData<T, K = T>{
     private options: GameStateDataOptions<T, K>
-    private subscriptions: GameStateDataSubscription<K>[]
-    private value: K
+    private subscriptions: GameStateDataSubscription<T>[]
+    private value: T
     
     constructor(initialValue: T, options: Partial<GameStateDataOptions<T, K>> = {}){
         this.options = {
@@ -27,11 +27,11 @@ export class GameStateData<T, K = T>{
             deserialize: (value: K) => value as unknown as T,
             ...options,
         }
-        this.value = this.options.serialize(initialValue)
+        this.value = initialValue
         this.subscriptions = []
     }
 
-    subscribe(callback: GameStateDataSubscriptionCallback<K>): GameStateDataSubscription<T>["id"]{
+    subscribe(callback: GameStateDataSubscriptionCallback<T>): GameStateDataSubscription<T>["id"]{
         const id = generateId()
         this.subscriptions.push({ id, callback })
         return id
@@ -42,9 +42,8 @@ export class GameStateData<T, K = T>{
     }
 
     set(newValue: T | ((value: T) => T)){
-        const deserializedValue = this.options.deserialize(this.value)
-        const computedValue = this.options.serialize(newValue instanceof Function ? newValue(deserializedValue) : newValue)
-        const change: GameStateDataHistory<K> = {
+        const computedValue = newValue instanceof Function ? newValue(this.value) : newValue
+        const change: GameStateDataHistory<T> = {
             timestamp: Date.now(),
             valueFrom: this.value,
             valueTo: computedValue,
@@ -55,7 +54,15 @@ export class GameStateData<T, K = T>{
         }
     }
 
-    get(): K {
+    get(): T {
         return this.value
+    }
+
+    getSerialized(): K {
+        return this.options.serialize(this.value)
+    }
+
+    setSerialized(value: K){
+        this.set(this.options.deserialize(value))
     }
 }
