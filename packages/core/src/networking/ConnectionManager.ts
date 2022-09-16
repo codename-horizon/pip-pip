@@ -3,8 +3,11 @@ import { WebSocket as NodeWebSocket } from "ws"
 import { SERVER_DEFAULT_BASE_ROUTE } from "../lib/constants"
 import axios, { AxiosInstance } from "axios"
 import { ConnectionOptions } from "../types/client"
+import { PacketManager } from "./Packets"
 
-export class ConnectionManager{
+export class ConnectionManager<
+    ConnectionPacketManager extends PacketManager = PacketManager,
+>{
     options: ConnectionOptions
     ws?: WebSocket | NodeWebSocket
     api!: AxiosInstance
@@ -12,6 +15,8 @@ export class ConnectionManager{
     token?: string
     connected = false
     reconciled = false
+
+    packetManager!: ConnectionPacketManager
 
     constructor(options: Partial<ConnectionOptions> = {}){
         this.options = {
@@ -24,6 +29,10 @@ export class ConnectionManager{
         }
 
         this.initializeApi()
+    }
+
+    setPacketManager(packetManager: ConnectionPacketManager){
+        this.packetManager = packetManager
     }
 
     initializeApi(){
@@ -124,6 +133,12 @@ export class ConnectionManager{
         })
     }
 
+    sendPacket(encodedMessages: string[]){
+        if(typeof this.packetManager === "undefined") return
+        const message = this.packetManager.group(encodedMessages)
+        this.socketSendMessage(message)
+    }
+
     socketSendMessage(data: string){
         if(typeof this.ws === "undefined") return
         if(this.ws.readyState !== this.ws.OPEN) return
@@ -144,7 +159,10 @@ export class ConnectionManager{
     }
         
     socketMessageHandler(data: string){
-        console.log(data)
+        if(typeof this.packetManager === "undefined") return 
+
+        const message = this.packetManager.decodeGroup(data)
+        console.log(message)
     }
 
     socketCloseHandler(){

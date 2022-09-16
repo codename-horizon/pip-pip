@@ -1,3 +1,5 @@
+import { BasePacket } from "../networking/Packets"
+
 export type ConnectionOptions = {
     tcpProtocol: string,
     udpProtocol: string,
@@ -11,5 +13,7 @@ export interface Packet<T = unknown>{
     encode: (value: T) => string,
     decode: (value: string) => T,
 }
+
+export type PacketDefinitions = Record<string, BasePacket>
 
 export type LiteralPacketType = string | number | boolean

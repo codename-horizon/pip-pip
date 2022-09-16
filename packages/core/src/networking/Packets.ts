@@ -1,6 +1,6 @@
-import { LiteralPacketType, Packet } from "../types/client"
+import { LiteralPacketType, Packet, PacketDefinitions } from "../types/client"
 
-export class PacketManager<T extends Record<string, BasePacket>>{
+export class PacketManager<T extends PacketDefinitions = PacketDefinitions>{
     packets: T
     packetsByCode: Record<BasePacket["code"], { id: string, packet: BasePacket }> = {}
     delimiter = "\n"

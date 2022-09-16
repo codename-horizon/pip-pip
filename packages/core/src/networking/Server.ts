@@ -10,8 +10,12 @@ import { Lobby } from "./Lobby"
 import createHttpError from "http-errors"
 import cors from "cors"
 import { ServerOptions } from "../types/server"
+import { PacketManager } from "./Packets"
 
-export class Server<ServerConnection extends Connection = Connection>{
+export class Server<
+    ServerConnection extends Connection = Connection, 
+    ServerPacketManager extends PacketManager = PacketManager,
+>{
     options: ServerOptions
 
     app: Express
@@ -19,6 +23,7 @@ export class Server<ServerConnection extends Connection = Connection>{
     server: http.Server
 
     ServerConnection: new () => Connection = Connection
+    packetManager!: ServerPacketManager
     
     connections: Record<string, Connection> = {}
 
@@ -46,6 +51,10 @@ export class Server<ServerConnection extends Connection = Connection>{
 
     setConnectionClass(ServerConnection: new () => ServerConnection){
         this.ServerConnection = ServerConnection
+    }
+
+    setPacketManager(packetManager: ServerPacketManager){
+        this.packetManager = packetManager
     }
 
     setLobbyTypes(lobbyTypes: Record<string, new () => Lobby>){
@@ -142,7 +151,12 @@ export class Server<ServerConnection extends Connection = Connection>{
     }
 
     handleSocketMessage(data: string, ws: WebSocket, connection: ServerConnection){
-        console.log(data, connection.token)
+        if(typeof this.packetManager === undefined){
+            // do nothing
+        } else{
+            const message = this.packetManager.decodeGroup(data)
+            console.log(message)
+        }
     }
 
     async start(){

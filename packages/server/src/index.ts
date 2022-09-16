@@ -42,6 +42,7 @@ const messages = [
     packetManager.encode("locked", false),
     packetManager.encode("randoms", ["hello there", "mike", 2]),
     packetManager.encode("randoms", ["ad2da2jo", Math.PI, Math.random() * 100, Math.random() * 100]),
+    packetManager.encode("randoms", ["ad2da2jo", Math.PI, Math.random() * 100, Math.random() * 100]),
 ]
 
 const grouped = packetManager.group(messages)

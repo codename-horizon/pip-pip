@@ -30,7 +30,16 @@ async function test(){
     console.log(await a.getLobbyInfo(lobby.id))
     await a.connect()
     console.log(a.ws?.readyState, a.ws)
-    a.socketSendMessage("tits")
+    
+    
+
+    setTimeout(() => {
+        setInterval(() => {
+            a.sendPacket([
+                a.packetManager.encode("ping", Math.random())
+            ])
+        }, 1000)
+    }, 1000);
 }
 
 test()
