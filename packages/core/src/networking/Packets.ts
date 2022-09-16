@@ -2,13 +2,29 @@ import { Packet } from "../types/client"
 
 export class PacketManager<T extends Record<string, BasePacket>>{
     packets: T
+    packetsByCode: Record<BasePacket["code"], { id: string, packet: BasePacket }> = {}
 
     constructor(packets: T){
         this.packets = packets
+        for(const id in this.packets){
+            const packet = this.packets[id]
+            this.packetsByCode[packet.code] = { id, packet }
+        }
     }
 
     encode<K extends keyof T, R extends ReturnType<T[K]["decode"]>>(key: K, value: R){
         return this.packets[key].encode(value)
+    }
+
+    decode(value: string){
+        const code = value[0]
+        if(!(code in this.packetsByCode)) throw Error("code not registered in packet manager")
+        const packetHandler = this.packetsByCode[code]
+        return {
+            id: packetHandler.id,
+            code: packetHandler.packet.code,
+            value: packetHandler.packet.decode(value),
+        }
     }
 }
 

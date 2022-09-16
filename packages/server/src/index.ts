@@ -32,7 +32,14 @@ const packetManager = new PacketManager({
     "update-score": new NumberPacket("s"),
 })
 
+const messages = [
+    packetManager.encode("name-update", "mike"),
+    packetManager.encode("update-score", 0),
+    packetManager.encode("name-update", "diego"),
+    packetManager.encode("update-score", 100),
+]
 
-console.log(packetManager.encode("name-update", "mike"))
-console.log(packetManager.encode("update-score", 0))
-// console.log(packetManager.decode("amike"))
+for(const message of messages){
+    const decoded = packetManager.decode(message)
+    console.log(message, decoded)
+}
