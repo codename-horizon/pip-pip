@@ -1,27 +1,38 @@
 import http from "http"
-import express, { Router as createRouter, Express } from "express"
-import { handle404Error, handleError } from "../lib/express"
-import { server as WebSocketServer } from "websocket"
-import { NIBBLER_DEFAULT_BASE_ROUTE, NIBBLER_DEFAULT_PORT } from "../lib/constants"
 
-export type NibblerServerOptions = {
+import express, { Router as createRouter, Express } from "express"
+import { server as WebSocketServer } from "websocket"
+
+import { handle404Error, handleError } from "../lib/express"
+import { NIBBLER_DEFAULT_BASE_ROUTE, NIBBLER_DEFAULT_PORT } from "../lib/constants"
+import { GameWorld } from "./GameWorld"
+import { GameServerConnection } from "./GameServerConnection"
+
+export type GameServerOptions = {
     baseRoute: string,
     port: number,
 }
 
-export class NibblerServer{
-    options: NibblerServerOptions
+export class GameServer{
+    options: GameServerOptions
 
     app: Express
     wss: WebSocketServer
     server: http.Server
 
-    constructor(options: Partial<NibblerServerOptions> = {}){
+    worlds: GameWorld[]
+
+    connections: GameServerConnection[]
+
+    constructor(options: Partial<GameServerOptions> = {}){
         this.options = {
             baseRoute: NIBBLER_DEFAULT_BASE_ROUTE,
             port: NIBBLER_DEFAULT_PORT,
             ...options
         }
+
+        this.worlds = []
+        this.connections = []
 
         this.app = express()
         this.server = http.createServer(this.app)
