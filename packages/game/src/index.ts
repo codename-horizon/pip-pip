@@ -1,11 +1,3 @@
-import { GameWorld, GameWorldOptions } from "@pip-pip/core"
-
-export type LobbyWorldOptions = {
-    test: boolean
-} & Partial<GameWorldOptions>
-
-export class LobbyWorld extends GameWorld{
-    constructor(options: Partial<LobbyWorldOptions> = {}){
-        super(options)
-    }
-}
+export * from "./server"
+export * from "./client"
+export * from "./lobby"

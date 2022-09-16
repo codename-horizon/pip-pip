@@ -8,7 +8,10 @@
   "workspaces": [ "./packages/*" ],
   "private": true,
   "scripts": {
+    "uninstall": "rm -rf node_modules/ packages/*/node_modules",
     "server": "yarn workspace @pip-pip/server",
-    "server:dev": "yarn server dev"
+    "client": "yarn workspace @pip-pip/client-react",
+    "game": "yarn workspace @pip-pip/game",
+    "core": "yarn workspace @pip-pip/core"
   }
 }
