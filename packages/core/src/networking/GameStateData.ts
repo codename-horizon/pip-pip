@@ -11,20 +11,39 @@ export type GameStateDataSubscription<T> = {
     callback: GameStateDataSubscriptionCallback<T>,
 }
 
-export type GameStateDataOptions<T, K> = {
-    serialize: (value: T) => K,
-    deserialize: (value: K) => T,
+export type GameStateDataOptions<T> = {
+    serialize: (value: T) => string,
+    deserialize: (value: string) => T,
 }
 
-export class GameStateData<T, K = T>{
-    private options: GameStateDataOptions<T, K>
+export class GameStateData<T>{
+    private options: GameStateDataOptions<T>
     private subscriptions: GameStateDataSubscription<T>[]
     private value: T
     
-    constructor(initialValue: T, options: Partial<GameStateDataOptions<T, K>> = {}){
+    constructor(initialValue: T, options: Partial<GameStateDataOptions<T>> = {}){
         this.options = {
-            serialize: (value: T) => value as unknown as K,
-            deserialize: (value: K) => value as unknown as T,
+            serialize: (value: T) => {
+                const genericValue = value as T & { 
+                    toString?: () => string,
+                    getSerialized?: () => string,
+                }
+
+                if(typeof genericValue.toString === "function"){
+                    return genericValue.toString()
+                }
+
+                if(typeof genericValue.getSerialized === "function"){
+                    return genericValue.getSerialized()
+                }
+                
+                if(typeof value === "object"){
+                    return JSON.stringify(value)
+                }
+
+                return value as string
+            },
+            deserialize: (value: string) => value as unknown as T,
             ...options,
         }
         this.value = initialValue
@@ -58,11 +77,11 @@ export class GameStateData<T, K = T>{
         return this.value
     }
 
-    getSerialized(): K {
+    getSerialized(){
         return this.options.serialize(this.value)
     }
 
-    setSerialized(value: K){
+    setSerialized(value: string){
         this.set(this.options.deserialize(value))
     }
 }
