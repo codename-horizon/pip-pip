@@ -6,5 +6,10 @@ export type ConnectionOptions = {
     baseRoute: string,
 }
 
-export type PacketEncoder<T> = (value: T) => string
-export type PacketDecoder<T> = (value: string) => T
+export interface Packet<T = unknown>{
+    code: string,
+    encode: (value: T) => string,
+    decode: (value: string) => T,
+}
+
+export type LiteralPacketType = string | number

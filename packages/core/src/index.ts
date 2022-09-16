@@ -7,7 +7,7 @@ export * from "./networking/Lobby"
 
 export * from "./networking/ConnectionManager"
 
-export * from "./networking/ConnectionManager"
+export * from "./networking/Packets"
 
 export * from "./types/client"
 export * from "./types/server"
