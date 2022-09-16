@@ -1,5 +1,9 @@
 import { LiteralPacketType, Packet, PacketDefinitions } from "../types/client"
 
+export const defaultServerPackets = {
+    
+}
+
 export class PacketManager<T extends PacketDefinitions = PacketDefinitions>{
     packets: T
     packetsByCode: Record<BasePacket["code"], { id: string, packet: BasePacket }> = {}

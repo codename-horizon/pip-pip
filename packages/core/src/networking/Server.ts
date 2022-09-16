@@ -11,11 +11,12 @@ import createHttpError from "http-errors"
 import cors from "cors"
 import { ServerOptions } from "../types/server"
 import { PacketManager } from "./Packets"
+import { HorizonEventEmitter } from "./Events"
 
 export class Server<
     ServerConnection extends Connection = Connection, 
     ServerPacketManager extends PacketManager = PacketManager,
->{
+> extends HorizonEventEmitter{
     options: ServerOptions
 
     app: Express
@@ -32,6 +33,8 @@ export class Server<
     lobbyTypes: Record<string, new () => Lobby> = {}
 
     constructor(options: Partial<ServerOptions> = {}){
+        super()
+
         this.options = {
             baseRoute: SERVER_DEFAULT_BASE_ROUTE,
             port: SERVER_DEFAULT_PORT,
@@ -151,11 +154,16 @@ export class Server<
     }
 
     handleSocketMessage(data: string, ws: WebSocket, connection: ServerConnection){
-        if(typeof this.packetManager === undefined){
-            // do nothing
-        } else{
+        if(typeof this.packetManager === undefined) return
+
+        try{
             const message = this.packetManager.decodeGroup(data)
-            console.log(message)
+            for(const packet of message){
+                this.emit(`packet:${packet.id}`, packet.value)
+            }
+        } catch(e){
+            console.log(`error with message [${data}]`)
+            console.warn(e)
         }
     }
 

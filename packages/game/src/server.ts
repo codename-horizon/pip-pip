@@ -1,4 +1,4 @@
-import { Server, Connection, PacketManager } from "@pip-pip/core"
+import { Server, Connection, PacketManager, PacketEventEmitter } from "@pip-pip/core"
 import { PipPipLobby } from "./lobby"
 import { serverPackets } from "./packets"
 
@@ -15,7 +15,8 @@ export class PipPipConnection extends Connection<PipPipConnectionPublicState>{
     }
 }
 
-export class PipPipServer extends Server<PipPipConnection, PacketManager<typeof serverPackets>>{
+export class PipPipServer 
+    extends Server<PipPipConnection, PacketManager<typeof serverPackets>>{
     constructor(port = 3000){
         super({ port })
         this.setPacketManager(new PacketManager(serverPackets))

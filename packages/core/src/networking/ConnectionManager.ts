@@ -4,10 +4,11 @@ import { SERVER_DEFAULT_BASE_ROUTE } from "../lib/constants"
 import axios, { AxiosInstance } from "axios"
 import { ConnectionOptions } from "../types/client"
 import { PacketManager } from "./Packets"
+import { HorizonEventEmitter } from "./Events"
 
 export class ConnectionManager<
     ConnectionPacketManager extends PacketManager = PacketManager,
->{
+> extends HorizonEventEmitter{
     options: ConnectionOptions
     ws?: WebSocket | NodeWebSocket
     api!: AxiosInstance
@@ -19,6 +20,7 @@ export class ConnectionManager<
     packetManager!: ConnectionPacketManager
 
     constructor(options: Partial<ConnectionOptions> = {}){
+        super()
         this.options = {
             tcpProtocol: "http",
             udpProtocol: "ws",
@@ -160,9 +162,15 @@ export class ConnectionManager<
         
     socketMessageHandler(data: string){
         if(typeof this.packetManager === "undefined") return 
-
-        const message = this.packetManager.decodeGroup(data)
-        console.log(message)
+        try{
+            const message = this.packetManager.decodeGroup(data)
+            for(const packet of message){
+                this.emit(`packet:${packet.id}`, packet.value)
+            }
+        } catch(e){
+            console.warn(`could not parse message [${data}]`)
+            console.warn(e)
+        }
     }
 
     socketCloseHandler(){

@@ -32,14 +32,11 @@ async function test(){
     console.log(a.ws?.readyState, a.ws)
     
     
-
-    setTimeout(() => {
-        setInterval(() => {
-            a.sendPacket([
-                a.packetManager.encode("ping", Math.random())
-            ])
-        }, 1000)
-    }, 1000);
+    setInterval(() => {
+        a.sendPacket([
+            a.packetManager.encode("ping", Math.random())
+        ])
+    }, 1000 / 20)
 }
 
 test()
