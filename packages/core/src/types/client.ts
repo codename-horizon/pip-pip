@@ -12,4 +12,4 @@ export interface Packet<T = unknown>{
     decode: (value: string) => T,
 }
 
-export type LiteralPacketType = string | number
+export type LiteralPacketType = string | number | boolean

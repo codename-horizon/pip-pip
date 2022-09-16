@@ -1,4 +1,4 @@
-import { BasePacket, ConnectionManager, NumberPacket, PacketManager, StringPacket } from "@pip-pip/core"
+import { BasePacket, BooleanPacket, ConnectionManager, LiteralArrayPacket, NumberPacket, PacketManager, StringPacket } from "@pip-pip/core"
 import { PipPipServer } from "@pip-pip/game"
 
 const instance = new PipPipServer()
@@ -31,18 +31,20 @@ const packetManager = new PacketManager({
     "game-start": new BasePacket("0"),
     "name-update": new StringPacket("n"),
     "update-score": new NumberPacket("s"),
+    "locked": new BooleanPacket("k"),
+    "randoms": new LiteralArrayPacket("r"),
 })
 
 const messages = [
     packetManager.code("game-start"),
     packetManager.encode("name-update", "mike"),
     packetManager.encode("update-score", 0),
-    packetManager.encode("name-update", "diego"),
-    packetManager.encode("update-score", 100),
-    packetManager.encode("name-update", "meggy")
+    packetManager.encode("locked", false),
+    packetManager.encode("randoms", ["hello there", "mike", 2]),
+    packetManager.encode("randoms", ["ad2da2jo", Math.PI, Math.random() * 100, Math.random() * 100]),
 ]
 
-for(const message of messages){
-    const decoded = packetManager.decode(message)
-    console.log(message, decoded)
-}
+const grouped = packetManager.group(messages)
+const decoded = packetManager.decodeGroup(grouped)
+
+console.log(grouped, grouped.length, decoded)

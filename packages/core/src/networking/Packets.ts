@@ -1,8 +1,9 @@
-import { Packet } from "../types/client"
+import { LiteralPacketType, Packet } from "../types/client"
 
 export class PacketManager<T extends Record<string, BasePacket>>{
     packets: T
     packetsByCode: Record<BasePacket["code"], { id: string, packet: BasePacket }> = {}
+    delimiter = "\n"
 
     constructor(packets: T){
         this.packets = packets
@@ -20,6 +21,10 @@ export class PacketManager<T extends Record<string, BasePacket>>{
         return this.packets[key].encode(value)
     }
 
+    group(value: string[]){
+        return value.join(this.delimiter)
+    }
+
     decode(value: string){
         const code = value[0]
         if(!(code in this.packetsByCode)) throw Error("code not registered in packet manager")
@@ -30,6 +35,23 @@ export class PacketManager<T extends Record<string, BasePacket>>{
             value: packetHandler.packet.decode(value),
         }
     }
+
+    decodeGroup(value: string){
+        return value.split(this.delimiter).map(line => this.decode(line))
+    }
+}
+
+export function encodeLiteral(value: LiteralPacketType): string {
+    if(typeof value === "string") return value
+    if(typeof value === "number") return value.toString()
+    if(typeof value === "boolean") return value ? "1" : "0"
+    return ""
+}
+
+export function decodeLiteral(value: string): LiteralPacketType {
+    const number = Number(value)
+    if(isNaN(number)) return value
+    return number
 }
 
 export class BasePacket implements Packet{
@@ -68,11 +90,11 @@ export class NumberPacket extends BasePacket implements Packet<number>{
     }
 
     encode(value: number){
-        return this.code + value.toString()
+        return this.code + encodeLiteral(value)
     }
 
     decode(value: string){
-        return Number(value.substring(1))
+        return decodeLiteral(value.substring(1)) as number
     }
 }
 
@@ -82,10 +104,24 @@ export class BooleanPacket extends BasePacket implements Packet<boolean>{
     }
 
     encode(value: boolean){
-        return this.code + (value === true ? "1" : "0")
+        return this.code + encodeLiteral(value)
     }
 
     decode(value: string){
-        return value.substring(1) === "1"
+        return !!decodeLiteral(value.substring(1)) as boolean
+    }
+}
+
+export class LiteralArrayPacket extends BasePacket implements Packet<LiteralPacketType[]>{
+    constructor(code: string){
+        super(code)
+    }
+
+    encode(value: LiteralPacketType[]){
+        return this.code + value.map(v => encodeLiteral(v)).join(",")
+    }
+
+    decode(value: string){
+        return value.substring(1).split(",").map(v => decodeLiteral(v))
     }
 }
