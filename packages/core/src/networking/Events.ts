@@ -17,7 +17,7 @@ export class HorizonEventEmitter<T extends HorizonEventMap  = Record<string, unk
 
     emit<K extends HorizonEventKey<T>>(eventName: K, ...params: OptionalIfUndefined<T[K]>): void{
         (this.listeners[eventName] || []).forEach(function(callback) {
-            callback(params)
+            callback(params[0])
         })
     }
 }

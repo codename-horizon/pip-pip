@@ -2,13 +2,15 @@ import { PipPipConnectionManager, PipPipServer } from "@pip-pip/game"
 
 const instance = new PipPipServer()
 
-instance.packetEvents.on("ping", ({value, ws}) => {
+instance.packetEvents.on("ping", ({value, connection}) => {
     console.log("i received it on the server", value)
     const message = instance.packetManager.group([
         instance.packetManager.encode("ping", 200)
     ])
     console.log("trying to send this to client", message)
-    ws.send(message)
+    connection.send(instance.packetManager.group([
+        instance.packetManager.encode("ping", 0)
+    ]))
 })
 
 instance.start().then(() => {
@@ -42,10 +44,6 @@ async function test(){
 
     a.packetEvents.on("ping", ({value}) => {
         console.log("i got it from the server!", value)
-    })
-
-    a.packetEvents.on("heartbeat", () =>{
-        console.log("heartbeat")
     })
 
     a.sendPacket(a.packetManager.encode("ping", 100))

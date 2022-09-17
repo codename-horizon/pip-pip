@@ -37,9 +37,5 @@ export class PipPipServer  extends Server<PipPipConnection, PipPipServerPackets>
         this.serverEvents.on("start", () => {
             console.log("server started!")
         })
-
-        this.packetEvents.on("heartbeat", ({value}) => {
-            console.log(value)
-        })
     }
 }

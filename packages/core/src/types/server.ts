@@ -11,13 +11,13 @@ export type ServerOptions = {
     maxConnections: number,
 }
 
-export type ServerEventMap = {
+export type ServerEventMap<ServerCon extends ServerConnection = ServerConnection> = {
     start: undefined,
 
     socketConnect: { ws: WebSocket },
-    socketConnectionReconciled: { ws: WebSocket, connection: ServerConnection},
+    socketConnectionReconciled: { ws: WebSocket, connection: ServerCon},
     socketClose: undefined,
-    socketMessage: { ws: WebSocket, data: string, connection: ServerConnection },
+    socketMessage: { ws: WebSocket, data: string, connection: ServerCon },
 
     auth: { connection: ServerConnection },
     lobbyCreate: { lobby: ServerLobby }

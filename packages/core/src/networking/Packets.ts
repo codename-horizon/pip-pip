@@ -73,11 +73,11 @@ export class BasePacket implements Packet{
         this.code = code
     }
 
-    encode(value: unknown){
+    encode(value: any){
         return value as string
     }
 
-    decode(value: unknown){
+    decode(value: any){
         return value
     }
 }
@@ -139,9 +139,7 @@ export class LiteralArrayPacket extends BasePacket implements Packet<LiteralPack
 }
 
 export const defaultServerClientPackets = {
-    "heartbeat": new NumberPacket("0"),
-    "connection-status": new NumberPacket("="),
-    "error": new NumberPacket("2"),
+    "connection-status": new NumberPacket("-"),
 }
 
 export const defaultServerPackets = {

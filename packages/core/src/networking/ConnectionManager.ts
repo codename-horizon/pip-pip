@@ -2,7 +2,7 @@
 import { WebSocket as NodeWebSocket } from "ws"
 import { SERVER_DEFAULT_BASE_ROUTE } from "../lib/constants"
 import axios, { AxiosInstance } from "axios"
-import { ClientPacketEventMap, ConnectionOptions, HorizonEventMap, PacketDefinitions } from "../types/client"
+import { ClientPacketEventMap, ConnectionOptions, DefaultClientPacketEventMap, Flatten, HorizonEventMap, PacketDefinitions } from "../types/client"
 import { defaultClientPackets, PacketManager } from "./Packets"
 import { HorizonEventEmitter } from "./Events"
 import { ServerEventMap } from "../types/server"
@@ -24,7 +24,7 @@ export class ConnectionManager<
         return typeof this.token === "string"
     }
 
-    packetManager!: PacketManager<PacketDefs>
+    packetManager!: PacketManager<Flatten<PacketDefs & DefaultClientPacketEventMap>>
     packetEvents: HorizonEventEmitter<ClientPacketEventMap<PacketDefs>> = new HorizonEventEmitter()
     serverEvents: HorizonEventEmitter<ServerEventMap> = new HorizonEventEmitter()
     customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
@@ -47,7 +47,7 @@ export class ConnectionManager<
         this.packetManager = new PacketManager({
             ...packetDefinitions,
             ...defaultClientPackets,
-        })
+        } as Flatten<PacketDefs & DefaultClientPacketEventMap>)
     }
 
     initializeApi(){

@@ -9,15 +9,15 @@ import { ServerConnection } from "./ServerConnection"
 import { ServerLobby } from "./ServerLobby"
 import createHttpError from "http-errors"
 import cors from "cors"
-import { ServerEventMap, ServerOptions, ServerPacketEventMap } from "../types/server"
+import { DefaultServerPacketEventMap, ServerEventMap, ServerOptions, ServerPacketEventMap } from "../types/server"
 import { defaultServerPackets, PacketManager } from "./Packets"
 import { HorizonEventEmitter } from "./Events"
-import { HorizonEventMap, PacketDefinitions } from "../types/client"
+import { Flatten, HorizonEventMap, PacketDefinitions } from "../types/client"
 import { testPacketKeyDuplicates } from "../lib/utils"
 
 export class Server<
-    ServerCon extends ServerConnection = ServerConnection, 
-    PacketDefs extends PacketDefinitions = PacketDefinitions,
+    ServerCon extends ServerConnection, 
+    PacketDefs extends PacketDefinitions,
     CustomEventMap extends HorizonEventMap = Record<string, never>,
 >{
     options: ServerOptions
@@ -26,11 +26,11 @@ export class Server<
     wss: WebSocketServer
     server: http.Server
 
-    ServerConnection: new () => ServerConnection = ServerConnection
+    serverConnectionClass!: new () => ServerCon
+    packetManager!: PacketManager<Flatten<PacketDefs & DefaultServerPacketEventMap>>
 
-    packetManager!: PacketManager<PacketDefs>
     packetEvents: HorizonEventEmitter<ServerPacketEventMap<PacketDefs>> = new HorizonEventEmitter()
-    serverEvents: HorizonEventEmitter<ServerEventMap> = new HorizonEventEmitter()
+    serverEvents: HorizonEventEmitter<ServerEventMap<ServerCon>> = new HorizonEventEmitter()
     customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
 
     connections: Record<string, ServerConnection> = {}
@@ -57,8 +57,8 @@ export class Server<
         this.initializeRoutes()
     }
 
-    setConnectionClass(ServerConnection: new () => ServerCon){
-        this.ServerConnection = ServerConnection
+    setConnectionClass(serverConnectionClass: new () => ServerCon){
+        this.serverConnectionClass = serverConnectionClass
     }
 
     setPacketDefinitions(packetDefinitions: PacketDefs){
@@ -66,7 +66,7 @@ export class Server<
         this.packetManager = new PacketManager({
             ...packetDefinitions,
             ...defaultServerPackets,
-        })
+        } as Flatten<PacketDefs & DefaultServerPacketEventMap>)
     }
 
     setLobbyTypes(lobbyTypes: Record<string, new () => ServerLobby>){
@@ -124,7 +124,7 @@ export class Server<
                     // Proceed with new connection
                 }
             }
-            const connection = new this.ServerConnection()
+            const connection = new this.serverConnectionClass()
             this.connections[connection.token] = connection
             this.serverEvents.emit("auth", { connection })
             res.json(connection.toJSON())
@@ -181,7 +181,7 @@ export class Server<
                 })
             }
         } catch(e){
-            console.log(`error with message [${data}]`)
+            console.log(`error with message ${data}`)
             console.warn(e)
         }
     }
@@ -215,6 +215,8 @@ export class Server<
                         connection.setWebSocket(ws)
                         reconciled = true
                         this.serverEvents.emit("socketConnectionReconciled", { ws, connection })
+                        connection.send(this.packetManager.encode("connection-status", 0))
+                        
                     } else{
                         ws.close()
                     }

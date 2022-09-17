@@ -40,6 +40,12 @@ export class ServerConnection<
         console.log(`WS set for ${this.token}`)
     }
 
+    send(data: string){
+        if(this.isConnected){
+            this.ws?.send(data)
+        }
+    }
+
     toJSON(){
         return {
             token: this.token,
