@@ -1,2 +1,13 @@
-export const NIBBLER_DEFAULT_BASE_ROUTE = "/hrzn/"
-export const NIBBLER_DEFAULT_PORT = 3000
+export const ALL_SINGLE_BYTE_CHARS = "`~1!2@3#4$5%6^7&8*9(0)-_=+qQwWeErRtTyYuUiIoOpP[{]}|aAsSdDfFgGhHjJkKlL;:'zZxXcCvVbBnNmM,<.>/?" + "\\" + "\""
+
+export const SERVER_DEFAULT_BASE_ROUTE = "/hrzn"
+export const SERVER_DEFAULT_PORT = 3000
+
+export enum LobbyDiscoveryMode {
+    PRIVATE = "private",
+    PUBLIC = "public",
+}
+
+export enum ServerEventCode{
+
+}
