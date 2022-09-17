@@ -1,4 +1,4 @@
-import { Server, Connection, PacketManager } from "@pip-pip/core"
+import { Server, Connection } from "@pip-pip/core"
 import { PipPipLobby } from "./lobby"
 import { serverPackets } from "./packets"
 

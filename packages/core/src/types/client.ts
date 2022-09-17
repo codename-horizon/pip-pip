@@ -36,6 +36,7 @@ export type ClientPacketEventMap<
     AllDefs extends PacketDefinitions = 
         Flatten<PacketDefs & DefaultClientPacketEventMap>> = {
     [eventName in keyof AllDefs]: {
+        group: PacketDecoded[],
         value: ReturnType<AllDefs[eventName]["decode"]>,
     }
 }

@@ -3,9 +3,10 @@ import { WebSocket as NodeWebSocket } from "ws"
 import { SERVER_DEFAULT_BASE_ROUTE } from "../lib/constants"
 import axios, { AxiosInstance } from "axios"
 import { ClientPacketEventMap, ConnectionOptions, HorizonEventMap, PacketDefinitions } from "../types/client"
-import { PacketManager } from "./Packets"
+import { defaultClientPackets, PacketManager } from "./Packets"
 import { HorizonEventEmitter } from "./Events"
 import { ServerEventMap } from "../types/server"
+import { testPacketKeyDuplicates } from "../lib/utils"
 
 export class ConnectionManager<
     PacketDefs extends PacketDefinitions = PacketDefinitions,
@@ -16,8 +17,12 @@ export class ConnectionManager<
     api!: AxiosInstance
 
     token?: string
-    connected = false
-    reconciled = false
+    isConnected = false
+    isReconciled = false
+
+    get isAuthenticated(){
+        return typeof this.token === "string"
+    }
 
     packetManager!: PacketManager<PacketDefs>
     packetEvents: HorizonEventEmitter<ClientPacketEventMap<PacketDefs>> = new HorizonEventEmitter()
@@ -38,7 +43,11 @@ export class ConnectionManager<
     }
 
     setPacketDefinitions(packetDefinitions: PacketDefs){
-        this.packetManager = new PacketManager(packetDefinitions)
+        testPacketKeyDuplicates(packetDefinitions, defaultClientPackets)
+        this.packetManager = new PacketManager({
+            ...packetDefinitions,
+            ...defaultClientPackets,
+        })
     }
 
     initializeApi(){
@@ -113,7 +122,7 @@ export class ConnectionManager<
 
     connect(){
         console.log("Connecting...")
-        if(this.connected) return
+        if(this.isConnected) return
         return new Promise<void>(resolve => {
             if(this.isBrowser){
                 this.ws = new WebSocket(this.udpUrl)
@@ -139,8 +148,9 @@ export class ConnectionManager<
         })
     }
 
-    sendPacket(encodedMessages: string[]){
+    sendPacket(encodedMessages: string | string[]){
         if(typeof this.packetManager === "undefined") return
+        if(typeof encodedMessages === "string") encodedMessages = [encodedMessages]
         const message = this.packetManager.group(encodedMessages)
         this.socketSendMessage(message)
     }
@@ -157,8 +167,8 @@ export class ConnectionManager<
 
     socketConnectedHandler(){
         console.log("Opened connection.")
-        this.connected = true
-        this.reconciled = false
+        this.isConnected = true
+        this.isReconciled = false
         if(typeof this.token === "string"){
             this.socketSendMessage(this.token)
         }
@@ -167,9 +177,10 @@ export class ConnectionManager<
     socketMessageHandler(data: string){
         if(typeof this.packetManager === "undefined") return 
         try{
-            const message = this.packetManager.decodeGroup(data)
-            for(const packet of message){
-                this.packetEvents.emit(packet.code, {
+            const packetGroup = this.packetManager.decodeGroup(data)
+            for(const packet of packetGroup){
+                this.packetEvents.emit(packet.id, {
+                    group: packetGroup,
                     value: packet.value as any,
                 })
             }
@@ -181,7 +192,7 @@ export class ConnectionManager<
 
     socketCloseHandler(){
         console.log("Closed conection!")
-        this.connected = false
-        this.reconciled = false
+        this.isConnected = false
+        this.isReconciled = false
     }
 }

@@ -8,9 +8,20 @@ export class PacketManager<T extends PacketDefinitions = PacketDefinitions>{
 
     constructor(packets: T){
         this.packets = packets
+
         for(const id in this.packets){
             const packet = this.packets[id]
             this.packetsByCode[packet.code] = { id, packet }
+
+            // Check for duplicate
+            for(const id2 in this.packets){
+                const packet2 = this.packets[id2]
+                if(id !== id2){
+                    if(packet.code === packet2.code){
+                        throw Error(`Packet code "${packet.code}" is used by both "${id}" and "${id2}"`)
+                    }
+                }
+            }
         }
     }
 
@@ -129,6 +140,8 @@ export class LiteralArrayPacket extends BasePacket implements Packet<LiteralPack
 
 export const defaultServerClientPackets = {
     "heartbeat": new NumberPacket("0"),
+    "connection-status": new NumberPacket("="),
+    "error": new NumberPacket("2"),
 }
 
 export const defaultServerPackets = {

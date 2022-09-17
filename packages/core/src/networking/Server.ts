@@ -13,6 +13,7 @@ import { ServerEventMap, ServerOptions, ServerPacketEventMap } from "../types/se
 import { defaultServerPackets, PacketManager } from "./Packets"
 import { HorizonEventEmitter } from "./Events"
 import { HorizonEventMap, PacketDefinitions } from "../types/client"
+import { testPacketKeyDuplicates } from "../lib/utils"
 
 export class Server<
     ServerConnection extends Connection = Connection, 
@@ -61,6 +62,7 @@ export class Server<
     }
 
     setPacketDefinitions(packetDefinitions: PacketDefs){
+        testPacketKeyDuplicates(packetDefinitions, defaultServerPackets)
         this.packetManager = new PacketManager({
             ...packetDefinitions,
             ...defaultServerPackets,
@@ -165,6 +167,11 @@ export class Server<
             const packetGroup = this.packetManager.decodeGroup(data)
             for(const packet of packetGroup){
                 this.packetEvents.emit(packet.id, {
+                    group: packetGroup,
+                    ws, connection,
+                    value: packet.value as any,
+                })
+                connection.packetEvents.emit(packet.id, {
                     group: packetGroup,
                     ws, connection,
                     value: packet.value as any,
