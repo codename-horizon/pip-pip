@@ -1,13 +1,18 @@
 import { WebSocket } from "ws"
 import { generateId } from "../lib/utils"
+import { HorizonEventEmitter } from "./Events"
 
-export class Connection<PublicState = Record<string, unknown>, PrivateState = Record<string, unknown>>{
+export class Connection<
+    PublicState = Record<string, unknown>, 
+    PrivateState = Record<string, unknown>
+> extends HorizonEventEmitter{
     token: string
     publicState!: PublicState
     privateState!: PrivateState
     ws?: WebSocket
 
     constructor(){
+        super()
         this.token = generateId()
         this.publicState = {} as PublicState
         this.privateState = {} as PrivateState

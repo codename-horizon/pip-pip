@@ -17,3 +17,10 @@ export interface Packet<T = unknown>{
 export type PacketDefinitions = Record<string, BasePacket>
 
 export type LiteralPacketType = string | number | boolean
+
+
+export type HorizonEventMap = Record<string, any>
+export type HorizonEventKey<T extends HorizonEventMap> = string & keyof T
+export type HorizonEventReceiver<T> = (params: T) => void
+
+export type Flatten<T> = T extends Record<string, any> ? { [k in keyof T] : T[k] } : never

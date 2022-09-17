@@ -1,9 +1,5 @@
 import { LiteralPacketType, Packet, PacketDefinitions } from "../types/client"
 
-export const defaultServerPackets = {
-    
-}
-
 export class PacketManager<T extends PacketDefinitions = PacketDefinitions>{
     packets: T
     packetsByCode: Record<BasePacket["code"], { id: string, packet: BasePacket }> = {}
@@ -128,4 +124,8 @@ export class LiteralArrayPacket extends BasePacket implements Packet<LiteralPack
     decode(value: string){
         return value.substring(1).split(",").map(v => decodeLiteral(v))
     }
+}
+
+export const defaultServerPackets = {
+    "heartbeat": new BasePacket("0"),
 }

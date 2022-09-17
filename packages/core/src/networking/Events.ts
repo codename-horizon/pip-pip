@@ -1,34 +1,23 @@
 /* REMINDER: BROWSER-SAFE */
-import { generateId } from "../lib/utils"
 
-type HorizonEventCallback = (payload: unknown) => void
+import { HorizonEventKey, HorizonEventMap, HorizonEventReceiver } from "../types/client"
 
-type HorizonEventListener = {
-    id: string,
-    eventName: string,
-    callback: HorizonEventCallback,
-}
+export class HorizonEventEmitter<T extends HorizonEventMap  = Record<string, unknown>>{
+    listeners: {
+        [K in HorizonEventKey<T>]?: Array<(params: HorizonEventMap[K]) => void>;
+    } = {}
 
-export class HorizonEventEmitter{
-    listeners: HorizonEventListener[] = []
+    on<K extends HorizonEventKey<T>>(eventName: K, callback: HorizonEventReceiver<T[K]>): void{
+        this.listeners[eventName] = (this.listeners[eventName] || []).concat(callback)
+    }
 
-    on(eventName: string, callback: HorizonEventCallback){
-        const id = generateId()
-        this.listeners.push({
-            id, eventName, callback,
+    off<K extends HorizonEventKey<T>>(eventName: K, callback: HorizonEventReceiver<T[K]>): void{
+        this.listeners[eventName] = (this.listeners[eventName] || []).filter(f => f !== callback)
+    }
+
+    emit<K extends HorizonEventKey<T>>(eventName: K, params?: T[K]): void{
+        (this.listeners[eventName] || []).forEach(function(callback) {
+            callback(params)
         })
-        return id
-    }
-
-    off(id: string){
-        this.listeners = this.listeners.filter(listener => listener.id !== id)
-    }
-
-    emit(eventName: string, payload: unknown){
-        for(const listener of this.listeners){
-            if(listener.eventName === eventName){
-                listener.callback(payload)
-            }
-        }
     }
 }

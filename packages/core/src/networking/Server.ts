@@ -9,14 +9,16 @@ import { Connection } from "./Connection"
 import { Lobby } from "./Lobby"
 import createHttpError from "http-errors"
 import cors from "cors"
-import { ServerOptions } from "../types/server"
-import { PacketManager } from "./Packets"
+import { ServerEventMap, ServerOptions, ServerPacketEventMap } from "../types/server"
+import { defaultServerPackets, PacketManager } from "./Packets"
 import { HorizonEventEmitter } from "./Events"
+import { Flatten, HorizonEventMap, PacketDefinitions } from "../types/client"
 
 export class Server<
     ServerConnection extends Connection = Connection, 
-    ServerPacketManager extends PacketManager = PacketManager,
-> extends HorizonEventEmitter{
+    PacketDefs extends PacketDefinitions = PacketDefinitions,
+    CustomEventMap extends HorizonEventMap = Record<string, never>,
+>{
     options: ServerOptions
 
     app: Express
@@ -24,8 +26,12 @@ export class Server<
     server: http.Server
 
     ServerConnection: new () => Connection = Connection
-    packetManager!: ServerPacketManager
-    
+    packetManager!: PacketManager<PacketDefs>
+
+    packetEvents: HorizonEventEmitter<ServerPacketEventMap<Flatten<PacketDefs & typeof defaultServerPackets>>> = new HorizonEventEmitter()
+    serverEvents: HorizonEventEmitter<ServerEventMap> = new HorizonEventEmitter()
+    customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
+
     connections: Record<string, Connection> = {}
 
 
@@ -33,8 +39,6 @@ export class Server<
     lobbyTypes: Record<string, new () => Lobby> = {}
 
     constructor(options: Partial<ServerOptions> = {}){
-        super()
-
         this.options = {
             baseRoute: SERVER_DEFAULT_BASE_ROUTE,
             port: SERVER_DEFAULT_PORT,
@@ -56,8 +60,11 @@ export class Server<
         this.ServerConnection = ServerConnection
     }
 
-    setPacketManager(packetManager: ServerPacketManager){
-        this.packetManager = packetManager
+    setPacketDefinitions(packetDefinitions: PacketDefs){
+        this.packetManager = new PacketManager({
+            ...packetDefinitions,
+            ...defaultServerPackets,
+        })
     }
 
     setLobbyTypes(lobbyTypes: Record<string, new () => Lobby>){
@@ -154,12 +161,14 @@ export class Server<
     }
 
     handleSocketMessage(data: string, ws: WebSocket, connection: ServerConnection){
-        if(typeof this.packetManager === undefined) return
-
         try{
-            const message = this.packetManager.decodeGroup(data)
-            for(const packet of message){
-                this.emit(`packet:${packet.id}`, packet.value)
+            const packetGroup = this.packetManager.decodeGroup(data)
+            for(const packet of packetGroup){
+                // this.emit(`packet:${packet.id}`, {
+                //     packetGroup,
+                //     packet,
+                //     ws, connection,
+                // })
             }
         } catch(e){
             console.log(`error with message [${data}]`)
@@ -177,10 +186,14 @@ export class Server<
             this.server.listen(this.options.port, () => resolve(null))
         }))
 
+        this.serverEvents.emit("start")
+
         // Handle web socket connections
         this.wss.on("connection", (ws: WebSocket) => {
             let connection: ServerConnection
             let reconciled = false
+
+            this.serverEvents.emit("connect", { ws })
 
             ws.on("message", (data) => {
                 if(reconciled === true){
