@@ -2,8 +2,8 @@ import { WebSocket } from "ws"
 import { ServerConnection } from "../networking/ServerConnection"
 import { PacketDecoded } from "./client"
 import { ServerLobby } from "../networking/ServerLobby"
-import { LibPacketMap, PacketMap } from "./packets"
-import { HorizonEventEmitter } from "../networking/Events"
+import { InternalPacketMap, PacketMap } from "./packets"
+import { EventEmitter } from "../networking/Events"
 
 export type ServerOptions = {
     baseRoute: string,
@@ -43,6 +43,6 @@ export type ServerPacketEventFormat<T extends PacketMap> = {
     }
 }
 
-export type ServerPacketEventMap<T extends PacketMap> = ServerPacketEventFormat<T & LibPacketMap>
-export type InternalServerPacketEventMap = ServerPacketEventFormat<LibPacketMap>
-export type InternalServerPacketEventEmitter = HorizonEventEmitter<InternalServerPacketEventMap>
+export type ServerPacketEventMap<T extends PacketMap> = ServerPacketEventFormat<T & InternalPacketMap>
+export type InternalServerPacketEventMap = ServerPacketEventFormat<InternalPacketMap>
+export type InternalServerPacketEventEmitter = EventEmitter<InternalServerPacketEventMap>

@@ -10,15 +10,15 @@ import { ServerLobby } from "./ServerLobby"
 import createHttpError from "http-errors"
 import cors from "cors"
 import { ServerEventMap, ServerOptions, ServerPacketEventMap } from "../types/server"
-import { HorizonEventEmitter } from "./Events"
+import { EventEmitter } from "./Events"
 import { EventMap } from "../types/client"
 import { PacketMap } from "../types/packets"
-import { LibPacketManager } from "./Packets"
+import { InternalPacketManager } from "./Packets"
 
 export class Server<
-    ServerCon extends ServerConnection, 
+    SC extends ServerConnection, 
     PM extends PacketMap,
-    CustomEventMap extends EventMap = Record<string, never>,
+    EM extends EventMap = Record<string, never>,
 >{
     options: ServerOptions
 
@@ -26,12 +26,12 @@ export class Server<
     wss: WebSocketServer
     server: http.Server
 
-    serverConnectionClass!: new () => ServerCon
-    packetManager!: LibPacketManager<PM>
+    serverConnectionClass!: new () => SC
+    packetManager!: InternalPacketManager<PM>
 
-    packetEvents: HorizonEventEmitter<ServerPacketEventMap<PM>> = new HorizonEventEmitter()
-    serverEvents: HorizonEventEmitter<ServerEventMap<ServerCon>> = new HorizonEventEmitter()
-    customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
+    packetEvents: EventEmitter<ServerPacketEventMap<PM>> = new EventEmitter()
+    serverEvents: EventEmitter<ServerEventMap<SC>> = new EventEmitter()
+    customEvents: EventEmitter<EM> = new EventEmitter()
 
     connections: Record<string, ServerConnection> = {}
 
@@ -56,12 +56,12 @@ export class Server<
         this.initializeRoutes()
     }
 
-    setConnectionClass(serverConnectionClass: new () => ServerCon){
+    setConnectionClass(serverConnectionClass: new () => SC){
         this.serverConnectionClass = serverConnectionClass
     }
 
     setPacketDefinitions(packetMap: PM){
-        this.packetManager = new LibPacketManager(packetMap)
+        this.packetManager = new InternalPacketManager(packetMap)
     }
 
     setLobbyTypes(lobbyTypes: Record<string, new () => ServerLobby>){
@@ -159,7 +159,7 @@ export class Server<
         this.app.use(this.options.baseRoute, router)
     }
 
-    handleSocketMessage(data: string, ws: WebSocket, connection: ServerCon){
+    handleSocketMessage(data: string, ws: WebSocket, connection: SC){
         this.serverEvents.emit("socketMessage", { data, ws, connection })
         try{
             const packetGroup = this.packetManager.decodeGroup(data)
@@ -195,7 +195,7 @@ export class Server<
 
         // Handle web socket connections
         this.wss.on("connection", (ws: WebSocket) => {
-            let connection: ServerCon
+            let connection: SC
             let reconciled = false
 
             this.serverEvents.emit("socketConnect", { ws })
@@ -206,7 +206,7 @@ export class Server<
                 } else{
                     const token = data.toString()
                     if(token in this.connections){
-                        connection = this.connections[token] as ServerCon
+                        connection = this.connections[token] as SC
                         connection.setWebSocket(ws)
                         reconciled = true
                         this.serverEvents.emit("socketConnectionReconciled", { ws, connection })

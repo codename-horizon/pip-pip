@@ -2,7 +2,7 @@
 
 import { EventKey, EventMap, EventCallback, OptionalIfUndefined } from "../types/client"
 
-export class HorizonEventEmitter<T extends EventMap  = Record<string, unknown>>{
+export class EventEmitter<T extends EventMap  = Record<string, unknown>>{
     listeners: {
         [K in EventKey<T>]?: Array<(params: EventMap[K]) => void>;
     } = {}

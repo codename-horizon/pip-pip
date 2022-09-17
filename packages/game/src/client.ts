@@ -1,7 +1,6 @@
 import { ConnectionManager } from "@pip-pip/core/src/networking/ConnectionManager"
 import { ConnectionOptions } from "@pip-pip/core/src/types/client"
-import { pipPipPackets } from "./packets"
-import { PipPipPackets } from "./types"
+import { PipPipPackets, pipPipPackets } from "./packets"
 
 export class PipPipConnectionManager 
     extends ConnectionManager<PipPipPackets>{

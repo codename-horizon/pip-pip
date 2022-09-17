@@ -3,14 +3,14 @@ import { WebSocket as NodeWebSocket } from "ws"
 import { SERVER_DEFAULT_BASE_ROUTE } from "../lib/constants"
 import axios, { AxiosInstance } from "axios"
 import { ConnectionOptions, EventMap } from "../types/client"
-import { LibPacketManager } from "./Packets"
-import { HorizonEventEmitter } from "./Events"
+import { InternalPacketManager } from "./Packets"
+import { EventEmitter } from "./Events"
 import { ServerEventMap } from "../types/server"
 import { ClientPacketEventMap, PacketMap } from "../types/packets"
 
 export class ConnectionManager<
     PM extends PacketMap,
-    CustomEventMap extends EventMap = Record<string, never>,
+    EM extends EventMap = Record<string, never>,
 >{
     options: ConnectionOptions
     ws?: WebSocket | NodeWebSocket
@@ -24,10 +24,10 @@ export class ConnectionManager<
         return typeof this.token === "string"
     }
 
-    packetManager!: LibPacketManager<PM>
-    packetEvents: HorizonEventEmitter<ClientPacketEventMap<PM>> = new HorizonEventEmitter()
-    serverEvents: HorizonEventEmitter<ServerEventMap> = new HorizonEventEmitter()
-    customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
+    packetManager!: InternalPacketManager<PM>
+    packetEvents: EventEmitter<ClientPacketEventMap<PM>> = new EventEmitter()
+    serverEvents: EventEmitter<ServerEventMap> = new EventEmitter()
+    customEvents: EventEmitter<EM> = new EventEmitter()
 
     constructor(options: Partial<ConnectionOptions> = {}){
         this.options = {
@@ -43,7 +43,7 @@ export class ConnectionManager<
     }
 
     setPacketDefinitions(packetMap: PM){
-        this.packetManager = new LibPacketManager(packetMap)
+        this.packetManager = new InternalPacketManager(packetMap)
     }
 
     initializeApi(){

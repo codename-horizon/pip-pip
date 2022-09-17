@@ -3,12 +3,12 @@ import { generateId } from "../lib/utils"
 import { EventMap } from "../types/client"
 import { ServerEventMap, ServerPacketEventMap } from "../types/server"
 import { ServerConnection } from "./ServerConnection"
-import { HorizonEventEmitter } from "./Events"
+import { EventEmitter } from "./Events"
 import { PacketMap } from "../types/packets"
 
 export class ServerLobby<
     PM extends PacketMap = PacketMap,
-    CustomEventMap extends EventMap = Record<string, never>,
+    EM extends EventMap = Record<string, never>,
 >{
     id: string
     locked = false
@@ -18,9 +18,9 @@ export class ServerLobby<
     
     connections: ServerConnection[] = []
     
-    packetEvents: HorizonEventEmitter<ServerPacketEventMap<PM>> = new HorizonEventEmitter()
-    serverEvents: HorizonEventEmitter<ServerEventMap> = new HorizonEventEmitter()
-    customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
+    packetEvents: EventEmitter<ServerPacketEventMap<PM>> = new EventEmitter()
+    serverEvents: EventEmitter<ServerEventMap> = new EventEmitter()
+    customEvents: EventEmitter<EM> = new EventEmitter()
 
     constructor(){
         this.id = generateId()

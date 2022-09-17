@@ -1,7 +1,7 @@
 import { Server, ServerConnection } from "@pip-pip/core"
 import { PipPipLobby } from "./lobby"
-import { pipPipPackets } from "./packets"
-import { PipPipConnectionPrivateState, PipPipConnectionPublicState, PipPipPackets } from "./types"
+import { PipPipPackets, pipPipPackets } from "./packets"
+import { PipPipConnectionPrivateState, PipPipConnectionPublicState } from "./types"
 
 export class PipPipConnection extends ServerConnection<
     PipPipConnectionPublicState, 

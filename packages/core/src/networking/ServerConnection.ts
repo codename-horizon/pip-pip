@@ -3,27 +3,27 @@ import { generateId } from "../lib/utils"
 import { EventMap } from "../types/client"
 import { PacketMap } from "../types/packets"
 import { ServerEventMap, ServerPacketEventMap } from "../types/server"
-import { HorizonEventEmitter } from "./Events"
+import { EventEmitter } from "./Events"
 
 export class ServerConnection<
-    PublicState = Record<string, unknown>, 
-    PrivateState = Record<string, unknown>,
+    PU = Record<string, unknown>, 
+    PR = Record<string, unknown>,
     PM extends PacketMap = PacketMap,
-    CustomEventMap extends EventMap = Record<string, never>,
+    EM extends EventMap = Record<string, never>,
 >{
     token: string
-    publicState!: PublicState
-    privateState!: PrivateState
+    publicState!: PU
+    privateState!: PR
     ws?: WebSocket
 
-    packetEvents: HorizonEventEmitter<ServerPacketEventMap<PM>> = new HorizonEventEmitter()
-    serverEvents: HorizonEventEmitter<ServerEventMap> = new HorizonEventEmitter()
-    customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
+    packetEvents: EventEmitter<ServerPacketEventMap<PM>> = new EventEmitter()
+    serverEvents: EventEmitter<ServerEventMap> = new EventEmitter()
+    customEvents: EventEmitter<EM> = new EventEmitter()
 
     constructor(){
         this.token = generateId()
-        this.publicState = {} as PublicState
-        this.privateState = {} as PrivateState
+        this.publicState = {} as PU
+        this.privateState = {} as PR
     }
 
     get isConnected(){

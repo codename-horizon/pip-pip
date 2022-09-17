@@ -1,8 +1,9 @@
 /* REMINDER: BROWSER-SAFE */
-import { Flatten, LiteralPacketType, Packet, PacketDecoded } from "../types/client"
-import { LibPacketMap, PacketMap, PacketValueMap } from "../types/packets"
+import { getKeyDuplicates } from "../lib/utils"
+import { LiteralPacketType, Packet, PacketDecoded } from "../types/client"
+import { InternalPacketMap, PacketMap } from "../types/packets"
 
-export class PacketManager<PM extends PacketMap, PVM extends PacketValueMap = PacketValueMap<PM>>{
+export class PacketManager<PM extends PacketMap>{
     packets: PM
     packetsByCode: Record<BasePacket["code"], { id: string, packet: BasePacket }> = {}
     delimiter = "\n"
@@ -19,7 +20,7 @@ export class PacketManager<PM extends PacketMap, PVM extends PacketValueMap = Pa
                 const packet2 = this.packets[id2]
                 if(id !== id2){
                     if(packet.code === packet2.code){
-                        throw Error(`Packet code "${packet.code}" is used by both "${id}" and "${id2}"`)
+                        throw Error(`Packet code "${packet.code}" is used by both "${id}" and "${id2}". Packet code is most likely already used by the engine.`)
                     }
                 }
             }
@@ -139,15 +140,23 @@ export class LiteralArrayPacket extends BasePacket implements Packet<LiteralPack
     }
 }
 
-export const libPacketMap: LibPacketMap = {
+export const internalPacketMap: InternalPacketMap = {
     "heartbeat": new NumberPacket("0"),
 }
 
-export class LibPacketManager<PM extends PacketMap> extends PacketManager<PM & LibPacketMap>{
+function testPacketKeyDuplicates(...args: Record<string, BasePacket>[]){
+    const dupes = getKeyDuplicates(...args)
+    if(dupes.hasDuplicates){
+        throw Error(`Packet ID "${dupes.duplicates.join(",")}" is already in use. Likely reserved by engine.`)
+    }
+}
+
+export class InternalPacketManager<PM extends PacketMap> extends PacketManager<PM & InternalPacketMap>{
     constructor(packets: PM){
+        testPacketKeyDuplicates(packets, internalPacketMap)
         super({
             ...packets,
-            ...libPacketMap,
+            ...internalPacketMap,
         })
     }
 }

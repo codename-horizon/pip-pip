@@ -1,7 +1,11 @@
 import { NumberPacket, StringPacket } from "@pip-pip/core/src/networking/Packets"
-import { PipPipPackets } from "./types"
+
+export type PipPipPackets = {
+    "ping": NumberPacket,
+    "pong": StringPacket,
+}
 
 export const pipPipPackets: PipPipPackets = {
     "ping": new NumberPacket("p"),
-    "error-2": new StringPacket("_"),
+    "pong": new StringPacket("_"),
 }
