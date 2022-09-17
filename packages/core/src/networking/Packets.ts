@@ -1,4 +1,5 @@
-import { LiteralPacketType, Packet, PacketDefinitions } from "../types/client"
+/* REMINDER: BROWSER-SAFE */
+import { LiteralPacketType, Packet, PacketDecoded, PacketDefinitions } from "../types/client"
 
 export class PacketManager<T extends PacketDefinitions = PacketDefinitions>{
     packets: T
@@ -25,7 +26,7 @@ export class PacketManager<T extends PacketDefinitions = PacketDefinitions>{
         return value.join(this.delimiter)
     }
 
-    decode(value: string){
+    decode(value: string): PacketDecoded{
         const code = value[0]
         if(!(code in this.packetsByCode)) throw Error("code not registered in packet manager")
         const packetHandler = this.packetsByCode[code]
@@ -36,7 +37,7 @@ export class PacketManager<T extends PacketDefinitions = PacketDefinitions>{
         }
     }
 
-    decodeGroup(value: string){
+    decodeGroup(value: string): PacketDecoded[]{
         return value.split(this.delimiter).map(line => this.decode(line))
     }
 }
@@ -126,6 +127,14 @@ export class LiteralArrayPacket extends BasePacket implements Packet<LiteralPack
     }
 }
 
+export const defaultServerClientPackets = {
+    "heartbeat": new NumberPacket("0"),
+}
+
 export const defaultServerPackets = {
-    "heartbeat": new BasePacket("0"),
+    ...defaultServerClientPackets,
+}
+
+export const defaultClientPackets = {
+    ...defaultServerClientPackets,
 }

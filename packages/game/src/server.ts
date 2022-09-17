@@ -6,6 +6,12 @@ export type PipPipConnectionPublicState = {
     name: string,
 }
 
+export type PipPipConnectionPrivateState = {
+    hidden: false,
+}
+
+export type PipPipServerPackets = typeof serverPackets
+
 export class PipPipConnection extends Connection<PipPipConnectionPublicState>{
     constructor(){
         super()
@@ -15,7 +21,7 @@ export class PipPipConnection extends Connection<PipPipConnectionPublicState>{
     }
 }
 
-export class PipPipServer  extends Server<PipPipConnection, typeof serverPackets>{
+export class PipPipServer  extends Server<PipPipConnection, PipPipServerPackets>{
     constructor(port = 3000){
         super({ port })
 
@@ -29,5 +35,8 @@ export class PipPipServer  extends Server<PipPipConnection, typeof serverPackets
             console.log("server started!")
         })
 
+        this.packetEvents.on("heartbeat", ({value}) => {
+            console.log(value)
+        })
     }
 }

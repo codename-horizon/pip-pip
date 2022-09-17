@@ -12,7 +12,7 @@ import cors from "cors"
 import { ServerEventMap, ServerOptions, ServerPacketEventMap } from "../types/server"
 import { defaultServerPackets, PacketManager } from "./Packets"
 import { HorizonEventEmitter } from "./Events"
-import { Flatten, HorizonEventMap, PacketDefinitions } from "../types/client"
+import { HorizonEventMap, PacketDefinitions } from "../types/client"
 
 export class Server<
     ServerConnection extends Connection = Connection, 
@@ -26,9 +26,9 @@ export class Server<
     server: http.Server
 
     ServerConnection: new () => Connection = Connection
-    packetManager!: PacketManager<PacketDefs>
 
-    packetEvents: HorizonEventEmitter<ServerPacketEventMap<Flatten<PacketDefs & typeof defaultServerPackets>>> = new HorizonEventEmitter()
+    packetManager!: PacketManager<PacketDefs>
+    packetEvents: HorizonEventEmitter<ServerPacketEventMap<PacketDefs>> = new HorizonEventEmitter()
     serverEvents: HorizonEventEmitter<ServerEventMap> = new HorizonEventEmitter()
     customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
 
@@ -164,11 +164,11 @@ export class Server<
         try{
             const packetGroup = this.packetManager.decodeGroup(data)
             for(const packet of packetGroup){
-                // this.emit(`packet:${packet.id}`, {
-                //     packetGroup,
-                //     packet,
-                //     ws, connection,
-                // })
+                this.packetEvents.emit(packet.id, {
+                    group: packetGroup,
+                    ws, connection,
+                    value: packet.value as any,
+                })
             }
         } catch(e){
             console.log(`error with message [${data}]`)

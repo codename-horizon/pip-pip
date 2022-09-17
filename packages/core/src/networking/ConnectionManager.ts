@@ -2,13 +2,15 @@
 import { WebSocket as NodeWebSocket } from "ws"
 import { SERVER_DEFAULT_BASE_ROUTE } from "../lib/constants"
 import axios, { AxiosInstance } from "axios"
-import { ConnectionOptions } from "../types/client"
+import { ClientPacketEventMap, ConnectionOptions, HorizonEventMap, PacketDefinitions } from "../types/client"
 import { PacketManager } from "./Packets"
 import { HorizonEventEmitter } from "./Events"
+import { ServerEventMap } from "../types/server"
 
 export class ConnectionManager<
-    ConnectionPacketManager extends PacketManager = PacketManager,
-> extends HorizonEventEmitter{
+    PacketDefs extends PacketDefinitions = PacketDefinitions,
+    CustomEventMap extends HorizonEventMap = Record<string, never>,
+>{
     options: ConnectionOptions
     ws?: WebSocket | NodeWebSocket
     api!: AxiosInstance
@@ -17,10 +19,12 @@ export class ConnectionManager<
     connected = false
     reconciled = false
 
-    packetManager!: ConnectionPacketManager
+    packetManager!: PacketManager<PacketDefs>
+    packetEvents: HorizonEventEmitter<ClientPacketEventMap<PacketDefs>> = new HorizonEventEmitter()
+    serverEvents: HorizonEventEmitter<ServerEventMap> = new HorizonEventEmitter()
+    customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
 
     constructor(options: Partial<ConnectionOptions> = {}){
-        super()
         this.options = {
             tcpProtocol: "http",
             udpProtocol: "ws",
@@ -33,8 +37,8 @@ export class ConnectionManager<
         this.initializeApi()
     }
 
-    setPacketManager(packetManager: ConnectionPacketManager){
-        this.packetManager = packetManager
+    setPacketDefinitions(packetDefinitions: PacketDefs){
+        this.packetManager = new PacketManager(packetDefinitions)
     }
 
     initializeApi(){
@@ -165,7 +169,9 @@ export class ConnectionManager<
         try{
             const message = this.packetManager.decodeGroup(data)
             for(const packet of message){
-                this.emit(`packet:${packet.id}`, packet.value)
+                this.packetEvents.emit(packet.code, {
+                    value: packet.value as any,
+                })
             }
         } catch(e){
             console.warn(`could not parse message [${data}]`)

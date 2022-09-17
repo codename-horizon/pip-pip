@@ -1,7 +1,7 @@
 import { WebSocket } from "ws"
 import { Connection } from "../networking/Connection"
 import { defaultServerPackets } from "../networking/Packets"
-import { PacketDefinitions } from "./client"
+import { Flatten, PacketDecoded, PacketDefinitions } from "./client"
 
 export type ServerOptions = {
     baseRoute: string,
@@ -16,12 +16,15 @@ export type ServerEventMap = {
     connectionReconciled: undefined,
 }
 
-export type ServerPacketEventMap<PacketDefs extends PacketDefinitions> = {
-    [eventName in keyof PacketDefs]: {
-        value: ReturnType<PacketDefs[eventName]["decode"]>,
+export type DefaultServerPacketEventMap = typeof defaultServerPackets
+
+export type ServerPacketEventMap<
+    PacketDefs extends PacketDefinitions, 
+    AllDefs extends PacketDefinitions = Flatten<PacketDefs & DefaultServerPacketEventMap>> = {
+    [eventName in keyof AllDefs]: {
+        group: PacketDecoded[],
+        value: ReturnType<AllDefs[eventName]["decode"]>,
         ws: WebSocket,
         connection: Connection,
     }
 }
-
-type Test = ServerPacketEventMap<typeof defaultServerPackets>

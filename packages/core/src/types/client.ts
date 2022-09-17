@@ -1,4 +1,4 @@
-import { BasePacket } from "../networking/Packets"
+import { BasePacket, defaultClientPackets } from "../networking/Packets"
 
 export type ConnectionOptions = {
     tcpProtocol: string,
@@ -24,3 +24,18 @@ export type HorizonEventKey<T extends HorizonEventMap> = string & keyof T
 export type HorizonEventReceiver<T> = (params: T) => void
 
 export type Flatten<T> = T extends Record<string, any> ? { [k in keyof T] : T[k] } : never
+
+export type PacketDecoded = {
+    id: string, code: string, value: unknown,
+}
+
+export type DefaultClientPacketEventMap = typeof defaultClientPackets
+
+export type ClientPacketEventMap<
+    PacketDefs extends PacketDefinitions,
+    AllDefs extends PacketDefinitions = 
+        Flatten<PacketDefs & DefaultClientPacketEventMap>> = {
+    [eventName in keyof AllDefs]: {
+        value: ReturnType<AllDefs[eventName]["decode"]>,
+    }
+}
