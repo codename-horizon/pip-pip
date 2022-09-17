@@ -215,7 +215,6 @@ export class Server<
                         connection.setWebSocket(ws)
                         reconciled = true
                         this.serverEvents.emit("socketConnectionReconciled", { ws, connection })
-                        connection.send(this.packetManager.encode("connection-status", 0))
                         
                     } else{
                         ws.close()

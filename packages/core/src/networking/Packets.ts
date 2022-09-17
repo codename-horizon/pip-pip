@@ -1,5 +1,5 @@
 /* REMINDER: BROWSER-SAFE */
-import { LiteralPacketType, Packet, PacketDecoded, PacketDefinitions } from "../types/client"
+import { Flatten, LiteralPacketType, Packet, PacketDecoded, PacketDefinitions } from "../types/client"
 
 export class PacketManager<T extends PacketDefinitions = PacketDefinitions>{
     packets: T
@@ -148,4 +148,54 @@ export const defaultServerPackets = {
 
 export const defaultClientPackets = {
     ...defaultServerClientPackets,
+}
+
+export const libPackets: PacketMap = {
+    "connection-status": new NumberPacket("c"),
+}
+
+export type LibPacketValueMap = {
+    "connection-status": number,
+}
+export type LibPacketMap = typeof libPackets
+export interface PacketMap {
+    [key: string]: BasePacket
+}
+export type PacketValueMap = Record<string, any>
+
+
+export class Test<
+    InstanceMap extends PacketMap, 
+    InstanceValueMap extends PacketValueMap,
+>{
+    map: LibPacketMap & InstanceMap
+
+    constructor(map: InstanceMap){
+        this.map = {
+            ...libPackets,
+            ...map,
+        }
+
+        this.call("connection-status", 2)
+    }
+
+    call<K extends keyof Flatten<LibPacketValueMap & InstanceValueMap>, B extends Flatten<LibPacketValueMap & InstanceValueMap>[K]>(a: K, b: B){
+        console.log(a, b)
+    }
+}
+
+const testPackets: PacketMap = {
+    "test": new StringPacket("l"),
+}
+
+type TestPacketValueMap = {
+    "test": string,
+}
+
+export class Testable extends Test<typeof testPackets, TestPacketValueMap>{
+    constructor(){
+        super(testPackets)
+
+        this.call("connection-status", 1)
+    }
 }
