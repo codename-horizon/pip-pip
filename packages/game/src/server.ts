@@ -1,20 +1,12 @@
 import { Server, ServerConnection } from "@pip-pip/core"
 import { PipPipLobby } from "./lobby"
-import { serverPackets } from "./packets"
-
-export type PipPipConnectionPublicState = {
-    name: string,
-}
-
-export type PipPipConnectionPrivateState = {
-    hidden: false,
-}
-
-export type PipPipServerPackets = typeof serverPackets
+import { pipPipPackets } from "./packets"
+import { PipPipConnectionPrivateState, PipPipConnectionPublicState, PipPipPackets } from "./types"
 
 export class PipPipConnection extends ServerConnection<
-    PipPipConnectionPublicState, PipPipConnectionPrivateState, 
-    PipPipServerPackets
+    PipPipConnectionPublicState, 
+    PipPipConnectionPrivateState, 
+    PipPipPackets
 >{
     constructor(){
         super()
@@ -24,11 +16,11 @@ export class PipPipConnection extends ServerConnection<
     }
 }
 
-export class PipPipServer  extends Server<PipPipConnection, PipPipServerPackets>{
+export class PipPipServer  extends Server<PipPipConnection, PipPipPackets>{
     constructor(port = 3000){
         super({ port })
 
-        this.setPacketDefinitions(serverPackets)
+        this.setPacketDefinitions(pipPipPackets)
         this.setConnectionClass(PipPipConnection)
         this.setLobbyTypes({
             default: PipPipLobby,
