@@ -1,4 +1,4 @@
-import { Server, Connection } from "@pip-pip/core"
+import { Server, ServerConnection } from "@pip-pip/core"
 import { PipPipLobby } from "./lobby"
 import { serverPackets } from "./packets"
 
@@ -12,7 +12,10 @@ export type PipPipConnectionPrivateState = {
 
 export type PipPipServerPackets = typeof serverPackets
 
-export class PipPipConnection extends Connection<PipPipConnectionPublicState>{
+export class PipPipConnection extends ServerConnection<
+    PipPipConnectionPublicState, PipPipConnectionPrivateState, 
+    PipPipServerPackets
+>{
     constructor(){
         super()
         this.publicState = {

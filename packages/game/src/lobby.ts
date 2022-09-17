@@ -1,6 +1,6 @@
-import { Lobby } from "@pip-pip/core"
+import { ServerLobby } from "@pip-pip/core"
 
-export class PipPipLobby extends Lobby{
+export class PipPipLobby extends ServerLobby{
     constructor(){
         super()
     }

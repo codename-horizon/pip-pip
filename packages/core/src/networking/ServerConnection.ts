@@ -4,7 +4,7 @@ import { HorizonEventMap, PacketDefinitions } from "../types/client"
 import { ServerEventMap, ServerPacketEventMap } from "../types/server"
 import { HorizonEventEmitter } from "./Events"
 
-export class Connection<
+export class ServerConnection<
     PublicState = Record<string, unknown>, 
     PrivateState = Record<string, unknown>,
     PacketDefs extends PacketDefinitions = PacketDefinitions,

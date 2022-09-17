@@ -1,6 +1,6 @@
 /* REMINDER: BROWSER-SAFE */
 
-import { HorizonEventKey, HorizonEventMap, HorizonEventReceiver } from "../types/client"
+import { HorizonEventKey, HorizonEventMap, HorizonEventReceiver, OptionalIfUndefined } from "../types/client"
 
 export class HorizonEventEmitter<T extends HorizonEventMap  = Record<string, unknown>>{
     listeners: {
@@ -15,7 +15,7 @@ export class HorizonEventEmitter<T extends HorizonEventMap  = Record<string, unk
         this.listeners[eventName] = (this.listeners[eventName] || []).filter(f => f !== callback)
     }
 
-    emit<K extends HorizonEventKey<T>>(eventName: K, params?: T[K]): void{
+    emit<K extends HorizonEventKey<T>>(eventName: K, ...params: OptionalIfUndefined<T[K]>): void{
         (this.listeners[eventName] || []).forEach(function(callback) {
             callback(params)
         })

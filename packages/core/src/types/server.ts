@@ -1,7 +1,8 @@
 import { WebSocket } from "ws"
-import { Connection } from "../networking/Connection"
+import { ServerConnection } from "../networking/ServerConnection"
 import { defaultServerPackets } from "../networking/Packets"
 import { Flatten, PacketDecoded, PacketDefinitions } from "./client"
+import { ServerLobby } from "../networking/ServerLobby"
 
 export type ServerOptions = {
     baseRoute: string,
@@ -12,8 +13,24 @@ export type ServerOptions = {
 
 export type ServerEventMap = {
     start: undefined,
-    connect: { ws: WebSocket },
-    connectionReconciled: undefined,
+
+    socketConnect: { ws: WebSocket },
+    socketConnectionReconciled: { ws: WebSocket, connection: ServerConnection},
+    socketClose: undefined,
+    socketMessage: { ws: WebSocket, data: string, connection: ServerConnection },
+
+    auth: { connection: ServerConnection },
+    lobbyCreate: { lobby: ServerLobby }
+}
+
+export type ConnectionEventMap = {
+    socketMessage: { ws: WebSocket, data: string, connection: ServerConnection },
+    reconciled: undefined,
+    socketClose: undefined,
+}
+
+export type ServerLobbyEventMap = {
+    start: undefined,
 }
 
 export type DefaultServerPacketEventMap = typeof defaultServerPackets
@@ -25,6 +42,6 @@ export type ServerPacketEventMap<
         group: PacketDecoded[],
         value: ReturnType<AllDefs[eventName]["decode"]>,
         ws: WebSocket,
-        connection: Connection,
+        connection: ServerConnection,
     }
 }

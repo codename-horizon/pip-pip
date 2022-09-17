@@ -40,3 +40,5 @@ export type ClientPacketEventMap<
         value: ReturnType<AllDefs[eventName]["decode"]>,
     }
 }
+
+export type OptionalIfUndefined<T> = undefined extends T ? [param?: T] : [param: T]
