@@ -35,7 +35,6 @@ export class Server<
 
     connections: Record<string, ServerConnection> = {}
 
-
     lobbies: Record<string, ServerLobby> = {}
     lobbyTypes: Record<string, new () => ServerLobby> = {}
 
@@ -215,7 +214,6 @@ export class Server<
                         connection.setWebSocket(ws)
                         reconciled = true
                         this.serverEvents.emit("socketConnectionReconciled", { ws, connection })
-                        
                     } else{
                         ws.close()
                     }

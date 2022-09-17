@@ -73,12 +73,12 @@ export class BasePacket implements Packet{
         this.code = code
     }
 
-    encode(value: any){
+    encode(value: unknown){
         return value as string
     }
 
-    decode(value: any){
-        return value
+    decode(value: string){
+        return value as unknown
     }
 }
 
@@ -150,17 +150,34 @@ export const defaultClientPackets = {
     ...defaultServerClientPackets,
 }
 
-export const libPackets: PacketMap = {
-    "connection-status": new NumberPacket("c"),
+// export interface PacketMap {
+//     [key: string]: BasePacket
+// }
+
+export type PacketMap = {
+    [key: string]: BasePacket,
 }
 
-export type LibPacketValueMap = {
-    "connection-status": number,
+
+export type PVM<T extends PacketMap> = {
+    [K in keyof T]: ReturnType<T[K]["decode"]>
 }
-export type LibPacketMap = typeof libPackets
-export interface PacketMap {
-    [key: string]: BasePacket
+
+export type LibPacketMap = {
+    "connection-status": NumberPacket,
+    "test": StringPacket,
 }
+export type LibPacketValueMap = PVM<LibPacketMap>
+export const libPackets: LibPacketMap = {
+    "connection-status": new NumberPacket("c"),
+    "test": new StringPacket("C"),
+}
+
+export type PacketValueMapFrom<T extends PacketMap> = {
+    [K in keyof T]: ReturnType<T[K]["decode"]>
+}
+
+
 export type PacketValueMap = Record<string, any>
 
 
@@ -175,8 +192,8 @@ export class Test<
             ...libPackets,
             ...map,
         }
-
-        this.call("connection-status", 2)
+        this.call("connection-status", 0)
+        this.call("test", "nice")
     }
 
     call<K extends keyof Flatten<LibPacketValueMap & InstanceValueMap>, B extends Flatten<LibPacketValueMap & InstanceValueMap>[K]>(a: K, b: B){
@@ -184,18 +201,19 @@ export class Test<
     }
 }
 
-const testPackets: PacketMap = {
-    "test": new StringPacket("l"),
+type TestPacketMap = {
+    "testable": StringPacket,
+}
+type TestPacketValueMap = PVM<TestPacketMap>
+
+const testPackets: TestPacketMap = {
+    "testable": new StringPacket("l"),
 }
 
-type TestPacketValueMap = {
-    "test": string,
-}
-
-export class Testable extends Test<typeof testPackets, TestPacketValueMap>{
+export class Testable extends Test<TestPacketMap, TestPacketValueMap>{
     constructor(){
         super(testPackets)
 
-        this.call("connection-status", 1)
+        this.call("test", "nice")
     }
 }
