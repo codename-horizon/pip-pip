@@ -9,16 +9,16 @@ import { ServerConnection } from "./ServerConnection"
 import { ServerLobby } from "./ServerLobby"
 import createHttpError from "http-errors"
 import cors from "cors"
-import { DefaultServerPacketEventMap, ServerEventMap, ServerOptions, ServerPacketEventMap } from "../types/server"
-import { defaultServerPackets, PacketManager } from "./Packets"
+import { ServerEventMap, ServerOptions, ServerPacketEventMap } from "../types/server"
 import { HorizonEventEmitter } from "./Events"
-import { Flatten, HorizonEventMap, PacketDefinitions } from "../types/client"
-import { testPacketKeyDuplicates } from "../lib/utils"
+import { EventMap } from "../types/client"
+import { PacketMap } from "../types/packets"
+import { LibPacketManager } from "./Packets"
 
 export class Server<
     ServerCon extends ServerConnection, 
-    PacketDefs extends PacketDefinitions,
-    CustomEventMap extends HorizonEventMap = Record<string, never>,
+    PM extends PacketMap,
+    CustomEventMap extends EventMap = Record<string, never>,
 >{
     options: ServerOptions
 
@@ -27,9 +27,9 @@ export class Server<
     server: http.Server
 
     serverConnectionClass!: new () => ServerCon
-    packetManager!: PacketManager<Flatten<PacketDefs & DefaultServerPacketEventMap>>
+    packetManager!: LibPacketManager<PM>
 
-    packetEvents: HorizonEventEmitter<ServerPacketEventMap<PacketDefs>> = new HorizonEventEmitter()
+    packetEvents: HorizonEventEmitter<ServerPacketEventMap<PM>> = new HorizonEventEmitter()
     serverEvents: HorizonEventEmitter<ServerEventMap<ServerCon>> = new HorizonEventEmitter()
     customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
 
@@ -60,12 +60,8 @@ export class Server<
         this.serverConnectionClass = serverConnectionClass
     }
 
-    setPacketDefinitions(packetDefinitions: PacketDefs){
-        testPacketKeyDuplicates(packetDefinitions, defaultServerPackets)
-        this.packetManager = new PacketManager({
-            ...packetDefinitions,
-            ...defaultServerPackets,
-        } as Flatten<PacketDefs & DefaultServerPacketEventMap>)
+    setPacketDefinitions(packetMap: PM){
+        this.packetManager = new LibPacketManager(packetMap)
     }
 
     setLobbyTypes(lobbyTypes: Record<string, new () => ServerLobby>){
@@ -219,7 +215,7 @@ export class Server<
                     }
                 }
             })
-            
+
             ws.on("close", () => {
                 this.serverEvents.emit("socketClose")
             })

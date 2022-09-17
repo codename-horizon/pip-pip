@@ -2,15 +2,15 @@
 import { WebSocket as NodeWebSocket } from "ws"
 import { SERVER_DEFAULT_BASE_ROUTE } from "../lib/constants"
 import axios, { AxiosInstance } from "axios"
-import { ClientPacketEventMap, ConnectionOptions, DefaultClientPacketEventMap, Flatten, HorizonEventMap, PacketDefinitions } from "../types/client"
-import { defaultClientPackets, PacketManager } from "./Packets"
+import { ConnectionOptions, EventMap } from "../types/client"
+import { LibPacketManager } from "./Packets"
 import { HorizonEventEmitter } from "./Events"
 import { ServerEventMap } from "../types/server"
-import { testPacketKeyDuplicates } from "../lib/utils"
+import { ClientPacketEventMap, PacketMap } from "../types/packets"
 
 export class ConnectionManager<
-    PacketDefs extends PacketDefinitions = PacketDefinitions,
-    CustomEventMap extends HorizonEventMap = Record<string, never>,
+    PM extends PacketMap,
+    CustomEventMap extends EventMap = Record<string, never>,
 >{
     options: ConnectionOptions
     ws?: WebSocket | NodeWebSocket
@@ -24,8 +24,8 @@ export class ConnectionManager<
         return typeof this.token === "string"
     }
 
-    packetManager!: PacketManager<Flatten<PacketDefs & DefaultClientPacketEventMap>>
-    packetEvents: HorizonEventEmitter<ClientPacketEventMap<PacketDefs>> = new HorizonEventEmitter()
+    packetManager!: LibPacketManager<PM>
+    packetEvents: HorizonEventEmitter<ClientPacketEventMap<PM>> = new HorizonEventEmitter()
     serverEvents: HorizonEventEmitter<ServerEventMap> = new HorizonEventEmitter()
     customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
 
@@ -42,12 +42,8 @@ export class ConnectionManager<
         this.initializeApi()
     }
 
-    setPacketDefinitions(packetDefinitions: PacketDefs){
-        testPacketKeyDuplicates(packetDefinitions, defaultClientPackets)
-        this.packetManager = new PacketManager({
-            ...packetDefinitions,
-            ...defaultClientPackets,
-        } as Flatten<PacketDefs & DefaultClientPacketEventMap>)
+    setPacketDefinitions(packetMap: PM){
+        this.packetManager = new LibPacketManager(packetMap)
     }
 
     initializeApi(){

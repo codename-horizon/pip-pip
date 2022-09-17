@@ -1,5 +1,3 @@
-import { BasePacket, defaultClientPackets } from "../networking/Packets"
-
 export type ConnectionOptions = {
     tcpProtocol: string,
     udpProtocol: string,
@@ -14,14 +12,12 @@ export interface Packet<T = unknown>{
     decode: (value: string) => T,
 }
 
-export type PacketDefinitions = Record<string, BasePacket>
-
 export type LiteralPacketType = string | number | boolean
 
 
-export type HorizonEventMap = Record<string, any>
-export type HorizonEventKey<T extends HorizonEventMap> = string & keyof T
-export type HorizonEventReceiver<T> = (params: T) => void
+export type EventMap = Record<string, any>
+export type EventKey<T extends EventMap> = string & keyof T
+export type EventCallback<T> = (params: T) => void
 
 export type Flatten<T> = T extends Record<string, any> ? { [k in keyof T] : T[k] } : never
 
@@ -29,16 +25,5 @@ export type PacketDecoded = {
     id: string, code: string, value: unknown,
 }
 
-export type DefaultClientPacketEventMap = typeof defaultClientPackets
-
-export type ClientPacketEventMap<
-    PacketDefs extends PacketDefinitions,
-    AllDefs extends PacketDefinitions = 
-        Flatten<PacketDefs & DefaultClientPacketEventMap>> = {
-    [eventName in keyof AllDefs]: {
-        group: PacketDecoded[],
-        value: ReturnType<AllDefs[eventName]["decode"]>,
-    }
-}
-
 export type OptionalIfUndefined<T> = undefined extends T ? [param?: T] : [param: T]
+

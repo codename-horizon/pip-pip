@@ -1,12 +1,13 @@
 /* REMINDER: BROWSER-SAFE */
-import { Flatten, LiteralPacketType, Packet, PacketDecoded, PacketDefinitions } from "../types/client"
+import { Flatten, LiteralPacketType, Packet, PacketDecoded } from "../types/client"
+import { LibPacketMap, PacketMap, PacketValueMap } from "../types/packets"
 
-export class PacketManager<T extends PacketDefinitions = PacketDefinitions>{
-    packets: T
+export class PacketManager<PM extends PacketMap, PVM extends PacketValueMap = PacketValueMap<PM>>{
+    packets: PM
     packetsByCode: Record<BasePacket["code"], { id: string, packet: BasePacket }> = {}
     delimiter = "\n"
 
-    constructor(packets: T){
+    constructor(packets: PM){
         this.packets = packets
 
         for(const id in this.packets){
@@ -25,11 +26,11 @@ export class PacketManager<T extends PacketDefinitions = PacketDefinitions>{
         }
     }
 
-    code(key: keyof T){
+    code(key: keyof PM){
         return this.packets[key].code
     }
 
-    encode<K extends keyof T, R extends ReturnType<T[K]["decode"]>>(key: K, value: R){
+    encode<K extends keyof PM, R extends ReturnType<PM[K]["decode"]>>(key: K, value: R){
         return this.packets[key].encode(value)
     }
 
@@ -138,82 +139,15 @@ export class LiteralArrayPacket extends BasePacket implements Packet<LiteralPack
     }
 }
 
-export const defaultServerClientPackets = {
-    "connection-status": new NumberPacket("-"),
+export const libPacketMap: LibPacketMap = {
+    "heartbeat": new NumberPacket("0"),
 }
 
-export const defaultServerPackets = {
-    ...defaultServerClientPackets,
-}
-
-export const defaultClientPackets = {
-    ...defaultServerClientPackets,
-}
-
-// export interface PacketMap {
-//     [key: string]: BasePacket
-// }
-
-export type PacketMap = {
-    [key: string]: BasePacket,
-}
-
-
-export type PVM<T extends PacketMap> = {
-    [K in keyof T]: ReturnType<T[K]["decode"]>
-}
-
-export type LibPacketMap = {
-    "connection-status": NumberPacket,
-    "test": StringPacket,
-}
-export type LibPacketValueMap = PVM<LibPacketMap>
-export const libPackets: LibPacketMap = {
-    "connection-status": new NumberPacket("c"),
-    "test": new StringPacket("C"),
-}
-
-export type PacketValueMapFrom<T extends PacketMap> = {
-    [K in keyof T]: ReturnType<T[K]["decode"]>
-}
-
-
-export type PacketValueMap = Record<string, any>
-
-
-export class Test<
-    InstanceMap extends PacketMap, 
-    InstanceValueMap extends PacketValueMap,
->{
-    map: LibPacketMap & InstanceMap
-
-    constructor(map: InstanceMap){
-        this.map = {
-            ...libPackets,
-            ...map,
-        }
-        this.call("connection-status", 0)
-        this.call("test", "nice")
-    }
-
-    call<K extends keyof Flatten<LibPacketValueMap & InstanceValueMap>, B extends Flatten<LibPacketValueMap & InstanceValueMap>[K]>(a: K, b: B){
-        console.log(a, b)
-    }
-}
-
-type TestPacketMap = {
-    "testable": StringPacket,
-}
-type TestPacketValueMap = PVM<TestPacketMap>
-
-const testPackets: TestPacketMap = {
-    "testable": new StringPacket("l"),
-}
-
-export class Testable extends Test<TestPacketMap, TestPacketValueMap>{
-    constructor(){
-        super(testPackets)
-
-        this.call("test", "nice")
+export class LibPacketManager<PM extends PacketMap> extends PacketManager<PM & LibPacketMap>{
+    constructor(packets: PM){
+        super({
+            ...packets,
+            ...libPacketMap,
+        })
     }
 }

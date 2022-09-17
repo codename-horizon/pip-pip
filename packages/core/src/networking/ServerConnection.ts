@@ -1,21 +1,22 @@
 import { WebSocket } from "ws"
 import { generateId } from "../lib/utils"
-import { HorizonEventMap, PacketDefinitions } from "../types/client"
+import { EventMap } from "../types/client"
+import { PacketMap } from "../types/packets"
 import { ServerEventMap, ServerPacketEventMap } from "../types/server"
 import { HorizonEventEmitter } from "./Events"
 
 export class ServerConnection<
     PublicState = Record<string, unknown>, 
     PrivateState = Record<string, unknown>,
-    PacketDefs extends PacketDefinitions = PacketDefinitions,
-    CustomEventMap extends HorizonEventMap = Record<string, never>,
+    PM extends PacketMap = PacketMap,
+    CustomEventMap extends EventMap = Record<string, never>,
 >{
     token: string
     publicState!: PublicState
     privateState!: PrivateState
     ws?: WebSocket
 
-    packetEvents: HorizonEventEmitter<ServerPacketEventMap<PacketDefs>> = new HorizonEventEmitter()
+    packetEvents: HorizonEventEmitter<ServerPacketEventMap<PM>> = new HorizonEventEmitter()
     serverEvents: HorizonEventEmitter<ServerEventMap> = new HorizonEventEmitter()
     customEvents: HorizonEventEmitter<CustomEventMap> = new HorizonEventEmitter()
 

@@ -11,6 +11,10 @@ instance.packetEvents.on("ping", ({value, connection}) => {
     connection.send(instance.packetManager.group([
         instance.packetManager.encode("ping", 0)
     ]))
+    instance.packetManager.encode("heartbeat", 1)
+    instance.packetEvents.on("heartbeat", () => {
+        123
+    })
 })
 
 instance.start().then(() => {
