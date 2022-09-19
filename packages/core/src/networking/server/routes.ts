@@ -1,13 +1,14 @@
 import { Server, ServerTypes } from "."
-import cors from "cors"
 import express, { Express, Router as createRouter, Request, Response, NextFunction } from "express"
 import createHttpError from "http-errors"
-import { handle404Error, handleError } from "../../lib/express"
+import cors from "cors"
+import { asyncHandler, handle404Error, handleError } from "../../lib/express"
 
 export function initializeServerRouter<T extends ServerTypes>(server: Server<T>){
-    server.app.use(cors)
+    server.app.use(cors())
 
     const router = createRouter()
+
     router.get("/", (req, res) => {
         res.json({
             name: "horizon-engine",
@@ -15,23 +16,20 @@ export function initializeServerRouter<T extends ServerTypes>(server: Server<T>)
         })
     })
     
-    const authMiddleware = server.authMiddleware.bind(server)
+    const authMiddleware = asyncHandler(server.authMiddleware.bind(server))
 
-    // authenticate user
-    router.get("/auth", (req, res) => {
-        // if(typeof req.headers.authorization !== "undefined"){
-        //     const token = req.headers.authorization
-        //     if(token in server.connections){
-        //         res.json(server.getConnectionByToken(token))
-        //         return
-        //     } else{
-        //         // Proceed with new connection
-        //     }
-        // }
-        // const connection = server.createConnection()
-        // server.serverEvents.emit("auth", { connection })
-        // res.json(connection.toJSON())
-    })
+    // register connection
+    router.get("/register", asyncHandler(async (req, res) => {
+        // Check if connection exists
+        const conFromReq = await server.getConnectionFromRequest(req)
+        if(typeof conFromReq !== "undefined"){
+            res.json(conFromReq)
+            return
+        }
+        // Create new connection
+        const connection = await server.createConnection()
+        res.json(server.getConnectionJSON(connection))
+    }))
 
     server.app.use(server.options.baseRoute, router)
 }

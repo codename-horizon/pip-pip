@@ -1,23 +1,31 @@
 import { Server } from "@pip-pip/core"
+import { PublicConnectionData } from "./client"
 import { pipPipPacketMap, PipPipPacketMap } from "./packets"
 
-export type PipPipConnectionData = {
-    public: {
-        name: string,
-    },
+export type ConnectionData = {
+    public: PublicConnectionData,
     private: {
         banned: false,
     },
 }
 
-export type ServerSettings = {
-    ConnectionData: PipPipConnectionData,
+export type ServerTypes = {
+    ConnectionData: ConnectionData,
     PacketMap: PipPipPacketMap,
 }
 
-export class PipPipServer extends Server<ServerSettings>{
+export class PipPipServer extends Server<ServerTypes>{
     constructor(port = 3000){
-        super({ port })
+        const connectionDataFactory = (): ConnectionData => ({
+            public: {
+                name: "Player" + Math.floor(Math.random() * 1000),
+            },
+            private: {
+                banned: false,
+            },
+        })
+
+        super({ port, connectionDataFactory })
 
         this.setPacketMap(pipPipPacketMap)
 
@@ -33,7 +41,6 @@ export class PipPipServer extends Server<ServerSettings>{
                 `---------- http://localhost:${this.options.port} -----------`,
             ]
 
-            console.clear()
             console.log(artLines.join("\n"))
         })
     }

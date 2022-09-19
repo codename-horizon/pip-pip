@@ -1,10 +1,12 @@
 import axios from "axios"
 import { Client, ClientTypes } from "."
+import { ConnectionJSON } from "../server/connection"
 
 export function initializeApi<T extends ClientTypes>(client: Client<T>){
     client.getTcpUrl = () => [
         client.options.tcpProtocol, "://", 
         client.options.host, ":", client.options.port,
+        client.options.baseRoute,
     ].join("")
 
     client.getUdpUrl = () => [
@@ -19,6 +21,11 @@ export function initializeApi<T extends ClientTypes>(client: Client<T>){
             "Content-Type": "application/json; charset=utf-8",
         },
     })
+
+    client.registerConnection = async () => {
+        const { data } = await client.api.get<ConnectionJSON<T["PublicConnectionData"]>>("/register")
+        return data
+    }
 }
 
 export const test = {

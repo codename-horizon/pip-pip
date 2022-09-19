@@ -4,6 +4,7 @@ import { WebSocket as NodeWebSocket } from "ws"
 import { SERVER_DEFAULT_BASE_ROUTE } from "../../lib/constants"
 import { EventEmitter } from "../events"
 import { ClientPacketEventMap, internalPacketMap, InternalPacketMap, PacketManager, PacketMap } from "../packets"
+import { ConnectionJSON } from "../server/connection"
 import { initializeApi } from "./axios"
 
 export type ClientOptions = {
@@ -20,16 +21,7 @@ export type ClientEvents = {
 
 export type ClientTypes = {
     PacketMap: PacketMap,
-}
-
-export interface Client<T extends ClientTypes>{
-    // API methods
-    getTcpUrl: () => string
-    getUdpUrl: () => string
-    authenticate: () => Promise<void>
-    getLobbies: () => Promise<void>
-    getLobbyInfo: (id: string) => Promise<void>
-    createLobby: (id?: string, type?: string) => Promise<void>
+    PublicConnectionData: Record<string, any>,
 }
 
 export class Client<T extends ClientTypes>{
@@ -61,3 +53,12 @@ export class Client<T extends ClientTypes>{
     }
 }
 
+export interface Client<T extends ClientTypes>{
+    // API methods defined in ./axios.ts
+    getTcpUrl: () => string
+    getUdpUrl: () => string
+    registerConnection: () => Promise<ConnectionJSON<T["PublicConnectionData"]>>
+    getLobbies: () => Promise<void>
+    getLobbyInfo: (id: string) => Promise<void>
+    createLobby: (id?: string, type?: string) => Promise<void>
+}
