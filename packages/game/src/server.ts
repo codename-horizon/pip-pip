@@ -1,31 +1,26 @@
-import { Server, ServerConnection } from "@pip-pip/core"
-import { PipPipLobby } from "./lobby"
-import { PipPipPackets, pipPipPackets } from "./packets"
-import { PipPipConnectionPrivateState, PipPipConnectionPublicState } from "./types"
+import { Server } from "@pip-pip/core"
+import { pipPipPacketMap, PipPipPacketMap } from "./packets"
 
-export class PipPipConnection extends ServerConnection<
-    PipPipConnectionPublicState, 
-    PipPipConnectionPrivateState, 
-    PipPipPackets
->{
-    constructor(){
-        super()
-        this.publicState = {
-            name: "Player",
-        }
-    }
+export type PipPipConnectionData = {
+    public: {
+        name: string,
+    },
+    private: {
+        banned: false,
+    },
 }
 
-export class PipPipServer  extends Server<PipPipConnection, PipPipPackets>{
+export type ServerSettings = {
+    ConnectionData: PipPipConnectionData,
+    PacketMap: PipPipPacketMap,
+}
+
+export class PipPipServer extends Server<ServerSettings>{
     constructor(port = 3000){
         super({ port })
 
-        this.setPacketDefinitions(pipPipPackets)
-        this.setConnectionClass(PipPipConnection)
-        this.setLobbyTypes({
-            default: PipPipLobby,
-        })
-        
+        this.setPacketMap(pipPipPacketMap)
+
         this.serverEvents.on("start", () => {
             const artLines = [
                 "---------------- WELCOME TO ----------------",
@@ -40,12 +35,6 @@ export class PipPipServer  extends Server<PipPipConnection, PipPipPackets>{
 
             console.clear()
             console.log(artLines.join("\n"))
-        })
-
-        this.packetEvents.on("parrot", ({ value, connection }) => {
-            connection.send(this.packetManager.group([
-                this.packetManager.encode("parrot", value)
-            ]))
         })
     }
 }

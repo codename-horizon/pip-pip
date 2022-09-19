@@ -15,10 +15,6 @@ export interface Packet<T = unknown>{
 export type LiteralPacketType = string | number | boolean
 
 
-export type EventMap = Record<string, any>
-export type EventKey<T extends EventMap> = string & keyof T
-export type EventCallback<T> = (params: T) => void
-
 export type Flatten<T> = T extends Record<string, any> ? { [k in keyof T] : T[k] } : never
 
 export type PacketDecoded = {
@@ -43,8 +39,6 @@ export type ConnectionManagerEventMap = {
     "socketReconciled": undefined,
     "socketReady": undefined,
 }
-
-export type OptionalIfUndefined<T> = undefined extends T ? [param?: T] : [param: T]
 
 export enum ConnectionStatus {
     CONNECTING = 0,

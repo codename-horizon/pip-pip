@@ -6,7 +6,7 @@ import { ConnectionManagerEventMap, ConnectionOptions, EventMap } from "../types
 import { InternalPacketManager } from "./Packets"
 import { EventEmitter } from "./Events"
 import { ClientPacketEventMap, InternalBasePacketManager, InternalClientPacketEventEmitter, PacketMap } from "../types/packets"
-import { Server } from "./Server"
+import { Server } from "./Server.Old"
 
 export class ConnectionManager<
     PM extends PacketMap = PacketMap,

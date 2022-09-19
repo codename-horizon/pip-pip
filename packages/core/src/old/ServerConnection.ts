@@ -4,7 +4,7 @@ import { EventMap } from "../types/client"
 import { PacketMap } from "../types/packets"
 import { ServerConnectionEventMap, ServerEventMap, ServerPacketEventMap } from "../types/server"
 import { EventEmitter } from "./Events"
-import { Server } from "./Server"
+import { Server } from "./Server.Old"
 import { ServerLobby } from "./ServerLobby"
 
 export class ServerConnection<

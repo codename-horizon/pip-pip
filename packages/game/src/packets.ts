@@ -1,11 +1,9 @@
-import { NumberPacket, StringPacket } from "@pip-pip/core/src/networking/Packets"
+import { NumberPacket } from "@pip-pip/core/src/common"
 
-export type PipPipPackets = {
-    "hello": NumberPacket,
-    "parrot": StringPacket,
+export type PipPipPacketMap = {
+    "test": NumberPacket,
 }
 
-export const pipPipPackets: PipPipPackets = {
-    "hello": new NumberPacket("p"),
-    "parrot": new StringPacket("k"),
+export const pipPipPacketMap = {
+    "test": new NumberPacket("9"),
 }

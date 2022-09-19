@@ -1,6 +1,7 @@
-/* REMINDER: BROWSER-SAFE */
-
-import { EventKey, EventMap, EventCallback, OptionalIfUndefined } from "../types/client"
+export type EventMap = Record<string, any>
+export type EventKey<T extends EventMap> = string & keyof T
+export type EventCallback<T> = (params: T) => void
+export type EventUndefinedParam<T> = undefined extends T ? [param?: T] : [param: T]
 
 export class EventEmitter<T extends EventMap  = Record<string, never>>{
     name: string
@@ -28,7 +29,7 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
         this.on(eventName, temporaryCallback)
     }
 
-    emit<K extends EventKey<T>>(eventName: K, ...params: OptionalIfUndefined<T[K]>): void {
+    emit<K extends EventKey<T>>(eventName: K, ...params: EventUndefinedParam<T[K]>): void {
         console.log(`[${this.name}] eventName: ${eventName}` + 
             (params[0] ? `, params: ${params}` : ""));
         (this.listeners[eventName] || []).forEach(function(callback) {

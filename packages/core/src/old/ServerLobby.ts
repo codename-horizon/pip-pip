@@ -5,7 +5,7 @@ import { ServerEventMap, ServerPacketEventMap } from "../types/server"
 import { ServerConnection } from "./ServerConnection"
 import { EventEmitter } from "./Events"
 import { PacketMap } from "../types/packets"
-import { Server } from "./Server"
+import { Server } from "./Server.Old"
 
 export class ServerLobby<
     PM extends PacketMap = PacketMap,
