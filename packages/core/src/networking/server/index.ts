@@ -5,7 +5,7 @@ import { WebSocket, WebSocketServer } from "ws"
 import { initializeServerErrorRoutes, initializeServerRouter, startServer } from "./routes"
 
 import { SERVER_DEFAULT_BASE_ROUTE } from "../../lib/constants"
-import { EventEmitter } from "../events"
+import { EventEmitter } from "../../events"
 import { internalPacketMap, InternalPacketMap, PacketManager, PacketMap } from "../packets"
 import { ServerPacketEventMap } from "../packets/events"
 import { initializeSocketListeners } from "./sockets"
@@ -16,6 +16,18 @@ import createHttpError from "http-errors"
 export type ServerEvents<T extends ServerTypes> = {
     beforeStart: undefined,
     start: undefined,
+
+    socketOpen: undefined,
+    socketRegister: undefined,
+    socketError: undefined,
+    socketMessage: {
+        data: string, ws: WebSocket,
+        connection?: Connection<T["ConnectionData"]>,
+    },
+    socketClose: {
+        ws: WebSocket,
+        connection?: Connection<T["ConnectionData"]>,
+    },
 
     registerConnection: { connection: Connection<T["ConnectionData"]> },
     destroyConnection: { connection: Connection<T["ConnectionData"]> },
@@ -102,7 +114,6 @@ export class Server<T extends ServerTypes>{
 }
 
 export interface Server<T extends ServerTypes>{
-    handleSocketMessage: (data: string, ws: WebSocket, connection: Connection<T["ConnectionData"]>) => void
 
     // Connection methods defined in ./connection.ts
     createConnection: () => Promise<Connection<T["ConnectionData"]>>
@@ -114,4 +125,11 @@ export interface Server<T extends ServerTypes>{
     endConnectionIdle: (connection: Connection<T["ConnectionData"]>) => void
 
     getConnectionJSON: (connection: Connection<T["ConnectionData"]>) => ConnectionJSON<T["ConnectionData"]["public"]>
+
+    // Socket methods defined in ./sockets.ts
+    handleSocketOpen: (ws: WebSocket) => void
+    handleSocketRegister: (ws: WebSocket, connection: Connection<T["ConnectionData"]>) => void
+    handleSocketError: (ws: WebSocket, err: Error) => void
+    handleSocketMessage: (data: string, ws: WebSocket, connection?: Connection<T["ConnectionData"]>) => void
+    handleSocketClose: (ws: WebSocket, connection?: Connection<T["ConnectionData"]>) => void
 }

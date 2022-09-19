@@ -28,6 +28,7 @@ export type Connection<T extends ConnectionData> = {
 
 export type ConnectionJSON<T extends Record<string, any>> = {
     id: ConnectionId,
+    token?: ConnectionToken,
     data: T,
     status: ConnectionStatus,
 }
@@ -84,7 +85,7 @@ export function initializeConnectionHandlers<T extends ServerTypes>(server: Serv
     }
 
     server.endConnectionIdle = (connection: Connection<T["ConnectionData"]>) => {
-        if(typeof connection._idleTimeout === "undefined"){
+        if(typeof connection._idleTimeout !== "undefined"){
             clearTimeout(connection._idleTimeout)
             server.serverEvents.emit("connectionIdleEnd", { connection })
         }

@@ -1,5 +1,5 @@
 import { InternalPacketMap } from "."
-import { EventEmitter } from "../events"
+import { EventEmitter } from "../../events"
 import { PacketDecoded, PacketMap } from "./types"
 
 export type ClientPacketEventMap<PM extends PacketMap> = {

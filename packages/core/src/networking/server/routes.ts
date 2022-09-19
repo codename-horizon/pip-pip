@@ -3,6 +3,7 @@ import express, { Express, Router as createRouter, Request, Response, NextFuncti
 import createHttpError from "http-errors"
 import cors from "cors"
 import { asyncHandler, handle404Error, handleError } from "../../lib/express"
+import { Connection } from "./connection"
 
 export function initializeServerRouter<T extends ServerTypes>(server: Server<T>){
     server.app.use(cors())
@@ -20,15 +21,21 @@ export function initializeServerRouter<T extends ServerTypes>(server: Server<T>)
 
     // register connection
     router.get("/register", asyncHandler(async (req, res) => {
+        const respond = (con: Connection<T["ConnectionData"]>) => {
+            res.json({
+                token: con.token,
+                ...server.getConnectionJSON(con),
+            })
+        }
         // Check if connection exists
         const conFromReq = await server.getConnectionFromRequest(req)
         if(typeof conFromReq !== "undefined"){
-            res.json(conFromReq)
+            respond(conFromReq)
             return
         }
         // Create new connection
         const connection = await server.createConnection()
-        res.json(server.getConnectionJSON(connection))
+        respond(connection)
     }))
 
     server.app.use(server.options.baseRoute, router)

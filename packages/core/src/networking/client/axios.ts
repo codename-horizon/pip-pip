@@ -22,8 +22,21 @@ export function initializeApi<T extends ClientTypes>(client: Client<T>){
         },
     })
 
+    client.api.interceptors.request.use((config) => {
+        const token = client.token
+        if(
+            typeof config.headers !== "undefined" &&
+            typeof token === "string" &&
+            token?.length > 0
+        ){
+            config.headers.authorization = token
+        }
+        return config
+    })
+
     client.registerConnection = async () => {
         const { data } = await client.api.get<ConnectionJSON<T["PublicConnectionData"]>>("/register")
+        client.setToken(data.token)
         return data
     }
 }
