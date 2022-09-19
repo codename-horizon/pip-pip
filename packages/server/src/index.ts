@@ -1,54 +1,44 @@
 import { PipPipConnectionManager, PipPipServer } from "@pip-pip/game"
 
 const instance = new PipPipServer()
+instance.start().then(async () => {
+    const connectionManager = new PipPipConnectionManager()
+    await connectionManager.authenticate()
+    await connectionManager.connect()
+    await connectionManager.waitForReconciled()
 
-instance.packetEvents.on("ping", ({value, connection}) => {
-    console.log("i received it on the server", value)
-    const message = instance.packetManager.group([
-        instance.packetManager.encode("ping", 200)
-    ])
-    console.log("trying to send this to client", message)
-    connection.send(instance.packetManager.group([
-        instance.packetManager.encode("ping", 0)
-    ]))
-    instance.packetManager.encode("heartbeat", 1)
-    instance.packetEvents.on("heartbeat", () => {
-        123
-    })
+    const lobby = await connectionManager.createLobby()
+    console.log(lobby)
+    log()
+
+    const ping = await connectionManager.getPing()
+
+    console.log(`ping: ${ping}ms`)
+
+    const output = await connectionManager.testParrot("peekabooo")
+
+    console.log(output)
+
+    setTimeout(async () => {
+        await connectionManager.ws?.close()
+    }, 5000)
 })
 
-instance.start().then(() => {
-    console.log(`Server started ${instance.options.port}`)
-    test()
-})
-
-async function test(){
-    // const con = new GameConnectionManager({
-    //     host: "147.185.221.180",
-    //     port: 17294,
-    // })
-    const o = {
-        host: "localhost",
-        port: 3000,
-    }
-    const a = new PipPipConnectionManager(o)
-
-    console.log(a.isAuthenticated, a.isConnected, a.isReconciled)
-    console.log(await a.authenticate())
-    console.log(a.isAuthenticated, a.isConnected, a.isReconciled)
-    console.log(await a.authenticate())
-    console.log(a.isAuthenticated, a.isConnected, a.isReconciled)
-    console.log(await a.getLobbies())
-    console.log(a.isAuthenticated, a.isConnected, a.isReconciled)
-    const lobby = await a.createLobby()
-    console.log(await a.getLobbyInfo(lobby.id))
-    await a.connect()
-
-    console.log(a.isConnected, a.isReconciled)
-
-    a.packetEvents.on("ping", ({value}) => {
-        console.log("i got it from the server!", value)
-    })
-
-    a.sendPacket(a.packetManager.encode("ping", 100))
+function log(){
+    console.log(
+        "connections", 
+        Object.entries(instance.connections).map(([key, connection]) => `${key}:${connection.token}`),
+        "wss", 
+        Array.from(instance.wss.clients.values()).map(ws => ws.readyState))
 }
+
+instance.serverEvents.on("connectionDestroy", () => {
+    log()
+})
+
+// instance.serverEvents.on("socketMessage", ({ data }) => { console.log(data) })
+
+instance.serverEvents.on("socketClose", () => {
+    console.log("connections", Object.keys(instance.connections))
+    console.log("wss", Array.from(instance.wss.clients.values()).map(ws => ws.readyState))
+})

@@ -8,4 +8,21 @@ export class PipPipConnectionManager
         super(options)
         this.setPacketDefinitions(pipPipPackets)
     }
+
+    testParrot(text: string){
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error("Parrot took longer than 1000ms"))
+            }, 1000)
+
+            this.sendPacket([
+                this.packetManager.encode("parrot", text)
+            ])
+
+            this.packetEvents.once("parrot", ({ value }) => {
+                clearTimeout(timeout)
+                resolve(`Server said: ${value}`)
+            })
+        })
+    }
 }

@@ -1,10 +1,9 @@
-
-
-import { PipPipConnectionManager } from "@pip-pip/game/src/client"
 import React from "react"
 import ReactDOM from "react-dom/client"
 import App from "./App"
-import "./index.css"
+import { connection } from "./game"
+
+import "./styles/global.sass"
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
@@ -12,31 +11,20 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     </React.StrictMode>
 )
 
+window.addEventListener("DOMContentLoaded", async () => {
+    await connection.authenticate()
+    await connection.connect()
 
-async function test(){
-    // const con = new GameConnectionManager({
-    //     host: "147.185.221.180",
-    //     port: 17294,
-    // })
-    const o = {
-        host: "localhost",
-        port: 3000,
-    }
-    const a = new PipPipConnectionManager(o)
+    connection.managerEvents.on("socketReady", () => {
+        setInterval(() => {
+            connection.sendPacket([
+                connection.packetManager.encode("ping", Date.now())
+            ])
+        }, 1000/20)
+    })
 
-    console.log(await a.authenticate())
-    console.log(await a.getLobbies())
-    const lobby = await a.createLobby()
-    console.log(await a.getLobbyInfo(lobby.id))
-    await a.connect()
-    console.log(a.ws?.readyState, a.ws)
-    
-    
-    setInterval(() => {
-        a.sendPacket([
-            a.packetManager.encode("ping", Math.random())
-        ])
-    }, 1000 / 20)
-}
+    connection.packetEvents.on("ping", ({ value }) => {
+        console.log(`PING: ${Date.now() - value}ms`)
+    })
 
-test()
+})

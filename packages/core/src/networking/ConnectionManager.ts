@@ -2,14 +2,14 @@
 import { WebSocket as NodeWebSocket } from "ws"
 import { SERVER_DEFAULT_BASE_ROUTE } from "../lib/constants"
 import axios, { AxiosInstance } from "axios"
-import { ConnectionOptions, EventMap } from "../types/client"
+import { ConnectionManagerEventMap, ConnectionOptions, EventMap } from "../types/client"
 import { InternalPacketManager } from "./Packets"
 import { EventEmitter } from "./Events"
-import { ServerEventMap } from "../types/server"
-import { ClientPacketEventMap, PacketMap } from "../types/packets"
+import { ClientPacketEventMap, InternalBasePacketManager, InternalClientPacketEventEmitter, PacketMap } from "../types/packets"
+import { Server } from "./Server"
 
 export class ConnectionManager<
-    PM extends PacketMap,
+    PM extends PacketMap = PacketMap,
     EM extends EventMap = Record<string, never>,
 >{
     options: ConnectionOptions
@@ -19,15 +19,16 @@ export class ConnectionManager<
     token?: string
     isConnected = false
     isReconciled = false
+    loading = false
 
     get isAuthenticated(){
         return typeof this.token === "string"
     }
 
     packetManager!: InternalPacketManager<PM>
-    packetEvents: EventEmitter<ClientPacketEventMap<PM>> = new EventEmitter()
-    serverEvents: EventEmitter<ServerEventMap> = new EventEmitter()
-    customEvents: EventEmitter<EM> = new EventEmitter()
+    packetEvents: EventEmitter<ClientPacketEventMap<PM>> = new EventEmitter("CONNECTION_MANAGER_PACKET_EVENTS")
+    managerEvents: EventEmitter<ConnectionManagerEventMap> = new EventEmitter("CONNECTION_MANAGER_EVENTS")
+    customEvents: EventEmitter<EM> = new EventEmitter("CONNECTION_MANAGER_CUSTOM_EVENTS")
 
     constructor(options: Partial<ConnectionOptions> = {}){
         this.options = {
@@ -40,10 +41,25 @@ export class ConnectionManager<
         }
 
         this.initializeApi()
+        this.managerEvents.emit("authStateChange")
+
+        const pe = this.packetEvents as InternalClientPacketEventEmitter
+        pe.on("connectionReconcile", () => {
+            if(this.isReconciled === false){
+                this.isReconciled = true
+                this.managerEvents.emit("socketReconciled")
+                this.managerEvents.emit("socketReady")
+            }
+        })
     }
 
     setPacketDefinitions(packetMap: PM){
         this.packetManager = new InternalPacketManager(packetMap)
+    }
+
+    setLoading(state: boolean){
+        this.loading = state
+        this.managerEvents.emit("loading", this.loading)
     }
 
     initializeApi(){
@@ -92,34 +108,46 @@ export class ConnectionManager<
     }
 
     async authenticate(){
+        this.setLoading(true)
+        this.managerEvents.emit("beforeAuth")
         const { data } = await this.api.get("/auth")
         this.setToken(data.token)
+        this.managerEvents.emit("authenticate")
+        this.setLoading(false)
+        this.managerEvents.emit("authStateChange")
         return data
     }
 
     async getLobbies(){
+        this.setLoading(true)
         const { data } = await this.api.get("/lobbies")
+        this.setLoading(false)
         return data
     }
 
     async getLobbyInfo(id: string){
+        this.setLoading(true)
         const { data } = await this.api.get("/lobbies/info", {
             params: { id },
         })
+        this.setLoading(false)
         return data
     }
 
     async createLobby(type = "default"){
+        this.setLoading(true)
         const { data } = await this.api.get("/lobbies/create", {
             params: { type },
         })
+        this.setLoading(false)
         return data
     }
 
-    connect(){
-        console.log("Connecting...")
+    async connect(){
         if(this.isConnected) return
-        return new Promise<void>(resolve => {
+        this.setLoading(true)
+        this.managerEvents.emit("socketConnecting")
+        await new Promise<void>(resolve => {
             if(this.isBrowser){
                 this.ws = new WebSocket(this.udpUrl)
                 this.ws.onclose = () => this.socketCloseHandler()
@@ -142,6 +170,7 @@ export class ConnectionManager<
                 }
             }
         })
+        this.setLoading(false)
     }
 
     sendPacket(encodedMessages: string | string[]){
@@ -162,15 +191,32 @@ export class ConnectionManager<
     }
 
     socketConnectedHandler(){
-        console.log("Opened connection.")
+        this.managerEvents.emit("socketConnected")
         this.isConnected = true
         this.isReconciled = false
         if(typeof this.token === "string"){
+            this.managerEvents.emit("socketReconciling", true)
             this.socketSendMessage(this.token)
+        } else{
+            this.ws?.close()
         }
+    }
+
+    waitForReconciled(){
+        return new Promise<void>((resolve, reject) => {
+            if(this.isReconciled) return resolve
+            const timeout = setTimeout(() => {
+                reject(new Error("Connection recon took too long..."))
+            }, 30000)
+            this.managerEvents.once("socketReconciled", () => {
+                resolve()
+                clearTimeout(timeout)
+            })
+        })
     }
         
     socketMessageHandler(data: string){
+        this.managerEvents.emit("socketMessage", { data })
         if(typeof this.packetManager === "undefined") return 
         try{
             const packetGroup = this.packetManager.decodeGroup(data)
@@ -187,8 +233,30 @@ export class ConnectionManager<
     }
 
     socketCloseHandler(){
-        console.log("Closed conection!")
         this.isConnected = false
         this.isReconciled = false
+        this.managerEvents.emit("authStateChange")
+        this.managerEvents.emit("logout")
+        this.managerEvents.emit("socketClose")
+    }
+
+    getPing(){
+        return new Promise<number>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error("Ping took longer than 1000ms"))
+            }, 1000)
+            
+            const pm = this.packetManager as InternalBasePacketManager
+            const pe = this.packetEvents as InternalClientPacketEventEmitter
+
+            this.sendPacket([
+                pm.encode("ping", Date.now())
+            ])
+
+            pe.once("ping", ({ value }) => {
+                clearTimeout(timeout)
+                resolve(Date.now() - value)
+            })
+        })
     }
 }

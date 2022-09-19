@@ -27,7 +27,25 @@ export class PipPipServer  extends Server<PipPipConnection, PipPipPackets>{
         })
         
         this.serverEvents.on("start", () => {
-            console.log("server started!")
+            const artLines = [
+                "---------------- WELCOME TO ----------------",
+                "██████╗░██╗██████╗░░░░░░░██████╗░██╗██████╗░",
+                "██╔══██╗██║██╔══██╗░░░░░░██╔══██╗██║██╔══██╗",
+                "██████╔╝██║██████╔╝█████╗██████╔╝██║██████╔╝",
+                "██╔═══╝░██║██╔═══╝░╚════╝██╔═══╝░██║██╔═══╝░",
+                "██║░░░░░██║██║░░░░░░░░░░░██║░░░░░██║██║░░░░░",
+                "╚═╝░░░░░╚═╝╚═╝░░░░░░░░░░░╚═╝░░░░░╚═╝╚═╝░░░░░",
+                `---------- http://localhost:${this.options.port} -----------`,
+            ]
+
+            console.clear()
+            console.log(artLines.join("\n"))
+        })
+
+        this.packetEvents.on("parrot", ({ value, connection }) => {
+            connection.send(this.packetManager.group([
+                this.packetManager.encode("parrot", value)
+            ]))
         })
     }
 }

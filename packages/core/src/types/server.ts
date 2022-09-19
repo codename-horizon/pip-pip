@@ -18,10 +18,20 @@ export type ServerEventMap<ServerCon extends ServerConnection = ServerConnection
     socketConnect: { ws: WebSocket },
     socketConnectionReconciled: { ws: WebSocket, connection: ServerCon},
     socketClose: undefined,
-    socketMessage: { ws: WebSocket, data: string, connection: ServerCon },
+    socketMessage: { ws: WebSocket, data: string, connection?: ServerCon, reconciled: boolean },
 
     auth: { connection: ServerConnection },
     lobbyCreate: { lobby: ServerLobby }
+
+    connectionDestroy: { connection: ServerConnection }
+    connectionCreate: { connection: ServerConnection }
+}
+
+export type ServerConnectionEventMap = {
+    idleStart: undefined,
+    idleEnd: undefined,
+    destroy: undefined,
+    socketClose: undefined,
 }
 
 export type ConnectionEventMap = {
@@ -46,3 +56,11 @@ export type ServerPacketEventFormat<T extends PacketMap> = {
 export type ServerPacketEventMap<T extends PacketMap> = ServerPacketEventFormat<T & InternalPacketMap>
 export type InternalServerPacketEventMap = ServerPacketEventFormat<InternalPacketMap>
 export type InternalServerPacketEventEmitter = EventEmitter<InternalServerPacketEventMap>
+
+export enum ServerConnectionStatus {
+    DISCONNECTED = 0,
+    CONNECTING = 1,
+    CONNECTED_AND_RECONCILING = 2,
+    READY = 2,
+
+}

@@ -3,7 +3,7 @@ import { getKeyDuplicates } from "../lib/utils"
 import { LiteralPacketType, Packet, PacketDecoded } from "../types/client"
 import { InternalPacketMap, PacketMap } from "../types/packets"
 
-export class PacketManager<PM extends PacketMap>{
+export class PacketManager<PM extends PacketMap = PacketMap>{
     packets: PM
     packetsByCode: Record<BasePacket["code"], { id: string, packet: BasePacket }> = {}
     delimiter = "\n"
@@ -141,7 +141,8 @@ export class LiteralArrayPacket extends BasePacket implements Packet<LiteralPack
 }
 
 export const internalPacketMap: InternalPacketMap = {
-    "heartbeat": new NumberPacket("0"),
+    "connectionReconcile": new StringPacket("*"),
+    "ping": new NumberPacket("^"),
 }
 
 function testPacketKeyDuplicates(...args: Record<string, BasePacket>[]){

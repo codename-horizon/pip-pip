@@ -9,10 +9,10 @@ import { ServerConnection } from "./ServerConnection"
 import { ServerLobby } from "./ServerLobby"
 import createHttpError from "http-errors"
 import cors from "cors"
-import { ServerEventMap, ServerOptions, ServerPacketEventMap } from "../types/server"
+import { InternalServerPacketEventEmitter, ServerEventMap, ServerOptions, ServerPacketEventMap } from "../types/server"
 import { EventEmitter } from "./Events"
 import { EventMap } from "../types/client"
-import { PacketMap } from "../types/packets"
+import { InternalBasePacketManager, PacketMap } from "../types/packets"
 import { InternalPacketManager } from "./Packets"
 
 export class Server<
@@ -26,14 +26,14 @@ export class Server<
     wss: WebSocketServer
     server: http.Server
 
-    serverConnectionClass!: new () => SC
+    ServerConnection!: new () => SC
     packetManager!: InternalPacketManager<PM>
 
-    packetEvents: EventEmitter<ServerPacketEventMap<PM>> = new EventEmitter()
-    serverEvents: EventEmitter<ServerEventMap<SC>> = new EventEmitter()
-    customEvents: EventEmitter<EM> = new EventEmitter()
+    packetEvents: EventEmitter<ServerPacketEventMap<PM>> = new EventEmitter("SERVER_PACKET_EVENTS")
+    serverEvents: EventEmitter<ServerEventMap<SC>> = new EventEmitter("SERVER_EVENTS")
+    customEvents: EventEmitter<EM> = new EventEmitter("SERVER_CUSTOM_EVENTS")
 
-    connections: Record<string, ServerConnection> = {}
+    connections: Record<string, SC> = {}
 
     lobbies: Record<string, ServerLobby> = {}
     lobbyTypes: Record<string, new () => ServerLobby> = {}
@@ -57,7 +57,7 @@ export class Server<
     }
 
     setConnectionClass(serverConnectionClass: new () => SC){
-        this.serverConnectionClass = serverConnectionClass
+        this.ServerConnection = serverConnectionClass
     }
 
     setPacketDefinitions(packetMap: PM){
@@ -79,16 +79,46 @@ export class Server<
         }
 
         const token = req.headers.authorization
+        const connection = this.getConnectionByToken(token)
 
-        if(!(token in this.connections)){
+        if(typeof connection === "undefined"){
             next(createHttpError(401, "Token invalid"))
             return
         }
-        
-
-        // const connection = this.connections[token]
 
         next()
+    }
+
+    createConnection(): SC{
+        const connection = new this.ServerConnection()
+
+        connection.connectionEvents.on("destroy", () => {
+            this.destroyConnection(connection)
+        })
+
+        this.registerConnection(connection)
+
+        this.serverEvents.emit("connectionCreate", { connection })
+        return connection
+    }
+
+    getConnectionByToken(token: string): undefined | SC{
+        for(const id in this.connections){
+            const connection = this.connections[id]
+            if(connection.token === token){
+                return connection
+            }
+        }
+    }
+
+    registerConnection(connection: SC){
+        this.connections[connection.id] = connection
+    }
+
+    destroyConnection(connection: SC){
+        const id = connection.id
+        delete this.connections[id]
+        this.serverEvents.emit("connectionDestroy", { connection })
     }
 
     initializeRoutes(){
@@ -113,14 +143,13 @@ export class Server<
             if(typeof req.headers.authorization !== "undefined"){
                 const token = req.headers.authorization
                 if(token in this.connections){
-                    res.json(this.connections[token])
+                    res.json(this.getConnectionByToken(token))
                     return
                 } else{
                     // Proceed with new connection
                 }
             }
-            const connection = new this.serverConnectionClass()
-            this.connections[connection.token] = connection
+            const connection = this.createConnection()
             this.serverEvents.emit("auth", { connection })
             res.json(connection.toJSON())
         })
@@ -160,7 +189,6 @@ export class Server<
     }
 
     handleSocketMessage(data: string, ws: WebSocket, connection: SC){
-        this.serverEvents.emit("socketMessage", { data, ws, connection })
         try{
             const packetGroup = this.packetManager.decodeGroup(data)
             for(const packet of packetGroup){
@@ -182,6 +210,8 @@ export class Server<
     }
 
     async start(){
+        this.initializePacketEvents()
+
         // Add error handler before starting server
         this.app.use(handle404Error)
         this.app.use(handleError)
@@ -201,17 +231,28 @@ export class Server<
             this.serverEvents.emit("socketConnect", { ws })
 
             ws.on("message", (data) => {
+                this.serverEvents.emit("socketMessage", { 
+                    data: data.toString(), ws, 
+                    connection, reconciled,
+                })
                 if(reconciled === true){
                     this.handleSocketMessage(data.toString(), ws, connection)
                 } else{
                     const token = data.toString()
-                    if(token in this.connections){
-                        connection = this.connections[token] as SC
+                    const tempConnection = this.getConnectionByToken(token)
+                    if(typeof tempConnection === "undefined"){
+                        ws.close()
+                    } else{
+                        connection = tempConnection
                         connection.setWebSocket(ws)
                         reconciled = true
+                    
                         this.serverEvents.emit("socketConnectionReconciled", { ws, connection })
-                    } else{
-                        ws.close()
+                        
+                        const pm = this.packetManager as InternalBasePacketManager
+                        connection.send(pm.group([
+                            pm.encode("connectionReconcile", token)
+                        ]))
                     }
                 }
             })
@@ -219,6 +260,19 @@ export class Server<
             ws.on("close", () => {
                 this.serverEvents.emit("socketClose")
             })
+        })
+    }
+
+    initializePacketEvents(){
+        if(typeof this.packetManager === "undefined") throw Error("Packet Manager not set.")
+
+        const pm = this.packetManager as InternalBasePacketManager
+        const pe = this.packetEvents as InternalServerPacketEventEmitter
+
+        pe.on("ping", ({ value, connection }) => {
+            connection.send(pm.group([
+                pm.encode("ping", value)
+            ]))
         })
     }
 }

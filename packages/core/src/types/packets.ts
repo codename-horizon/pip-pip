@@ -1,5 +1,5 @@
 import { EventEmitter } from "../networking/Events"
-import { BasePacket, NumberPacket, PacketManager } from "../networking/Packets"
+import { BasePacket, NumberPacket, PacketManager, StringPacket } from "../networking/Packets"
 import { Flatten, PacketDecoded } from "./client"
 
 export type PacketMap = {
@@ -11,7 +11,8 @@ export type PacketValueMap<T extends PacketMap = PacketMap> = {
 }
 
 export type InternalPacketMap = {
-    "heartbeat": NumberPacket,
+    "connectionReconcile": StringPacket,
+    "ping": NumberPacket,
 }
 
 export type ClientPacketEventMap<
@@ -23,5 +24,5 @@ export type ClientPacketEventMap<
     }
 }
 
-export type InternalPacketManager = PacketManager<InternalPacketMap>
+export type InternalBasePacketManager = PacketManager<InternalPacketMap>
 export type InternalClientPacketEventEmitter = EventEmitter<ClientPacketEventMap<InternalPacketMap>>
