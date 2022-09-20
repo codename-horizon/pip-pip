@@ -1,4 +1,4 @@
-import { PointPhysicsObject } from "./physics"
+import { PointPhysicsObject } from "@pip-pip/core/src/client"
 
 export class GameEntity{
     physics?: PointPhysicsObject
