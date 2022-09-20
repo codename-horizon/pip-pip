@@ -81,12 +81,20 @@ export function getStateChanges<T extends StateSchema>(to: T, from: T){
 
 export class State<T extends StateSchema>{
     history: StateSnapshot<T>[] = []
+    initialState: T
     state: T
     events: EventEmitter<StateEventMap<T>> = new EventEmitter("State")
     transactionState?: T
 
     constructor(initialState: T){
         this.state = initialState
+        this.initialState = initialState
+    }
+
+    reset(){
+        this.setState({
+            ...this.initialState,
+        })
     }
 
     setState(state: T){
@@ -104,6 +112,10 @@ export class State<T extends StateSchema>{
 
         this.history = [snapshot, ...this.history]
         this.events.emit("change", snapshot)
+    }
+
+    get<K extends keyof T>(key: K): T[K]{
+        return this.state[key]
     }
 
     set<K extends keyof T>(key: K, valueOrFactory: TypeOrFactoryType<T[K]>){
