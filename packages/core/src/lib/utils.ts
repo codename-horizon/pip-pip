@@ -27,3 +27,9 @@ export function getKeyDuplicates(...args: Record<string, unknown>[]){
         hasDuplicates: duplicates.length > 0,
     }
 }
+
+export function getLocalStorage(): Storage | undefined{
+    if(typeof window === "undefined") return
+    if(typeof window.localStorage === "undefined") return
+    return window.localStorage
+}

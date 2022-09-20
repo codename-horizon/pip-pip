@@ -1,12 +1,13 @@
 import { AxiosInstance } from "axios"
 import { WebSocket as NodeWebSocket } from "ws"
 
-import { SERVER_DEFAULT_BASE_ROUTE } from "../../lib/constants"
+import { CLIENT_DEFAULT_TOKEN_KEY, SERVER_DEFAULT_BASE_ROUTE } from "../../lib/constants"
 import { EventEmitter } from "../../events"
 import { ClientPacketEventMap, internalPacketMap, InternalPacketMap, PacketManager, PacketMap } from "../packets"
 import { ConnectionJSON } from "../server/connection"
 import { initializeApi as initializeApiHandler } from "./axios"
 import { initializeSocketHandler } from "./sockets"
+import { initializeTokenHandler } from "./token"
 
 export type ClientOptions = {
     baseRoute: string,
@@ -14,6 +15,7 @@ export type ClientOptions = {
     host: string,
     udpProtocol: string,
     tcpProtocol: string,
+    tokenKey: string,
 }
 
 export enum ClientStatus {
@@ -61,21 +63,15 @@ export class Client<T extends ClientTypes>{
             host: "localhost",
             port: 3000,
             baseRoute: SERVER_DEFAULT_BASE_ROUTE,
+            tokenKey: CLIENT_DEFAULT_TOKEN_KEY,
             ...options,
         }
 
+        initializeTokenHandler(this)
         initializeApiHandler(this)
         initializeSocketHandler(this)
-    }
 
-    setToken(token?: string){
-        if(typeof token === "string"){
-            this.token = token
-            this.clientEvents.emit("tokenSet")
-        } else{
-            this.token = undefined
-            this.clientEvents.emit("tokenUnset")
-        }
+        this.syncToken()
     }
 
     setStatus(status: ClientStatus){
@@ -89,6 +85,10 @@ export class Client<T extends ClientTypes>{
 }
 
 export interface Client<T extends ClientTypes>{
+    // Token methods defined in ./token.ts
+    setToken: (token?: string) => void
+    syncToken: () => void
+
     // API methods defined in ./axios.ts
     getTcpUrl: () => string
     getUdpUrl: () => string

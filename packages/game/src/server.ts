@@ -19,6 +19,7 @@ export class PipPipServer extends Server<ServerTypes>{
         const connectionDataFactory = (): ConnectionData => ({
             public: {
                 name: "Player" + Math.floor(Math.random() * 1000),
+                score: 0,
             },
             private: {
                 banned: false,

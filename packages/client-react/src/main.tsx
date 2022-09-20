@@ -14,4 +14,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 window.addEventListener("DOMContentLoaded", async () => {
     const client = new PipPipClient()
     await client.registerConnection()
+    await client.connectSocket()
 })

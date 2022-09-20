@@ -3,6 +3,7 @@ import { PipPipPacketMap } from "./packets"
 
 export type PublicConnectionData = {
     name: string,
+    score: number,
 }
 
 export type ClientTypes = {
