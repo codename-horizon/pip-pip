@@ -1,2 +1,2 @@
-export * from "./server"
-export * from "./client"
+export * from "./networking/server"
+export * from "./networking/client"

@@ -33,3 +33,9 @@ export function getLocalStorage(): Storage | undefined{
     if(typeof window.localStorage === "undefined") return
     return window.localStorage
 }
+
+export function isObject(variable: any){
+    return typeof variable === "object" &&
+        variable !== null &&
+        !Array.isArray(variable)
+}
