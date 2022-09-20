@@ -1,5 +1,6 @@
 import { Client, ClientTypes } from "."
 import { WebSocket as NodeWebSocket } from "ws"
+import { InternalClientPacketEventEmitter, InternalPacketManager } from "../packets"
 
 export function initializeSocketHandler<T extends ClientTypes>(client: Client<T>){
     client.isBrowser = () => typeof module === "undefined"
@@ -7,8 +8,16 @@ export function initializeSocketHandler<T extends ClientTypes>(client: Client<T>
         const WebSocketClass = client.isBrowser() ? WebSocket : NodeWebSocket
         client.ws = new WebSocketClass(client.getUdpUrl())
         client.ws.onopen = () => {
-            client.handleSocketOpen()
-            resolve()
+            if(typeof client.token === "undefined"){
+                client.closeSocket()
+                reject()
+                return
+            }
+            client.sendSocketData(client.token)
+            client.packetEvents.once("connectionHandshake", () => {
+                client.handleSocketOpen()
+                resolve()
+            })
         }
         client.ws.onerror = () => {
             client.handleSocketError()
@@ -31,13 +40,22 @@ export function initializeSocketHandler<T extends ClientTypes>(client: Client<T>
     }
 
     client.handleSocketOpen = () => {
-        if(typeof client.token === "undefined") return
         client.clientEvents.emit("socketOpen")
-        client.sendSocketData(client.token)
     }
 
     client.handleSocketMessage = (data: string) => {
         client.clientEvents.emit("socketMessage")
+        try{
+            const packetGroup = client.packetManager.decodeGroup(data)
+            for(const packet of packetGroup){
+                client.packetEvents.emit(packet.id, {
+                    group: packetGroup,
+                    value: packet.value as any,
+                })
+            }
+        } catch(e){
+            client.clientEvents.emit("packetError", { data })
+        }
     }
 
     client.handleSocketError = () => {

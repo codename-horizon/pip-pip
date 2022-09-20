@@ -1,8 +1,10 @@
 import { WebSocket } from "ws"
 import { Server, ServerTypes } from "."
+import { InternalPacketManager } from "../packets"
 import { Connection } from "./connection"
 
 export function initializeSocketListeners<T extends ServerTypes>(server: Server<T>){
+
     server.wss.on("connection", (ws: WebSocket) => {
         let registered = false
         let connection: Connection<T["ConnectionData"]>
@@ -15,6 +17,7 @@ export function initializeSocketListeners<T extends ServerTypes>(server: Server<
 
         ws.on("message", async (rawData) => {
             const data: string = rawData.toString()
+            console.log(data, registered)
             if(registered === false){
                 const tempConnection = await server.getConnectionByToken(data)
                 if(typeof tempConnection !== "undefined"){
@@ -22,8 +25,10 @@ export function initializeSocketListeners<T extends ServerTypes>(server: Server<
                     registered = true
                     server.handleSocketRegister(ws, connection)
                 }
+            } else{
+                console.log("registered na...")
+                server.handleSocketMessage(data, ws, connection)
             }
-            server.handleSocketMessage(data, ws, connection)
         })
 
         ws.on("close", () => {
@@ -35,6 +40,10 @@ export function initializeSocketListeners<T extends ServerTypes>(server: Server<
         server.serverEvents.emit("socketOpen")
     }
     server.handleSocketRegister = (ws: WebSocket, connection: Connection<T["ConnectionData"]>) => {
+        const pm = server.packetManager as InternalPacketManager
+        ws.send(pm.group([
+            pm.encode("connectionHandshake", connection.id)
+        ]))
         server.endConnectionIdle(connection)
         server.serverEvents.emit("socketRegister")
     }
@@ -46,6 +55,19 @@ export function initializeSocketListeners<T extends ServerTypes>(server: Server<
         server.serverEvents.emit("socketMessage", {
             data, ws, connection
         })
+        try{
+            const packetGroup = server.packetManager.decodeGroup(data)
+            for(const packet of packetGroup){
+                server.packetEvents.emit(packet.id, {
+                    group: packetGroup,
+                    ws,
+                    value: packet.value as any,
+                    connection,
+                })
+            }
+        } catch(e){
+            server.serverEvents.emit("packetError", { data, ws, connection })
+        }
     }
 
     server.handleSocketClose =  (ws: WebSocket, connection?: Connection<T["ConnectionData"]>) => {

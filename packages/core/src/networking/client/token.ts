@@ -9,15 +9,18 @@ export function initializeTokenHandler<T extends ClientTypes>(client: Client<T>)
 
     client.setToken = (token?: string) => {
         const localStorage = getClientLocalStorage()
-        if(typeof localStorage === "undefined") return
 
         if(typeof token === "string"){
             client.token = token
-            localStorage.setItem(client.options.tokenKey, token)
+            if(typeof localStorage !== "undefined"){
+                localStorage.setItem(client.options.tokenKey, token)
+            }
             client.clientEvents.emit("tokenSet")
         } else{
             client.token = undefined
-            localStorage.removeItem(client.options.tokenKey)
+            if(typeof localStorage !== "undefined"){
+                localStorage.removeItem(client.options.tokenKey)
+            }
             client.clientEvents.emit("tokenUnset")
         }
     }

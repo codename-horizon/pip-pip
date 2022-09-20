@@ -6,13 +6,13 @@ import { PacketManager } from "./manager"
 import { NumberPacket, StringPacket } from "./types"
 
 export type InternalPacketMap = {
-    "connectionReconcile": StringPacket,
+    "connectionHandshake": StringPacket,
     "ping": NumberPacket,
 }
 
 export type InternalPacketManager = PacketManager<InternalPacketMap>
 
 export const internalPacketMap: InternalPacketMap = {
-    "connectionReconcile": new StringPacket("0"),
+    "connectionHandshake": new StringPacket("0"),
     "ping": new NumberPacket("1"),
 }

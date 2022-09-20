@@ -1,6 +1,9 @@
 import { InternalPacketMap } from "."
 import { EventEmitter } from "../../events"
 import { PacketDecoded, PacketMap } from "./types"
+import { WebSocket } from "ws"
+import { ServerTypes } from "../server"
+import { Connection } from "../server/connection"
 
 export type ClientPacketEventMap<PM extends PacketMap> = {
     [K in keyof PM]: {
@@ -9,11 +12,12 @@ export type ClientPacketEventMap<PM extends PacketMap> = {
     }
 }
 
-export type ServerPacketEventMap<PM extends PacketMap> = {
+export type ServerPacketEventMap<PM extends PacketMap, T extends ServerTypes = ServerTypes> = {
     [K in keyof PM]: {
         group: PacketDecoded[],
         value: ReturnType<PM[K]["decode"]>,
-        ws: WebSocket,
+        ws: WebSocket, 
+        connection?: Connection<T["ConnectionData"]>,
     }
 }
 

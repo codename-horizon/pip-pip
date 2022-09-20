@@ -3,7 +3,7 @@ import { WebSocket as NodeWebSocket } from "ws"
 
 import { CLIENT_DEFAULT_TOKEN_KEY, SERVER_DEFAULT_BASE_ROUTE } from "../../lib/constants"
 import { EventEmitter } from "../../events"
-import { ClientPacketEventMap, internalPacketMap, InternalPacketMap, PacketManager, PacketMap } from "../packets"
+import { ClientPacketEventMap, internalPacketMap, InternalPacketMap, PacketDecoded, PacketManager, PacketMap } from "../packets"
 import { ConnectionJSON } from "../server/connection"
 import { initializeApi as initializeApiHandler } from "./axios"
 import { initializeSocketHandler } from "./sockets"
@@ -36,6 +36,8 @@ export type ClientEvents = {
     socketError: undefined,
     socketMessage: undefined,
     socketClose: undefined,
+
+    packetError: { data: string },
 }
 
 export type ClientTypes = {

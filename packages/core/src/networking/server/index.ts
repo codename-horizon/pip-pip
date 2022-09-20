@@ -29,6 +29,8 @@ export type ServerEvents<T extends ServerTypes> = {
         connection?: Connection<T["ConnectionData"]>,
     },
 
+    packetError: { data: string, ws: WebSocket, connection?: Connection<T["ConnectionData"]>},
+
     registerConnection: { connection: Connection<T["ConnectionData"]> },
     destroyConnection: { connection: Connection<T["ConnectionData"]> },
     connectionIdleStart: { connection: Connection<T["ConnectionData"]> },
@@ -58,7 +60,7 @@ export class Server<T extends ServerTypes>{
     connections: Record<ConnectionId, Connection<T["ConnectionData"]>> = {}
 
     serverEvents: EventEmitter<ServerEvents<T>> = new EventEmitter("Server")
-    packetEvents: EventEmitter<ServerPacketEventMap<T["PacketMap"] & InternalPacketMap>> = new EventEmitter("ServerPacket")
+    packetEvents: EventEmitter<ServerPacketEventMap<T["PacketMap"] & InternalPacketMap, T>> = new EventEmitter("ServerPacket")
 
     packetManager!: PacketManager<T["PacketMap"] & InternalPacketMap>
 
