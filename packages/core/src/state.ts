@@ -12,6 +12,7 @@ export type StateSnapshot<T> = {
 
 export type StateEventMap<T> = {
     change: StateSnapshot<T>,
+    flush: StateSnapshot<T>,
 }
 
 export type StateBoolean<T> = {
@@ -80,15 +81,17 @@ export function getStateChanges<T extends StateSchema>(to: T, from: T){
 
 
 export class State<T extends StateSchema>{
+    queueHistory: StateSnapshot<T>[] = []
     history: StateSnapshot<T>[] = []
     initialState: T
     state: T
     events: EventEmitter<StateEventMap<T>> = new EventEmitter("State")
-    transactionState?: T
+    slowState: T
 
     constructor(initialState: T){
-        this.state = initialState
-        this.initialState = initialState
+        this.state = {...initialState}
+        this.initialState = {...initialState}
+        this.slowState = {...initialState}
     }
 
     reset(){
@@ -97,19 +100,31 @@ export class State<T extends StateSchema>{
         })
     }
 
-    setState(state: T){
-        const previousState = this.state
-        this.state = state
-
+    flushQueue(){
+        const previousState = this.slowState
+        const state = this.state
         const { changes, deletions } = getStateChanges(state, previousState)
-
         const snapshot: StateSnapshot<T> = {
             time: Date.now(),
             state,
             previousState,
             changes, deletions,
         }
+        this.slowState = this.state
+        this.queueHistory = [snapshot, ...this.queueHistory]
+        this.events.emit("flush", snapshot)
+    }
 
+    setState(state: T){
+        const previousState = this.state
+        const { changes, deletions } = getStateChanges(state, previousState)
+        const snapshot: StateSnapshot<T> = {
+            time: Date.now(),
+            state,
+            previousState,
+            changes, deletions,
+        }
+        this.state = state
         this.history = [snapshot, ...this.history]
         this.events.emit("change", snapshot)
     }
@@ -159,9 +174,47 @@ export class State<T extends StateSchema>{
     >(key: KeyOfRecords, prop: KeyOfProp){
         type Key = keyof T
 
-        const modified = this.state[key as Key][prop]
-        delete modified[key as Key]
+        if(key in this.state){
+            if(prop in this.state[key as Key]){
+                const modified = {...this.state[key as Key]}
+                delete modified[prop]
+        
+                this.set(key as Key, modified)
+            }
+        }
+    }
+}
 
-        this.set(key as Key, modified)
+export class StateRecordSubscriber<
+    SubSchema extends StateSchema = StateSchema, 
+    KeyOfSubSchema extends keyof PickRecord<SubSchema> = keyof PickRecord<SubSchema>, 
+    SubProp extends SubSchema[KeyOfSubSchema] = SubSchema[KeyOfSubSchema],
+    KeyOfSubProp extends keyof SubProp = keyof SubProp,
+    SubPropType extends SubProp[KeyOfSubProp] = SubProp[KeyOfSubProp]
+>{
+    subKey: string
+    subProp: KeyOfSubSchema
+    subState: State<SubSchema>
+    subInitialState: SubPropType
+
+    constructor(state: State<SubSchema>, prop: KeyOfSubSchema, key: string, initialState: SubPropType){
+        this.subKey = key
+        this.subProp = prop
+        this.subState = state
+        this.subInitialState = initialState
+
+        this.subState.setRecord(prop, this.subKey, initialState)
+    }
+
+    getState(): SubPropType{
+        return this.subState.get(this.subProp)[this.subKey]
+    }
+
+    setState(valueOrFactory: TypeOrFactoryType<SubPropType>){
+        this.subState.setRecord(this.subProp, this.subKey, valueOrFactory)
+    }
+    
+    delete(){
+        this.subState.deleteRecord(this.subProp, this.subKey)
     }
 }

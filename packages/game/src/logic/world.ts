@@ -1,5 +1,4 @@
-import { generateId, State, StateSchema } from "@pip-pip/core/src/common"
-import { PickRecord, TypeOrFactoryType } from "@pip-pip/core/src/lib/types"
+import { generateId, State, StateRecordSubscriber } from "@pip-pip/core/src/common"
 
 export type Vector2 = { x: 0, y: 0 }
 
@@ -10,41 +9,7 @@ export type PlayerData = {
     velocity: Vector2,
 }
 
-export class StateEater<
-    T extends StateSchema = StateSchema, 
-    K extends keyof PickRecord<T> = keyof PickRecord<T>, 
-    V extends T[K] = T[K],
-    S extends keyof V = keyof V,
-    U extends V[S] = V[S]
->{
-    eaterId: string
-    eaterProp: K
-    eaterState: State<T>
-    eaterInitialState: U
-
-    constructor(state: State<T>, prop: K, id: string, initialState: U){
-        this.eaterId = id
-        this.eaterProp = prop
-        this.eaterState = state
-        this.eaterInitialState = initialState
-
-        this.eaterState.setRecord(prop, this.eaterId, initialState)
-    }
-
-    getState(): U{
-        return this.eaterState.get(this.eaterProp)[this.eaterId]
-    }
-
-    setState(valueOrFactory: TypeOrFactoryType<U>){
-        this.eaterState.setRecord(this.eaterProp, this.eaterId, valueOrFactory)
-    }
-    
-    remove(){
-        this.eaterState.deleteRecord(this.eaterProp, this.eaterId)
-    }
-}
-
-export class Player extends StateEater<WorldSchema>{
+export class Player extends StateRecordSubscriber<WorldSchema>{
     constructor(id: string, state: State<WorldSchema>){
         super(state, "players", id, {
             name: "Player",
@@ -52,6 +17,10 @@ export class Player extends StateEater<WorldSchema>{
             position: { x: 0, y: 0 },
             velocity: { x: 0, y: 0 },
         })
+    }
+
+    update(){
+        
     }
 }
 
@@ -76,7 +45,7 @@ export class World{
 
     constructor(){
         this.state = new State(getInitialWorldState())
-        this.state.events.on("change", console.log)
+        this.state.events.on("flush", console.log)
     }
 
     addNewPlayer(){

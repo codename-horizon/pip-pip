@@ -29,12 +29,3 @@ eventNames.forEach(eventName => server.serverEvents.on(eventName as any, () => {
 
 
 const world = new World()
-
-world.addNewPlayer()
-console.log(world.players[0].getState())
-world.players[0].setState(player => ({
-    ...player,
-    angle: Math.PI,
-}))
-
-world.state.set("gameMode", "hi")
