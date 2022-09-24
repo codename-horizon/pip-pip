@@ -1,7 +1,7 @@
 import { WebSocket } from "ws"
 import { Server, ServerTypes } from "."
 import { InternalPacketManager } from "../packets"
-import { Connection } from "./connection"
+import { Connection, ConnectionStatus } from "./connection"
 
 export function initializeSocketListeners<T extends ServerTypes>(server: Server<T>){
 
@@ -17,7 +17,6 @@ export function initializeSocketListeners<T extends ServerTypes>(server: Server<
 
         ws.on("message", async (rawData) => {
             const data: string = rawData.toString()
-            console.log(data, registered)
             if(registered === false){
                 const tempConnection = await server.getConnectionByToken(data)
                 if(typeof tempConnection !== "undefined"){
@@ -26,7 +25,6 @@ export function initializeSocketListeners<T extends ServerTypes>(server: Server<
                     server.handleSocketRegister(ws, connection)
                 }
             } else{
-                console.log("registered na...")
                 server.handleSocketMessage(data, ws, connection)
             }
         })
@@ -44,8 +42,17 @@ export function initializeSocketListeners<T extends ServerTypes>(server: Server<
         ws.send(pm.group([
             pm.encode("connectionHandshake", connection.id)
         ]))
+        // TODO: Handle socket switching
+
+        if(typeof connection.ws !== "undefined"){
+            connection.ws.close()
+        }
+
+        connection.ws = ws
+
         server.endConnectionIdle(connection)
-        server.serverEvents.emit("socketRegister")
+        server.serverEvents.emit("socketRegister", { ws, connection })
+        server.setConnectionStatus(connection, ConnectionStatus.READY)
     }
     server.handleSocketError = (ws: WebSocket) => {
         server.serverEvents.emit("socketError")

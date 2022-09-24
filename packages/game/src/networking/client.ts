@@ -1,4 +1,4 @@
-import { Client } from "@pip-pip/core/src/client"
+import { Client, ClientOptions } from "@pip-pip/core/src/client"
 import { pipPipPacketMap, PipPipPacketMap } from "./packets"
 
 export type PublicConnectionData = {
@@ -12,8 +12,8 @@ export type ClientTypes = {
 }
 
 export class PipPipClient extends Client<ClientTypes>{
-    constructor(port = 3000){
-        super({ port })
+    constructor(options: Partial<ClientOptions> = {}){
+        super(options)
 
         this.setPacketMap(pipPipPacketMap)
     }

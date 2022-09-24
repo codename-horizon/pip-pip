@@ -4,8 +4,10 @@ export interface Packet<T = any>{
     decode: (value: string) => T,
 }
 
-export type PacketDecoded = {
-    id: string, code: string, value: unknown,
+export type PacketType<T extends Packet> = ReturnType<T["decode"]>
+
+export type PacketDecoded<T = unknown> = {
+    id: string, code: string, value: T,
 }
 
 export interface PacketMap {
@@ -38,12 +40,12 @@ export class BasePacket implements Packet{
         this.code = code
     }
 
-    encode(value: unknown){
+    encode(value: any){
         return value as string
     }
 
     decode(value: string){
-        return value as unknown
+        return value as any
     }
 }
 
@@ -86,5 +88,38 @@ export class BooleanPacket extends BasePacket implements Packet<boolean>{
 
     decode(value: string){
         return !!decodeLiteral(value.substring(1)) as boolean
+    }
+}
+
+export class Array1DPacket<T extends LiteralPacketType[]> extends BasePacket implements Packet<T>{
+    delimiter = "~"
+
+    constructor(code: string){
+        super(code)
+    }
+    
+    encode(value: T): string {
+        return this.code + value.map(part => encodeLiteral(part)).join(this.delimiter)
+    }
+
+    decode(value: string){
+        return value.substring(1).split(this.delimiter).map(part => decodeLiteral(part)) as T
+    }
+}
+
+export class Array2DPacket<T extends LiteralPacketType[][]> extends BasePacket implements Packet<T>{
+    bigDelimiter = "|"
+    smallDelimiter = "~"
+
+    constructor(code: string){
+        super(code)
+    }
+    
+    encode(value: T): string {
+        return this.code + value.map(inner => inner.map(part => encodeLiteral(part)).join(this.smallDelimiter)).join(this.bigDelimiter)
+    }
+
+    decode(value: string){
+        return value.substring(1).split(this.bigDelimiter).map(inner => inner.split(this.smallDelimiter).map(part => decodeLiteral(part))) as T
     }
 }

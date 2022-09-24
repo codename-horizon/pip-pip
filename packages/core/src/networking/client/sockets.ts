@@ -1,6 +1,5 @@
 import { Client, ClientTypes } from "."
 import { WebSocket as NodeWebSocket } from "ws"
-import { InternalClientPacketEventEmitter, InternalPacketManager } from "../packets"
 
 export function initializeSocketHandler<T extends ClientTypes>(client: Client<T>){
     client.isBrowser = () => typeof module === "undefined"

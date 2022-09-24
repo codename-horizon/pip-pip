@@ -9,7 +9,7 @@ import { EventEmitter } from "../../events"
 import { internalPacketMap, InternalPacketMap, PacketManager, PacketMap } from "../packets"
 import { ServerPacketEventMap } from "../packets/events"
 import { initializeSocketListeners } from "./sockets"
-import { Connection, ConnectionData, ConnectionId, ConnectionJSON, ConnectionToken, initializeConnectionHandlers } from "./connection"
+import { Connection, ConnectionData, ConnectionId, ConnectionJSON, ConnectionStatus, ConnectionToken, initializeConnectionHandlers } from "./connection"
 import { RequiredOnly } from "../../lib/types"
 import createHttpError from "http-errors"
 
@@ -18,7 +18,10 @@ export type ServerEvents<T extends ServerTypes> = {
     start: undefined,
 
     socketOpen: undefined,
-    socketRegister: undefined,
+    socketRegister: {
+        ws: WebSocket,
+        connection: Connection<T["ConnectionData"]>,
+    },
     socketError: undefined,
     socketMessage: {
         data: string, ws: WebSocket,
@@ -35,6 +38,7 @@ export type ServerEvents<T extends ServerTypes> = {
     destroyConnection: { connection: Connection<T["ConnectionData"]> },
     connectionIdleStart: { connection: Connection<T["ConnectionData"]> },
     connectionIdleEnd: { connection: Connection<T["ConnectionData"]> },
+    connectionStatusChange: { connection: Connection<T["ConnectionData"]>, status: ConnectionStatus },
 }
 
 export type ServerOptions<T extends ServerTypes> = {
@@ -122,11 +126,10 @@ export interface Server<T extends ServerTypes>{
     registerConnection: (connection: Connection<T["ConnectionData"]>) => void
     getConnectionByToken: (token: ConnectionToken) => Promise<Connection<T["ConnectionData"]> | undefined>
     destroyConnection: (connection: Connection<T["ConnectionData"]>) => void
-
     startConnectionIdle: (connection: Connection<T["ConnectionData"]>) => void
     endConnectionIdle: (connection: Connection<T["ConnectionData"]>) => void
-
     getConnectionJSON: (connection: Connection<T["ConnectionData"]>) => ConnectionJSON<T["ConnectionData"]["public"]>
+    setConnectionStatus: (connection: Connection<T["ConnectionData"]>, status: ConnectionStatus) => void
 
     // Socket methods defined in ./sockets.ts
     handleSocketOpen: (ws: WebSocket) => void

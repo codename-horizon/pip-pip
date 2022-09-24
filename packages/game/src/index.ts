@@ -1,3 +1,3 @@
 export * from "./networking/server"
 export * from "./networking/client"
-export * from "./logic/world"
+export * from "./logic/test"

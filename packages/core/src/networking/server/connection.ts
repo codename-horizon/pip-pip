@@ -9,8 +9,7 @@ export type ConnectionData = {
 
 export enum ConnectionStatus {
     IDLE = 0,
-    CONNECTED = 1,
-    READY = 2,
+    READY = 1,
 }
 
 export type ConnectionId = string
@@ -37,7 +36,7 @@ export function initializeConnectionHandlers<T extends ServerTypes>(server: Serv
     server.createConnection = async () => {
         const connection: Connection<T["ConnectionData"]> = {
             id: generateId(),
-            token: generateId(),
+            token: generateId(64),
             data: server.options.connectionDataFactory(),
             status: ConnectionStatus.IDLE,
         }
@@ -47,6 +46,11 @@ export function initializeConnectionHandlers<T extends ServerTypes>(server: Serv
         await server.registerConnection(connection)
 
         return connection
+    }
+
+    server.setConnectionStatus = (connection: Connection<T["ConnectionData"]>, status: ConnectionStatus) => {
+        connection.status = status
+        server.serverEvents.emit("connectionStatusChange", { connection, status })
     }
 
     server.registerConnection = async (connection: Connection<T["ConnectionData"]>) => {
@@ -82,6 +86,7 @@ export function initializeConnectionHandlers<T extends ServerTypes>(server: Serv
             server.destroyConnection(connection)
         }, server.options.connectionIdleLifespan)
         server.serverEvents.emit("connectionIdleStart", { connection })
+        server.setConnectionStatus(connection, ConnectionStatus.IDLE)
     }
 
     server.endConnectionIdle = (connection: Connection<T["ConnectionData"]>) => {

@@ -3,6 +3,7 @@ import { getLocalStorage } from "../../common"
 
 export function initializeTokenHandler<T extends ClientTypes>(client: Client<T>){
     const getClientLocalStorage = () => {
+        return
         if(!client.isBrowser()) return
         return getLocalStorage()
     }

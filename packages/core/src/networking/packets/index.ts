@@ -13,6 +13,6 @@ export type InternalPacketMap = {
 export type InternalPacketManager = PacketManager<InternalPacketMap>
 
 export const internalPacketMap: InternalPacketMap = {
-    "connectionHandshake": new StringPacket("0"),
-    "ping": new NumberPacket("1"),
+    "connectionHandshake": new StringPacket("("),
+    "ping": new NumberPacket(")"),
 }
