@@ -17,7 +17,7 @@ export class PixiGraphics{
         this.app.ticker.stop()
         this.viewport = new PIXIViewport()
         this.app.stage.addChild(this.viewport)
-        
+
         this.container.appendChild(this.app.view)
     }
 }

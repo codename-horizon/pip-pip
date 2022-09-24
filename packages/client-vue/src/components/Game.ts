@@ -1,6 +1,8 @@
 import { PipPipGame, Player } from "@pip-pip/game/src/logic/test";
 import { defineComponent, onMounted, ref } from "vue";
 import * as PIXI from "pixi.js"
+import ship1 from "../assets/ship-1.png"
+import { assets } from "../game/assets";
 
 function setup(){
     const container = ref()
@@ -11,26 +13,32 @@ function setup(){
 
         game.addPlayer(player)
         game.graphics.setContainer(container.value)
-
-        console.log(game)
+        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 
         const test = async () => {
-            const texture = await PIXI.Texture.from("https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Vg_graphics.svg/1024px-Vg_graphics.svg.png")
+            const texture = await PIXI.Texture.from(assets["ship-1"])
             const sprite = new PIXI.Sprite(texture)
-            game.graphics.viewport.addChild(sprite)
+            const container = new PIXI.Container()
             sprite.anchor.x = 0.5
             sprite.anchor.y = 0.5
+            sprite.scale.x = 10
+            sprite.scale.y = 10
+
+            container.addChild(sprite)
+            container.position.y = 200
+            container.position.x = 0
+            game.graphics.viewport.addChild(container)
+
+            game.renderTicker.on("tick", ({ deltaMs }) => {
+                const C = (deltaMs / 16)
+                sprite.rotation += 0.05 * C
+                container.position.x += 1 * C
+            })
 
             game.renderTicker.startTick()
         }
 
-
         game.renderTicker.on("tick", ({deltaMs}) => {
-            console.log("nice?")
-            game.graphics.app.stage.children.forEach(child => {
-                child.rotation += 0.01
-            })
-            game.graphics.viewport.position.x += 5
             game.graphics.app.render()
         })
 
