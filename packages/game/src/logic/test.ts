@@ -1,30 +1,32 @@
-import { PixiGraphics, PointPhysicsObject, PointPhysicsWorld, Ticker } from "@pip-pip/core/src/client"
+import { PixiGraphicsRenderer, PixiGraphicsDrawable, PointPhysicsObject, PointPhysicsWorld, Ticker } from "@pip-pip/core/src/client"
 import * as PIXI from "pixi.js"
 
-export interface GamePhysicsObject{
+export class Ship{
     physics: PointPhysicsObject
-}
-
-export type GameDrawableThing = PIXI.Sprite
-
-export interface GameDrawable{
-    getDrawable: () => GameDrawableThing
-    render: (deltaMs: number, drawable: GameDrawableThing) => void,
-}
-
-export class Ship implements GameDrawable, GamePhysicsObject{
-    physics: PointPhysicsObject
+    graphics: PixiGraphicsDrawable<{
+        smoothing: number,
+    }, {
+        sprite: PIXI.Sprite,
+        container: PIXI.Container,
+    }>
+    
+    texture!: PIXI.Texture
 
     constructor(){
         this.physics = new PointPhysicsObject()
-    }
+        this.graphics = new PixiGraphicsDrawable()
 
-    getDrawable(){
-        return new PIXI.Sprite()
-    }
+        this.graphics.setDisplayObject(({objects}) => {
+            objects.sprite = new PIXI.Sprite()
+            objects.container = new PIXI.Container()
+            objects.container.addChild(objects.sprite)
+            return objects.container
+        })
 
-    render(){
-        //
+        this.graphics.setRenderCallback(({displayObject}) => {
+            displayObject.position.x = this.physics.position.x
+            displayObject.position.y = this.physics.position.y
+        })
     }
 }
 
@@ -42,7 +44,7 @@ export class PipPipGame{
     players: Record<string, Player> = {}
 
     physics: PointPhysicsWorld = new PointPhysicsWorld()
-    graphics: PixiGraphics = new PixiGraphics()
+    graphics: PixiGraphicsRenderer = new PixiGraphicsRenderer()
 
     gameMode = 0
     isWaitingLobby = true

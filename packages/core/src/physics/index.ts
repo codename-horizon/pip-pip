@@ -1,7 +1,6 @@
 import { generateId } from "../lib/utils"
 
-const EXPONENTIAL_COEF = 0.9696969
-const MAX_DECIMALS = 4
+const MAX_DECIMALS = 2
 const MD_Z = Math.pow(10, MAX_DECIMALS)
 
 function trim(n: number){
@@ -173,22 +172,22 @@ export class PointPhysicsWorld{
             deltaMs = Date.now() - this.lastTick
         }
         const baseMs = 1000 / this.options.baseTps
-        const deltaCoef =  (Math.max(1, deltaMs) / baseMs) * this.timeScale
+        const deltaTime =  (Math.max(1, deltaMs) / baseMs) * this.timeScale
         this.updateTick()
 
         for(const id in this.objects){
             const object = this.objects[id]
 
-            const airResistance = 1 - (object.airResistance * deltaCoef) / EXPONENTIAL_COEF
+            const airResistance = Math.pow(1 - object.airResistance, deltaTime)
 
             object.velocity.qx *= airResistance
             object.velocity.qy *= airResistance
 
-            object.position.qx += object.velocity.x * deltaCoef
-            object.position.qy += object.velocity.y * deltaCoef
+            object.position.qx += object.velocity.x * deltaTime
+            object.position.qy += object.velocity.y * deltaTime
 
-            object.smoothing.position.qx += (object.position.x - object.smoothing.position.x) / (object.smoothing.coefficient * deltaCoef)
-            object.smoothing.position.qy += (object.position.y - object.smoothing.position.y) / (object.smoothing.coefficient * deltaCoef)
+            object.smoothing.position.qx += (object.position.x - object.smoothing.position.x) / (object.smoothing.coefficient * deltaTime)
+            object.smoothing.position.qy += (object.position.y - object.smoothing.position.y) / (object.smoothing.coefficient * deltaTime)
         }
 
         for(const aId in this.objects){
