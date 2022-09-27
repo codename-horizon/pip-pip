@@ -1,4 +1,3 @@
-export * from "./server"
-export * from "./client"
-export * from "./lobby"
-export * from "./packets"
+export * from "./networking/server"
+export * from "./networking/client"
+export * from "./logic/test"

@@ -1,4 +1,4 @@
-export function generateId(length = 16){
+export function generateId(length = 4){
     const pool = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMOPQRSTUVWXYZ"
     return Array(length).fill(null).map(() => pool[Math.floor(Math.random()*pool.length)]).join("")
 }
@@ -26,4 +26,16 @@ export function getKeyDuplicates(...args: Record<string, unknown>[]){
         duplicates: duplicates,
         hasDuplicates: duplicates.length > 0,
     }
+}
+
+export function getLocalStorage(): Storage | undefined{
+    if(typeof window === "undefined") return
+    if(typeof window.localStorage === "undefined") return
+    return window.localStorage
+}
+
+export function isObject(variable: any){
+    return typeof variable === "object" &&
+        variable !== null &&
+        !Array.isArray(variable)
 }

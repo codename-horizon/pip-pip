@@ -1,44 +1,25 @@
-import { PipPipConnectionManager, PipPipServer } from "@pip-pip/game"
+import { PipPipClient, PipPipServer } from "@pip-pip/game"
 
-const instance = new PipPipServer()
-instance.start().then(async () => {
-    const connectionManager = new PipPipConnectionManager()
-    await connectionManager.authenticate()
-    await connectionManager.connect()
-    await connectionManager.waitForReconciled()
+const server = new PipPipServer()
 
-    const lobby = await connectionManager.createLobby()
-    console.log(lobby)
-    log()
+async function run(){
+    await server.start()
 
-    const ping = await connectionManager.getPing()
+    // const client = new PipPipClient()
+    // await client.registerConnection()
+    // await client.connectSocket()
 
-    console.log(`ping: ${ping}ms`)
+    // const message = client.packetManager.group([
+    //     client.packetManager.encode("player-move", "hi!"),
+    //     client.packetManager.encode("player-move", "hi!"),
+    //     client.packetManager.encode("player-move", "hi!"),
+    // ])
 
-    const output = await connectionManager.testParrot("peekabooo")
+    // client.sendSocketData(message)
 
-    console.log(output)
-
-    setTimeout(async () => {
-        await connectionManager.ws?.close()
-    }, 5000)
-})
-
-function log(){
-    console.log(
-        "connections", 
-        Object.entries(instance.connections).map(([key, connection]) => `${key}:${connection.token}`),
-        "wss", 
-        Array.from(instance.wss.clients.values()).map(ws => ws.readyState))
+    // setTimeout(async() => {
+    //     client.closeSocket()
+    // }, 5000)
 }
 
-instance.serverEvents.on("connectionDestroy", () => {
-    log()
-})
-
-// instance.serverEvents.on("socketMessage", ({ data }) => { console.log(data) })
-
-instance.serverEvents.on("socketClose", () => {
-    console.log("connections", Object.keys(instance.connections))
-    console.log("wss", Array.from(instance.wss.clients.values()).map(ws => ws.readyState))
-})
+run()
