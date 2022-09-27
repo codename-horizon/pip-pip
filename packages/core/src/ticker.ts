@@ -1,7 +1,7 @@
 import { EventEmitter } from "./events"
 
 export type TickerEventMap = {
-    tick: { deltaMs: number },
+    tick: { deltaMs: number, deltaTime: number },
     start: undefined,
     stop: undefined,
 }
@@ -12,35 +12,23 @@ export class Ticker extends EventEmitter<TickerEventMap>{
     lastUpdate = Date.now()
     ticking = false
     tickInterval?: NodeJS.Timer
+    deltaMsLog: number[] = []
+    deltaMsLogMax = 12
 
-    constructor(tps = 20, tickerId = "Ticker"){
+    constructor(tps = 20, useRaf = false, tickerId = "Ticker"){
         super(tickerId)
-        if(typeof tps === "number"){
-            this.tps = tps
-            if(tps === 60){
-                this.useRequestAnimationFrame = true
-            }
-        }
+        this.setTps(tps, useRaf)
     }
 
-    setTps(tpsOrUseRaf: number | true){
+    setTps(tps: number, useRaf = false){
         let restart = false
         if(this.ticking){
             restart = true
             this.stopTick()
         }
-        
-        if(typeof tpsOrUseRaf === "number"){
-            this.tps = tpsOrUseRaf
-            this.useRequestAnimationFrame = false
-        } else if(typeof tpsOrUseRaf === "boolean"){
-            this.useRequestAnimationFrame = tpsOrUseRaf
-            if(tpsOrUseRaf){
-                this.tps = 60
-            }
-        } else {
-            throw Error("tpsOrRaf invalid")
-        }
+
+        this.tps = tps
+        this.useRequestAnimationFrame = useRaf
         
         if(restart){
             this.startTick()
@@ -49,9 +37,31 @@ export class Ticker extends EventEmitter<TickerEventMap>{
 
     tick(){
         const now = Date.now()
+        const targetDeltaMs = 1000 / this.tps
         const deltaMs = now - this.lastUpdate
-        this.emit("tick", { deltaMs })
+        const deltaTime = deltaMs / targetDeltaMs
+        this.emit("tick", { deltaMs, deltaTime })
+        if(this.deltaMsLog.length > this.deltaMsLogMax){
+            this.deltaMsLog.shift()
+        }
+        this.deltaMsLog.push(deltaMs)
         this.lastUpdate = now
+    }
+
+    getPerformance(){
+        let deltaMsSum = 0
+        for(const deltaMs of this.deltaMsLog){
+            deltaMsSum += deltaMs
+        }
+        const averageDeltaMs = deltaMsSum / Math.max(1, this.deltaMsLog.length)
+        const averageTPS = 1000 / averageDeltaMs
+        const averageDeltaTime = averageDeltaMs / (1000 / this.tps)
+
+        return {
+            averageDeltaMs,
+            averageTPS,
+            averageDeltaTime,
+        }
     }
 
     startTick(){

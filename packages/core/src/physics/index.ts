@@ -132,7 +132,6 @@ export class PointPhysicsWorld{
 
     objects: Record<string, PointPhysicsObject> = {}
 
-    lastTick = Date.now()
     lastLog = Date.now()
 
     timeScale = 1
@@ -163,21 +162,13 @@ export class PointPhysicsWorld{
         }
     }
 
-    updateTick(){
-        this.lastTick = Date.now()
-    }
-
-    update(deltaMs?: number){
-        if(typeof deltaMs === "undefined"){
-            deltaMs = Date.now() - this.lastTick
-        }
+    update(deltaMs: number){
         const baseMs = 1000 / this.options.baseTps
         const deltaTime =  (Math.max(1, deltaMs) / baseMs) * this.timeScale
-        this.updateTick()
+        const objects = Object.values(this.objects)
+        const collidable = Object.values(this.objects).filter(object => object.collision.enabled === true)
 
-        for(const id in this.objects){
-            const object = this.objects[id]
-
+        for(const object of objects){
             const airResistance = Math.pow(1 - object.airResistance, deltaTime)
 
             object.velocity.qx *= airResistance
@@ -190,11 +181,10 @@ export class PointPhysicsWorld{
             object.smoothing.position.qy += (object.position.y - object.smoothing.position.y) / (object.smoothing.coefficient * deltaTime)
         }
 
-        for(const aId in this.objects){
-            for(const bId in this.objects){
-                const a = this.objects[aId]
-                const b = this.objects[bId]
-                if(aId === bId) continue
+
+        for(const a of collidable){
+            for(const b of collidable){
+                if(a.id === b.id) continue
                 if(!a.collision.enabled) continue
                 if(!b.collision.enabled) continue
 
@@ -202,9 +192,9 @@ export class PointPhysicsWorld{
                 const dy = a.position.y - b.position.y
                 const dist = Math.sqrt(dx * dx + dy * dy)
                 const diff = ((a.radius + b.radius) - dist) / dist
-                const s1 = (1 / a.mass)/((1 / a.mass) + (1 / b.mass))
+                const s1 = (1 / a.mass) / ((1 / a.mass) + (1 / b.mass))
                 const s2 = 1 - s1
-                const C = 0.1
+                const C = 0.5 * deltaTime
 
                 if(dist < a.radius + b.radius){
                     a.velocity.x += dx * s1 * diff * C
@@ -215,8 +205,7 @@ export class PointPhysicsWorld{
             }
         }
 
-        for(const id in this.objects){
-            const object = this.objects[id]
+        for(const object of objects){
 
             object.velocity.flush()
             object.position.flush()
@@ -225,7 +214,11 @@ export class PointPhysicsWorld{
 
         if(Date.now() - this.lastLog > this.options.logFrequency){
             this.lastLog = Date.now()
-            // console.log(deltaMs, deltaCoef)
+            this.log()
         }
+    }
+
+    log(){
+        //
     }
 }
