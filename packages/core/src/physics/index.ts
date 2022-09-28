@@ -168,6 +168,38 @@ export class PointPhysicsWorld{
         const objects = Object.values(this.objects)
         const collidable = Object.values(this.objects).filter(object => object.collision.enabled === true)
 
+        for(const a of collidable){
+            for(const b of collidable){
+                if(a.id === b.id) continue
+                if(!a.collision.enabled) continue
+                if(!b.collision.enabled) continue
+
+                const dx = a.position.x - b.position.x
+                const dy = a.position.y - b.position.y
+                const dist = Math.sqrt(dx * dx + dy * dy)
+                const diff = ((a.radius + b.radius) - dist) / dist
+                const s1 = (1 / a.mass) / ((1 / a.mass) + (1 / b.mass))
+                const s2 = 1 - s1
+                const C = 0.5
+                const P = C * deltaTime
+
+                if(dist < a.radius + b.radius){
+                    a.velocity.qx += dx * s1 * diff * C
+                    a.velocity.qy += dy * s1 * diff * C
+
+                    a.position.qx += dx * s1 * diff * P
+                    a.position.qy += dy * s1 * diff * P
+
+                    b.velocity.qx -= dx * s2 * diff * C
+                    b.velocity.qy -= dy * s2 * diff * C
+                    
+                    b.position.qx -= dx * s2 * diff * P
+                    b.position.qy -= dy * s2 * diff * P
+                }
+            }
+        }
+
+        
         for(const object of objects){
             const airResistance = Math.pow(1 - object.airResistance, deltaTime)
 
@@ -181,32 +213,7 @@ export class PointPhysicsWorld{
             object.smoothing.position.qy += (object.position.y - object.smoothing.position.y) / (object.smoothing.coefficient * deltaTime)
         }
 
-
-        for(const a of collidable){
-            for(const b of collidable){
-                if(a.id === b.id) continue
-                if(!a.collision.enabled) continue
-                if(!b.collision.enabled) continue
-
-                const dx = a.position.x - b.position.x
-                const dy = a.position.y - b.position.y
-                const dist = Math.sqrt(dx * dx + dy * dy)
-                const diff = ((a.radius + b.radius) - dist) / dist
-                const s1 = (1 / a.mass) / ((1 / a.mass) + (1 / b.mass))
-                const s2 = 1 - s1
-                const C = 0.5 * deltaTime
-
-                if(dist < a.radius + b.radius){
-                    a.velocity.x += dx * s1 * diff * C
-                    a.velocity.y += dy * s1 * diff * C
-                    b.velocity.x -= dx * s2 * diff * C
-                    b.velocity.y -= dy * s2 * diff * C
-                }
-            }
-        }
-
         for(const object of objects){
-
             object.velocity.flush()
             object.position.flush()
             object.smoothing.position.flush()

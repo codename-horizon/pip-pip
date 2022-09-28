@@ -6,6 +6,7 @@ import { assets } from "../game/assets";
 import { generateId, KeyboardListener, PIXIGraphics, Ticker } from "@pip-pip/core/src/client";
 import { PipPipGameRenderer } from "../game/render";
 
+
 const game = new PipPipGame()
 const renderer = new PipPipGameRenderer()
 const keyboard = new KeyboardListener()
@@ -13,7 +14,7 @@ renderer.setGame(game)
 const player = new Player("single")
 
 const dataTick = new Ticker(20, false, "Data")
-const renderTick = new Ticker(60, true, "Render")
+const renderTick = new Ticker(20, false, "Render")
 const debugTick = new Ticker(1, false, "Debug")
 
 debugTick.on("tick", () => {
@@ -21,9 +22,6 @@ debugTick.on("tick", () => {
     document.title = `${perf.averageTPS.toFixed(2)} FPS`
     console.log(renderer.graphics.viewport.position)
 })
-
-keyboard.on("down", () => console.log(keyboard.state))
-
 function setup(){
     const container = ref()
     // const overlayMode
@@ -31,6 +29,7 @@ function setup(){
 
     onMounted(() => {
         renderer.graphics.setContainer(container.value)
+        renderer.setup()
         keyboard.setTarget(document.body)
         game.addPlayer(player)
 
