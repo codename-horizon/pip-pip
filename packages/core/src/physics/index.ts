@@ -29,14 +29,14 @@ export class Vector2{
     get x(){ return this._x }
     set x(value: number){
         this.px = this._x
-        this._x = trim(this._qx = value)
+        this._x = this._qx = value
         this.dx = this._x - this.px
     }
 
     get y(){ return this._y }
     set y(value: number){
         this.py = this._y
-        this._y = trim(this._qy = value)
+        this._y = this._qy = value
         this.dy = this._y - this.py
     }
 
@@ -174,8 +174,8 @@ export class PointPhysicsWorld{
                 if(!a.collision.enabled) continue
                 if(!b.collision.enabled) continue
 
-                const dx = a.position.x - b.position.x
-                const dy = a.position.y - b.position.y
+                const dx = (a.position.x - b.position.x)
+                const dy = (a.position.y - b.position.y)
                 const dist = Math.sqrt(dx * dx + dy * dy)
                 const diff = ((a.radius + b.radius) - dist) / dist
                 const s1 = (1 / a.mass) / ((1 / a.mass) + (1 / b.mass))

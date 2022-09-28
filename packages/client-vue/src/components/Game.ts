@@ -14,12 +14,13 @@ renderer.setGame(game)
 const player = new Player("single")
 
 const dataTick = new Ticker(20, false, "Data")
-const renderTick = new Ticker(20, false, "Render")
+const renderTick = new Ticker(20, true, "Render")
+const updateTick = new Ticker(20, false, "Update")
 const debugTick = new Ticker(1, false, "Debug")
 
 debugTick.on("tick", () => {
     const perf = renderTick.getPerformance()
-    document.title = `${perf.averageTPS.toFixed(2)} FPS`
+    document.title = `${perf.averageTPS.toFixed(2)} FPS @ ${perf.averageExecutionTime.toFixed(2)}ms`
     console.log(renderer.graphics.viewport.position)
 })
 function setup(){
@@ -33,12 +34,15 @@ function setup(){
         keyboard.setTarget(document.body)
         game.addPlayer(player)
 
-        for(let i = 0; i < 320; i++){
+        for(let i = 0; i < 600; i++){
             const p = new Player(generateId())
             p.physics.position.x = Math.random() * 1000
             p.physics.position.y = Math.random() * 1000
             game.addPlayer(p)
         }
+
+        updateTick.on("tick", ({ deltaMs }) => {
+        })
 
         renderTick.on("tick", ({ deltaMs }) => {
             game.physics.update(deltaMs)
@@ -54,6 +58,7 @@ function setup(){
         })
 
         renderTick.startTick()
+        updateTick.startTick()
         debugTick.startTick()
     })
 

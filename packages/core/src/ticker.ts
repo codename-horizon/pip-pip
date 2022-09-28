@@ -12,8 +12,10 @@ export class Ticker extends EventEmitter<TickerEventMap>{
     lastUpdate = Date.now()
     ticking = false
     tickInterval?: NodeJS.Timer
+
     deltaMsLog: number[] = []
-    deltaMsLogMax = 12
+    executionTimes: number[] = []
+    maxLogs = 12
 
     constructor(tps = 20, useRaf = false, tickerId = "Ticker"){
         super(tickerId)
@@ -41,23 +43,34 @@ export class Ticker extends EventEmitter<TickerEventMap>{
         const deltaMs = now - this.lastUpdate
         const deltaTime = deltaMs / targetDeltaMs
         this.emit("tick", { deltaMs, deltaTime })
-        if(this.deltaMsLog.length > this.deltaMsLogMax){
+        const executionTime = Date.now() - now
+        if(this.executionTimes.length > this.maxLogs){
+            this.executionTimes.shift()
+        }
+        if(this.deltaMsLog.length > this.maxLogs){
             this.deltaMsLog.shift()
         }
+        this.executionTimes.push(executionTime)
         this.deltaMsLog.push(deltaMs)
         this.lastUpdate = now
     }
 
     getPerformance(){
         let deltaMsSum = 0
+        let executionTimesSum = 0
         for(const deltaMs of this.deltaMsLog){
             deltaMsSum += deltaMs
         }
+        for(const execTime of this.executionTimes){
+            executionTimesSum += execTime
+        }
+        const averageExecutionTime = executionTimesSum / Math.max(1, this.executionTimes.length)
         const averageDeltaMs = deltaMsSum / Math.max(1, this.deltaMsLog.length)
         const averageTPS = 1000 / averageDeltaMs
         const averageDeltaTime = averageDeltaMs / (1000 / this.tps)
 
         return {
+            averageExecutionTime,
             averageDeltaMs,
             averageTPS,
             averageDeltaTime,
