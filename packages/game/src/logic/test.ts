@@ -1,4 +1,4 @@
-import { PointPhysicsObject, PointPhysicsWorld, radianDifference } from "@pip-pip/core/src/client"
+import { generateId, PointPhysicsObject, PointPhysicsWorld, radianDifference } from "@pip-pip/core/src/client"
 import * as PIXI from "pixi.js"
 
 export class Ship{
@@ -7,13 +7,55 @@ export class Ship{
     agility = 0.6
     acceleration = 5
     
-    reloadDuration = 2000
-    bulletCount = 20
-    bulletSpeed = 30
-    bulletSize = 10
+    reloadDuration = 1200
+    shootInterval = 1
+    bullet = {
+        count: 500,
+        speed: 20,
+        size: 20,
+    }
 
     constructor(){
         //
+    }
+}
+
+export class Bullet{
+    id: string
+    physics: PointPhysicsObject = new PointPhysicsObject()
+    lifespan = 5000
+
+    owner?: Player
+
+    speed = 10
+    radius = 20
+    rotation = 0
+
+    constructor(id: string = generateId()){
+        this.id = id
+        this.physics.setId(id)
+        this.physics.mass = 5
+        this.physics.radius = this.radius
+        this.physics.airResistance = 0
+        this.physics.collision.channels = [1]
+        this.physics.collision.excludeChannels = [1]
+    }
+
+    setOwner(player: Player){
+        this.owner = player
+        this.physics.collision.excludeObjects = [player.physics]
+    }
+    
+    setPosition(x: number, y: number){
+        this.physics.position.x = x
+        this.physics.position.y = y
+    }
+
+    setTrajectory(angle: number, speed?: number){
+        const s = typeof speed === "undefined" ? this.speed : speed
+        this.physics.velocity.x = Math.cos(angle) * s
+        this.physics.velocity.y = Math.sin(angle) * s
+        this.rotation = angle
     }
 }
 
@@ -24,9 +66,17 @@ export class Player{
 
     ship?: Ship
 
+    debugMagModifier = 0
+
     targetRotation = 0
     aimRotation = 0
 
+    reloadTimeLeft = 0
+    ammo = 0
+
+    lastShotTick = -100
+
+    shooting = false
     acceleration = {
         angle: 0,
         magnitude: 0,
@@ -36,15 +86,36 @@ export class Player{
         this.id = id
         this.physics.collision.enabled = true
     }
+
+    reload(){
+        if(typeof this.ship === "undefined") return
+        if(this.ammo >= this.ship.bullet.count) return
+        if(this.isReloading) return
+        this.reloadTimeLeft = this.ship.reloadDuration
+    }
+
+    get isReadyToShoot(){
+        if(this.isReloading) return false
+        if(this.ammo === 0) return false
+        return true
+    }
+
+    get isReloading(){
+        if(this.reloadTimeLeft === 0) return false
+        return true
+    }
 }
 
 export class PipPipGame{
     players: Record<string, Player> = {}
+    bullets: Record<string, Bullet> = {}
 
     physics: PointPhysicsWorld = new PointPhysicsWorld()
 
     gameMode = 0
     isWaitingLobby = true
+
+    tickNumber = 0
 
     readonly tps = 20
     readonly deltaMs = 1000 / this.tps
@@ -71,18 +142,59 @@ export class PipPipGame{
         player.physics.destroy()
     }
 
+    addBullet(bullet: Bullet){
+        this.bullets[bullet.id] = bullet
+        this.physics.addObject(bullet.physics)
+    }
+
+    removeBullet(bullet: Bullet){
+        delete this.bullets[bullet.id]
+        bullet.physics.destroy()
+    }
+
     update(){
         const players = Object.values(this.players)
 
         for(const player of players){
             if(typeof player.ship !== "undefined"){
-                // Make aim move
+                // shooting
+                if(player.shooting === true){
+                    if(player.ammo === 0){
+                        player.reload()
+                    } else if(player.isReadyToShoot){
+                        if(this.tickNumber >= player.lastShotTick + player.ship.shootInterval){
+                            // shoot
+                            const bullet = new Bullet()
+                            bullet.setOwner(player)
+                            const offset = player.physics.radius + 0 * bullet.physics.radius
+                            const x = player.physics.position.x + Math.cos(player.aimRotation) * offset
+                            const y = player.physics.position.y + Math.sin(player.aimRotation) * offset
+                            bullet.setPosition(x, y)
+                            bullet.setTrajectory(player.aimRotation)
+                            this.addBullet(bullet)
+                            player.ammo--
+                            player.lastShotTick = this.tickNumber
+                        }
+                    }
+                }
+
+                // reload player
+                if(player.reloadTimeLeft > 0){
+                    player.reloadTimeLeft -= this.deltaMs
+                    if(player.reloadTimeLeft <= 0){
+                        player.reloadTimeLeft = 0
+                        player.ammo = player.ship.bullet.count
+                    }
+                }
+
+                // make aim move
                 player.aimRotation += radianDifference(player.aimRotation, player.targetRotation) / (3 + 9 * (1 - player.ship.aim))
                 
                 // accelerate players
                 if(player.acceleration.magnitude > 0){
                     const angleDiff = radianDifference(player.acceleration.angle, player.aimRotation)
                     const magModifier = Math.pow(player.ship.agility + (1 - Math.abs(angleDiff) / Math.PI) * (1 - player.ship.agility), 4)
+                    player.debugMagModifier = magModifier
                     const mag = player.ship.acceleration * player.acceleration.magnitude * magModifier
                     const x = Math.cos(player.acceleration.angle) * mag
                     const y = Math.sin(player.acceleration.angle) * mag
@@ -92,6 +204,22 @@ export class PipPipGame{
             }
         }
 
+        const bullets = Object.values(this.bullets)
+
+        for(const bullet of bullets){
+            // kill bullet
+        }
+
         this.physics.update(this.deltaMs)
+
+        for(const bullet of bullets){
+            // kill bullet
+            bullet.lifespan -= this.deltaMs
+            if(bullet.lifespan <= 0){
+                this.removeBullet(bullet)
+            }
+        }
+
+        this.tickNumber++
     }
 }

@@ -136,6 +136,11 @@ export class PointPhysicsObject{
         }
     }
 
+    setId(id: string){
+        this.id = id
+        // Ensure ID change is safe
+    }
+
     setWorld(world: PointPhysicsWorld){
         this.world = world
     }

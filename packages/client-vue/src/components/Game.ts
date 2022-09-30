@@ -18,18 +18,18 @@ player.ship = new Ship()
 const dataTick = new Ticker(20, false, "Data")
 const renderTick = new Ticker(20, true, "Render")
 const updateTick = new Ticker(game.tps, false, "Update")
-const debugTick = new Ticker(1, false, "Debug")
+const debugTick = new Ticker(4, false, "Debug")
 
 debugTick.on("tick", () => {
     const renderPerf = renderTick.getPerformance()
     const updatePerf = updateTick.getPerformance()
     const totalExecTime = Number(updatePerf.averageExecutionTime + renderPerf.averageExecutionTime).toFixed(2)
     document.title = `${renderPerf.averageTPS.toFixed(2)}fps ${updatePerf.averageExecutionTime.toFixed(2)}+${renderPerf.averageExecutionTime.toFixed(2)}=${totalExecTime}ms`
-    console.log(renderer.graphics.viewport.position)
 })
 
 function setup(){
     const container = ref()
+    const debugJson = ref<Record<string, any>>({})
     // const overlayMode
     // const overlayData
 
@@ -40,16 +40,35 @@ function setup(){
         mouse.setTarget(renderer.graphics.app.view)
         game.addPlayer(player)
 
-        for(let i = 0; i < 20; i++){
+        console.log(
+            game, renderer, keyboard, mouse,
+        )
+
+        for(let i = 0; i < 200; i++){
             const p = new Player(generateId())
-            p.physics.position.x = Math.random() * 100
-            p.physics.position.y = Math.random() * 100
+            p.physics.position.x = Math.random() * 600
+            p.physics.position.y = Math.random() * 600
             // p.physics.mass = Math.random() * 300
             // p.physics.radius = p.physics.mass / 100 * 25
             game.addPlayer(p)
         }
 
         updateTick.on("tick", ({ deltaMs, deltaTime }) => {
+            debugJson.value.game = {
+                "tick": game.tickNumber,
+                deltaMs, deltaTime,
+                entities: Object.keys(game.physics.objects).length
+            }
+            debugJson.value.player = {
+                mag: player.debugMagModifier,
+                shooting: player.shooting,
+                reloading: player.isReloading ? player.reloadTimeLeft : false,
+                ammo: player.ammo,
+            }
+            debugJson.value.bullets = {
+                count: Object.keys(game.bullets).length,
+            }
+            
             
             // inputs
             let xInput = 0, yInput = 0
@@ -70,12 +89,17 @@ function setup(){
                 player.acceleration.magnitude = 0
             }
 
+            // aiming
             const mouseAngle = Math.atan2(
                 mouse.state.position.y - window.innerHeight / 2,
                 mouse.state.position.x - window.innerWidth / 2,
             )
             
             player.targetRotation = mouseAngle
+
+            // shooting
+            player.shooting = mouse.state.down
+            if(keyboard.state.KeyR) player.reload()
 
             // update the game
             game.update()
@@ -90,7 +114,7 @@ function setup(){
         debugTick.startTick()
     })
 
-    return { container }
+    return { container, debugJson }
 }
 
 export default defineComponent({
