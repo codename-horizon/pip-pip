@@ -1,21 +1,23 @@
-import { PipPipGame, Player } from "@pip-pip/game/src/logic/test";
+import { PipPipGame, Player, Ship } from "@pip-pip/game/src/logic/test";
 import { defineComponent, onMounted, ref } from "vue";
 import * as PIXI from "pixi.js"
 import ship1 from "../assets/ship-1.png"
 import { assets } from "../game/assets";
-import { generateId, KeyboardListener, PIXIGraphics, Ticker } from "@pip-pip/core/src/client";
+import { degreeDifference, generateId, KeyboardListener, MouseListener, PIXIGraphics, Ticker } from "@pip-pip/core/src/client";
 import { PipPipGameRenderer } from "../game/render";
 
 
 const game = new PipPipGame()
 const renderer = new PipPipGameRenderer()
 const keyboard = new KeyboardListener()
+const mouse = new MouseListener()
 renderer.setGame(game)
 const player = new Player("single")
+player.ship = new Ship()
 
 const dataTick = new Ticker(20, false, "Data")
 const renderTick = new Ticker(20, true, "Render")
-const updateTick = new Ticker(game.physics.options.baseTps, false, "Update")
+const updateTick = new Ticker(game.tps, false, "Update")
 const debugTick = new Ticker(1, false, "Debug")
 
 debugTick.on("tick", () => {
@@ -35,33 +37,52 @@ function setup(){
         renderer.graphics.setContainer(container.value)
         renderer.setup()
         keyboard.setTarget(document.body)
+        mouse.setTarget(renderer.graphics.app.view)
         game.addPlayer(player)
 
-        for(let i = 0; i < 1000; i++){
+        for(let i = 0; i < 20; i++){
             const p = new Player(generateId())
-            p.physics.position.x = Math.random() * 2000
-            p.physics.position.y = Math.random() * 2000
-            p.physics.mass = Math.random() * 300
-            p.physics.radius = p.physics.mass / 100 * 25
+            p.physics.position.x = Math.random() * 100
+            p.physics.position.y = Math.random() * 100
+            // p.physics.mass = Math.random() * 300
+            // p.physics.radius = p.physics.mass / 100 * 25
             game.addPlayer(p)
         }
 
-        updateTick.on("tick", ({ deltaMs }) => {
-            game.physics.update(1000 / game.physics.options.baseTps)
-
+        updateTick.on("tick", ({ deltaMs, deltaTime }) => {
+            
             // inputs
-            const deltaTime = deltaMs / (1000 / game.physics.options.baseTps)
-            const mag = 5 * deltaTime
-            if(keyboard.state.KeyW) player.physics.velocity.y -= mag
-            if(keyboard.state.KeyS) player.physics.velocity.y += mag
-            if(keyboard.state.KeyA) player.physics.velocity.x -= mag
-            if(keyboard.state.KeyD) player.physics.velocity.x += mag
+            let xInput = 0, yInput = 0
+
+            if(keyboard.state.KeyW) yInput -= 1
+            if(keyboard.state.KeyS) yInput += 1
+            if(keyboard.state.KeyA) xInput -= 1
+            if(keyboard.state.KeyD) xInput += 1
+
+            const hasKeyboardInput = xInput !== 0 || yInput !== 0
+            
+            if(hasKeyboardInput){
+                player.acceleration.angle = Math.atan2(yInput, xInput)
+                player.acceleration.magnitude = 1
+            }
+
+            if(!hasKeyboardInput){
+                player.acceleration.magnitude = 0
+            }
+
+            const mouseAngle = Math.atan2(
+                mouse.state.position.y - window.innerHeight / 2,
+                mouse.state.position.x - window.innerWidth / 2,
+            )
+            
+            player.targetRotation = mouseAngle
+
+            // update the game
+            game.update()
         })
 
         renderTick.on("tick", ({ deltaMs }) => {
             renderer.render(deltaMs)
-
-            
         })
 
         renderTick.startTick()

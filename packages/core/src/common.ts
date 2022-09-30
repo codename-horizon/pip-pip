@@ -1,5 +1,6 @@
 export * from "./lib/utils"
 export * from "./lib/constants"
+export * from "./lib/math"
 
 export * from "./ticker"
 export * from "./state"

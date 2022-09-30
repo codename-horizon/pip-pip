@@ -1,4 +1,4 @@
-import { PIXIGraphics } from "@pip-pip/core/src/client"
+import { PIXIGraphics, radianDifference } from "@pip-pip/core/src/client"
 import { PipPipGame } from "@pip-pip/game"
 import * as PIXI from "pixi.js"
 import ship1 from "../assets/ship-1.png"
@@ -8,6 +8,7 @@ export type PlayerGraphic = {
     object: PIXI.DisplayObject,
     inStage: false,
     x: number, y: number,
+    rotation: number,
 }
 
 // set this before the loader
@@ -17,7 +18,8 @@ const ship = PIXI.Texture.from(ship1)
 export class PipPipGameRenderer{
     graphics = new PIXIGraphics()
     smoothing = {
-        players: 10,
+        playerMovement: 10,
+        playerAim: 5,
     }
     players: Record<string, PlayerGraphic> = {}
     game!: PipPipGame
@@ -42,6 +44,9 @@ export class PipPipGameRenderer{
         const now = Date.now()
         const gameDeltaMs = now - this.game.physics.lastUpdate
         const gameDeltaTime = gameDeltaMs / (1000 / this.game.physics.options.baseTps)
+        const deltaTime = deltaMs / (1000 / this.fps)
+        const playerMovementSmoothing = Math.pow(1 / this.smoothing.playerMovement, deltaTime)
+        const playerAimSmoothing = Math.pow(1 / this.smoothing.playerAim, deltaTime)
 
         // check what players are new
         for(const gamePlayerId in this.game.players){
@@ -53,13 +58,13 @@ export class PipPipGameRenderer{
                 object.interactive = false
                 object.anchor.set(0.5)
                 object.cacheAsBitmap = false
-                object.rotation = Math.random() * Math.PI * 2
                 this.players[gamePlayerId] = {
                     id: gamePlayerId,
                     object,
                     inStage: false,
                     x: palyer.physics.position.x,
                     y: palyer.physics.position.y,
+                    rotation: palyer.aimRotation,
                 }
                 this.playersContainer.addChild(object)
             }
@@ -72,11 +77,15 @@ export class PipPipGameRenderer{
             const tx = gamePlayer.physics.position.x + gamePlayer.physics.velocity.x * gameDeltaTime
             const ty = gamePlayer.physics.position.y + gamePlayer.physics.velocity.y * gameDeltaTime
             
-            graphicPlayer.x += (tx - graphicPlayer.x) / this.smoothing.players
-            graphicPlayer.y += (ty - graphicPlayer.y) / this.smoothing.players
+            graphicPlayer.x += (tx - graphicPlayer.x) * playerMovementSmoothing
+            graphicPlayer.y += (ty - graphicPlayer.y) * playerMovementSmoothing
 
             graphicPlayer.object.position.x = graphicPlayer.x
             graphicPlayer.object.position.y = graphicPlayer.y
+
+            graphicPlayer.rotation += radianDifference(graphicPlayer.rotation, gamePlayer.aimRotation + Math.PI / 2) * playerAimSmoothing
+
+            graphicPlayer.object.rotation = graphicPlayer.rotation
 
             if(playerId === "single"){
                 this.playersContainer.position.x = this.graphics.app.view.width / 2 - graphicPlayer.x
