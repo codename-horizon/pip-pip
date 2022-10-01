@@ -7,6 +7,13 @@ function trim(n: number){
     return Math.round(n * MD_Z) / MD_Z
 }
 
+export type Vector2State = {
+    x: number,
+    y: number,
+}
+
+const MAX_STATES = 32
+
 export class Vector2{
     _x = 0
     _y = 0
@@ -19,6 +26,8 @@ export class Vector2{
     // queue
     _qx = 0
     _qy = 0
+
+    history: Vector2State[] = []
 
     constructor(x?: number, y?: number){
         if(typeof x === "number" && typeof y === "number"){
@@ -65,6 +74,23 @@ export class Vector2{
         this.px = this.py = 0
         this.dx = this.dy = 0
     }
+
+    capture(){
+        if(this.history.length >= MAX_STATES){
+            this.history.pop()
+        }
+        this.history.unshift({
+            x: this.x,
+            y: this.y,
+        })
+    }
+
+    last(n: number){
+        if(n in this.history){
+            return this.history[n]
+        }
+        return { x: this.x, y: this.y }
+    }
 }
 
 export type CollisionOptions = {
@@ -110,6 +136,11 @@ export class PointPhysicsObject{
         }
     }
 
+    setId(id: string){
+        this.id = id
+        // Ensure ID change is safe
+    }
+
     setWorld(world: PointPhysicsWorld){
         this.world = world
     }
@@ -135,6 +166,8 @@ export class PointPhysicsWorld{
     lastLog = Date.now()
 
     timeScale = 1
+    
+    lastUpdate = Date.now()
 
     constructor(options: Partial<PointPhysicsWorldOptions> = {}){
         this.options = {
@@ -163,6 +196,8 @@ export class PointPhysicsWorld{
     }
 
     update(deltaMs: number){
+        this.lastUpdate = Date.now()
+        
         const baseMs = 1000 / this.options.baseTps
         const deltaTime =  (Math.max(1, deltaMs) / baseMs) * this.timeScale
         const objects = Object.values(this.objects)
@@ -173,10 +208,19 @@ export class PointPhysicsWorld{
                 if(a.id === b.id) continue
                 if(!a.collision.enabled) continue
                 if(!b.collision.enabled) continue
+                if(a.collision.channels.some(channel => b.collision.excludeChannels.includes(channel))) continue
+                if(b.collision.channels.some(channel => a.collision.excludeChannels.includes(channel))) continue
+                if(a.collision.excludeObjects.includes(b)) continue
+                if(b.collision.excludeObjects.includes(a)) continue
+
+                const vdx = (a.position.x + a.velocity.x - b.position.x + b.velocity.x)
+                const vdy = (a.position.y + a.velocity.y - b.position.y + b.velocity.y)
+                // const vdist = Math.sqrt(vdx * vdx + vdy * vdy)
 
                 const dx = (a.position.x - b.position.x)
                 const dy = (a.position.y - b.position.y)
                 const dist = Math.sqrt(dx * dx + dy * dy)
+
                 const diff = ((a.radius + b.radius) - dist) / dist
                 const s1 = (1 / a.mass) / ((1 / a.mass) + (1 / b.mass))
                 const s2 = 1 - s1
@@ -184,17 +228,17 @@ export class PointPhysicsWorld{
                 const P = C * deltaTime
 
                 if(dist < a.radius + b.radius){
-                    a.velocity.qx += dx * s1 * diff * C
-                    a.velocity.qy += dy * s1 * diff * C
+                    a.velocity.qx += vdx * s1 * diff * C
+                    a.velocity.qy += vdy * s1 * diff * C
 
-                    a.position.qx += dx * s1 * diff * P
-                    a.position.qy += dy * s1 * diff * P
+                    a.position.qx += vdx * s1 * diff * P
+                    a.position.qy += vdy * s1 * diff * P
 
-                    b.velocity.qx -= dx * s2 * diff * C
-                    b.velocity.qy -= dy * s2 * diff * C
+                    b.velocity.qx -= vdx * s2 * diff * C
+                    b.velocity.qy -= vdy * s2 * diff * C
                     
-                    b.position.qx -= dx * s2 * diff * P
-                    b.position.qy -= dy * s2 * diff * P
+                    b.position.qx -= vdx * s2 * diff * P
+                    b.position.qy -= vdy * s2 * diff * P
                 }
             }
         }
@@ -217,6 +261,9 @@ export class PointPhysicsWorld{
             object.velocity.flush()
             object.position.flush()
             object.smoothing.position.flush()
+            object.velocity.capture()
+            object.position.capture()
+            object.smoothing.position.capture()
         }
 
         if(Date.now() - this.lastLog > this.options.logFrequency){
