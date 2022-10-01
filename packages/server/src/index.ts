@@ -1,10 +1,10 @@
-type PacketType<T> = {
+type PacketSerializer<T = any> = {
     length: number,
     encode: (value: T) => Uint8Array,
     decode: (value: Uint8Array) => T,
 }
 
-type TypedArray = Uint8ArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor
+type NumberArrayConstructor = Uint8ArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor
 
 const numberTypes = {
     uint8: [1, Uint8Array],
@@ -14,8 +14,8 @@ const numberTypes = {
     float64: [8, Float64Array],
 }
 
-function createNumberPacketType(type: keyof typeof numberTypes): PacketType<number>{
-    const [length, NumberArray] = numberTypes[type] as [number, TypedArray]
+function numPacket(type: keyof typeof numberTypes): PacketSerializer<number>{
+    const [length, NumberArray] = numberTypes[type] as [number, NumberArrayConstructor]
     return {
         length,
         encode(value){
@@ -32,12 +32,45 @@ function createNumberPacketType(type: keyof typeof numberTypes): PacketType<numb
     }
 }
 
-const float64 = createNumberPacketType("uint32")
+const uint8 = numPacket("uint8")
+const uint16 = numPacket("uint16")
+const uint32 = numPacket("uint32")
+const float32 = numPacket("float32")
+const float64 = numPacket("float64")
 
-const packets = {
-    "playerPositions": [float64]
+type PacketInputMap = Record<string, unknown>
+type PacketSerializerMap = Record<string, PacketSerializer>
+class Pac<T extends PacketSerializerMap>{
+    id: number
+    dataTypes: T
+    constructor(id: number, dataTypes: T){
+        if(id < 0 || id > 255) throw new Error("ID must be an unsigned int8.")
+        this.id = id
+        this.dataTypes = dataTypes
+    }
 }
 
-console.log(float64.encode(Math.PI))
-console.log(float64.decode(float64.encode(Math.PI)))
-console.log(Math.PI)
+type PacketManagerInputMap = Record<string, PacketInputMap>
+
+type GamePacketInputMap = {
+    "playerPositions": {
+        x: number,
+        y: number,
+    }
+}
+
+type PacketManagerInputSerializerMap<T extends PacketManagerInputMap> = {
+    [K in keyof T]: Pac<{
+        [P in keyof T[K]]: PacketSerializer<T[K][P]>
+    }>
+}
+
+type GamePacketInputSerializerMap = PacketManagerInputSerializerMap<GamePacketInputMap>
+
+const packets: GamePacketInputSerializerMap = {
+    "playerPositions": new Pac(0, {
+        x: uint16,
+        y: uint16,
+    }),
+}
+
