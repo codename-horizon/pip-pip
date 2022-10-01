@@ -167,7 +167,7 @@ export class PipPipGame{
                             // shoot
                             const bullet = new Bullet()
                             bullet.setOwner(player)
-                            const offset = player.physics.radius + 0 * bullet.physics.radius
+                            const offset = player.physics.radius / 4
                             const x = player.physics.position.x + Math.cos(player.aimRotation) * offset
                             const y = player.physics.position.y + Math.sin(player.aimRotation) * offset
                             bullet.setPosition(x, y)
@@ -194,7 +194,7 @@ export class PipPipGame{
                 // accelerate players
                 if(player.acceleration.magnitude > 0){
                     const angleDiff = radianDifference(player.acceleration.angle, player.aimRotation)
-                    const magModifier = Math.pow(player.ship.agility + (1 - Math.abs(angleDiff) / Math.PI) * (1 - player.ship.agility), 4)
+                    const magModifier = Math.pow(player.ship.agility + (1 - Math.abs(angleDiff) / Math.PI) * (1 - player.ship.agility), 2)
                     player.debugMagModifier = magModifier
                     const mag = player.ship.acceleration * player.acceleration.magnitude * magModifier
                     const x = Math.cos(player.acceleration.angle) * mag

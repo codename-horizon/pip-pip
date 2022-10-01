@@ -60,7 +60,7 @@ function setup(){
                 entities: Object.keys(game.physics.objects).length
             }
             debugJson.value.player = {
-                mag: player.debugMagModifier,
+                mag: player.debugMagModifier.toFixed(2),
                 shooting: player.shooting,
                 reloading: player.isReloading ? player.reloadTimeLeft : false,
                 ammo: player.ammo,
