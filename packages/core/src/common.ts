@@ -1,10 +1,10 @@
 export * from "./lib/utils"
 export * from "./lib/constants"
-export * from "./lib/math"
+export * from "./math"
 
-export * from "./ticker"
-export * from "./state"
-export * from "./events"
+export * from "./common/ticker"
+export * from "./common/state"
+export * from "./common/events"
 export * from "./physics"
 
 export * from "./networking/packets"

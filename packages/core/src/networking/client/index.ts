@@ -2,7 +2,7 @@ import { AxiosInstance } from "axios"
 import { WebSocket as NodeWebSocket } from "ws"
 
 import { CLIENT_DEFAULT_TOKEN_KEY, SERVER_DEFAULT_BASE_ROUTE } from "../../lib/constants"
-import { EventEmitter } from "../../events"
+import { EventEmitter } from "../../common/events"
 import { ClientPacketEventMap, internalPacketMap, InternalPacketMap, PacketDecoded, PacketManager, PacketMap } from "../packets"
 import { ConnectionJSON } from "../server/connection"
 import { initializeApi as initializeApiHandler } from "./axios"

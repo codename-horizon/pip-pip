@@ -1,4 +1,4 @@
-import { EventEmitter } from "./events"
+import { EventEmitter } from "../common/events"
 
 export type MousePosition = { x: number, y: number }
 

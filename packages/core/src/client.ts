@@ -1,5 +1,5 @@
 export * from "./common"
 export * from "./networking/client"
-export * from "./mouse"
-export * from "./keyboard"
+export * from "./client/mouse"
+export * from "./client/keyboard"
 export * from "./graphics/pixi"
