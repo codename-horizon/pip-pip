@@ -5,12 +5,12 @@ export class Ship{
     aim = 0.8
 
     agility = 0.6
-    acceleration = 5
+    acceleration = 3
     
     reloadDuration = 1200
-    shootInterval = 1
+    shootInterval = 3
     bullet = {
-        count: 500,
+        count: 16,
         speed: 20,
         size: 20,
     }
@@ -27,7 +27,7 @@ export class Bullet{
 
     owner?: Player
 
-    speed = 10
+    speed = 40
     radius = 20
     rotation = 0
 
@@ -85,6 +85,7 @@ export class Player{
     constructor(id: string){
         this.id = id
         this.physics.collision.enabled = true
+        this.physics.collision.channels = []
     }
 
     reload(){

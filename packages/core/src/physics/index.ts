@@ -208,6 +208,10 @@ export class PointPhysicsWorld{
                 if(a.id === b.id) continue
                 if(!a.collision.enabled) continue
                 if(!b.collision.enabled) continue
+                if(a.collision.channels.some(channel => b.collision.excludeChannels.includes(channel))) continue
+                if(b.collision.channels.some(channel => a.collision.excludeChannels.includes(channel))) continue
+                if(a.collision.excludeObjects.includes(b)) continue
+                if(b.collision.excludeObjects.includes(a)) continue
 
                 const vdx = (a.position.x + a.velocity.x - b.position.x + b.velocity.x)
                 const vdy = (a.position.y + a.velocity.y - b.position.y + b.velocity.y)
