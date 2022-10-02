@@ -37,6 +37,14 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
         })
     }
 
+    subscribe(){
+        // TODO: Implement
+    }
+
+    unsubscribe(){
+        // TODO: Implement
+    }
+
     reset(){
         this.listeners = {}
     }
