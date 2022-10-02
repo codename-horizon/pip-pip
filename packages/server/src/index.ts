@@ -117,10 +117,13 @@ type PacketManagerInputSerializerMap<T extends PacketManagerInputMap> = {
 type PacketManagerSerialierMap = Record<string, Packet<PacketSerializerMap>>
 
 const packets = {
+    "tick": new Packet(255, {
+        n: uint32,
+    }),
     "playerPositions": new Packet(0, {
         x: float32,
         y: float32,
-        a: float32,
+        a: float64,
         b: float32,
         s: uint16,
         r: uint8,
@@ -155,9 +158,9 @@ const pm = new PacketManager(packets)
 const example = Array(2).fill({
     x: Math.PI,
     y: Math.PI / 2,
-    a: Math.PI * 2,
-    b: 69,
-    s: 696,
+    a: -Math.PI * 200,
+    b: -20,
+    s: 51,
     r: 6,
 })
 
@@ -165,3 +168,9 @@ const a = pm.encode("playerPositions", example)
 const code = packets.playerPositions.encode(example)
 const decode = packets.playerPositions.decode(code)
 console.log(packets.playerPositions.messageLength, a, code, decode)
+
+const n = pm.encode("tick", {
+    n: 1005,
+})
+
+console.log(n)
