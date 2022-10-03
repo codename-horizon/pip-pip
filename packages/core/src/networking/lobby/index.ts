@@ -50,7 +50,7 @@ export class Lobby<
         this.options = options
         this.server = server
         this.packets = {
-            events: new EventEmitter()
+            events: new EventEmitter("LobbyPackets")
         }
     }
 }

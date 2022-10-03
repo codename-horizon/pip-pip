@@ -1,10 +1,64 @@
 import { PacketManagerSerializerMap } from "../packets/manager"
+import express, { Express, Router as createRouter, Request, Response, NextFunction } from "express"
 import { Server } from "."
+import { Connection } from "../connection"
 
 export function initializeConnectionMethods<
     T extends PacketManagerSerializerMap,
     R extends Record<string, any> = Record<string, any>,
     P extends Record<string, any> = Record<string, any>,
 >(server: Server<T, R, P>){
-    server
+    server.getConnectionFromRequest = (req: Request) => {
+        if(typeof req.headers[server.options.authHeader] !== "undefined"){
+            const connectionToken = req.headers[server.options.authHeader]
+            if(typeof connectionToken === "string"){
+                const connection = server.getConnectionByConnectionToken(connectionToken)
+                return connection
+            }
+        }
+
+        return undefined
+    }
+
+    server.getConnectionByConnectionToken = (connectionToken: string) => {
+        for(const connectionId in server.connections){
+            const connection = server.connections[connectionId]
+            if(connection.token.connection === connectionToken) return connection
+        }
+        return undefined
+    }
+
+    server.getConnectionByWebSocketToken = (websocketToken: string) => {
+        for(const connectionId in server.connections){
+            const connection = server.connections[connectionId]
+            if(connection.token.websocket === websocketToken) return connection
+        }
+        return undefined
+    }
+
+    server.addConnection = (connection: Connection<T, R, P>) => {
+        if(connection.id in server.connections){
+            throw new Error(`Connection "${connection.id}" already exists.`)
+        }
+
+        const connections = Object.values(server.connections)
+        if(connections.length >= server.options.maxConnections){
+            throw new Error("Server has reached max connections.")
+        }
+
+        server.connections[connection.id] = connection
+        server.events.emit("addConnection", {
+            connection,
+        })
+    }
+
+    server.removeConnection = (connection: Connection<T, R, P>) => {
+        if(connection.id in server.connections){
+            delete server.connections[connection.id]
+            server.events.emit("removeConnection", {
+                connection,
+            })
+            connection.destroy()
+        }
+    }
 }

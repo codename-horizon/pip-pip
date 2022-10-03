@@ -30,8 +30,8 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
     }
 
     emit<K extends EventKey<T>>(eventName: K, ...params: EventUndefinedParam<T[K]>): void {
-        // console.log(`[${this.name}] eventName: ${eventName}` + 
-        //     (params[0] ? `, params: ${params}` : ""));
+        console.log(`[${this.name}] eventName: ${eventName}` + 
+            (params[0] ? `, params: ${params}` : ""));
         (this.listeners[eventName] || []).forEach(function(callback) {
             callback(params[0])
         })

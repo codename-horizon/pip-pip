@@ -11,3 +11,5 @@ export * from "./networking/packets/manager"
 export * from "./networking/packets/packet"
 export * from "./networking/packets/serializer"
 export * from "./networking/packets/server"
+
+export * from "./networking/client"

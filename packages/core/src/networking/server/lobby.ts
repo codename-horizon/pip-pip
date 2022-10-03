@@ -15,7 +15,7 @@ export function initializeLobbyMethods<
         }
     }
 
-    server.createLobby = <K extends keyof typeof server.lobbyType>(type: K, id?: string) => {
+    server.createLobby = <K extends keyof Server<T, R, P>["lobbyType"]>(type: K, id?: string) => {
         if(!(type in server.lobbyType)) throw new Error(`Lobby type "${type}" does not exist.`)
         // double check if instances have reached max
         // move lobbyoptions into lobbyTypeoptions cause it's different
