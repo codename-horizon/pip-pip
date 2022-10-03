@@ -10,6 +10,7 @@ export type ServerEventMap<
 > = {
     start: undefined,
 
+    createConnection: { connection: Connection<T, R, P> },
     addConnection: { connection: Connection<T, R, P> },
     removeConnection: { connection: Connection<T, R, P> },
 
@@ -40,6 +41,9 @@ export type ConnectionEventMap<
     socketClose: undefined,
     socketMessage: { data: RawData },
 
+    lobbyJoin: { lobby: Lobby<T, R, P> },
+    lobbyLeave: { lobby: Lobby<T, R, P> },
+
     destroy: undefined,
 }
 
@@ -52,6 +56,9 @@ export type LobbyEventMap<
     idleEnd: undefined,
 
     statusChange: { status: LobbyStatus },
+
+    addConnection: { connection: Connection<T, R, P> },
+    removeConnection: { connection: Connection<T, R, P> },
 
     destroy: undefined,
 }

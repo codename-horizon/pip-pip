@@ -34,6 +34,7 @@ export type LobbyType<
 export enum LobbyStatus {
     IDLE = 0,
     ACTIVE = 1,
+    DESTROYED = 2,
 }
 
 export class Lobby<
@@ -44,7 +45,7 @@ export class Lobby<
     id = generateId(8)
     type: string
 
-    events: EventEmitter<LobbyEventMap<T, R, P>> = new EventEmitter()
+    events: EventEmitter<LobbyEventMap<T, R, P>> = new EventEmitter("Lobby")
 
     server: Server<T, R, P>
     connections: Record<string, Connection<T, R, P>> = {}
@@ -68,8 +69,34 @@ export class Lobby<
     }
 
     get status(){
+        if(this.destroyed === true) return LobbyStatus.DESTROYED
         if(typeof this.idleTimeout !== "undefined") return LobbyStatus.IDLE
         return LobbyStatus.ACTIVE
+    }
+
+    addConnection(connection: Connection<T, R, P>){
+        if(connection.id in this.connections) throw new Error(`Connection "${connection.id}" already in lobby ${this.id}.`)
+
+        const connections = Object.values(this.connections)
+        if(connections.length >= this.typeOptions.maxConnections) throw new Error("Max connections reached for lobby.")
+
+        this.connections[connection.id] = connection
+        connection.setLobby(this)
+        this.events.emit("addConnection", { connection })
+        this.stopIdle()
+    }
+
+    removeConnection(connection: Connection<T, R, P>){
+        if(connection.id in this.connections){
+            connection.removeLobby()
+            delete this.connections[connection.id]
+            this.events.emit("removeConnection", { connection })
+
+            const connections = Object.values(this.connections)
+            if(connections.length === 0){
+                this.startIdle()
+            }
+        }
     }
 
     startIdle(){
@@ -93,7 +120,7 @@ export class Lobby<
         if(this.destroyed === false){
             this.destroyed = true
             // TODO: remove from lobby
-            // remove all connections
+            // TODO: remove all connections
             this.server.removeLobby(this)
             this.events.emit("destroy")
             // TODO: Imrpove status change calls

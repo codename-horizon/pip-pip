@@ -5,6 +5,7 @@ export type ConnectionJSON = {
     connectionId: string,
     connectionToken?: string,
     websocketToken?: string,
+    lobbyId?: string,
     status: ConnectionStatus,
 }
 
@@ -14,4 +15,9 @@ export type LobbyJSON = {
     connections: number,
     maxConnections: number,
     status: LobbyStatus,
+}
+
+export type ConnectionLobbyJSON = {
+    lobby: LobbyJSON,
+    connection: ConnectionJSON,
 }

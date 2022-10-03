@@ -3,7 +3,7 @@ import { Axios, AxiosInstance } from "axios"
 import { WebSocket as NodeWebSocket } from "ws"
 import { EventEmitter, ServerSerializerMap, SERVER_DEFAULT_BASE_ROUTE, SERVER_HEADER_KEY } from "../../common"
 import { initializeAxios } from "./axios"
-import { ConnectionJSON, LobbyJSON } from "../api/types"
+import { ConnectionJSON, ConnectionLobbyJSON, LobbyJSON } from "../api/types"
 import { initializeWebSockets } from "./websockets"
 import { ClientEventMap } from "./events"
 
@@ -62,7 +62,10 @@ export interface Client<T extends PacketManagerSerializerMap>{
     api: AxiosInstance
     requestConnection: () => Promise<ConnectionJSON>
     verifyConnection: () => Promise<ConnectionJSON>
+
     createLobby: (type: string) => Promise<LobbyJSON>
+    joinLobby: (id: string) => Promise<ConnectionLobbyJSON>
+    leaveLobby: () => Promise<ConnectionLobbyJSON>
 
     // websockets.ts
     ws?: WebSocket | NodeWebSocket

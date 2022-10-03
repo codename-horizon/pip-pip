@@ -41,10 +41,26 @@ async function run(){
     const client = new Client(packetManager)
     await client.connect()
 
-    for(let i = 0; i < 20; i++){
-        const lobby = await client.createLobby("default")
-        console.log(lobby)
-    }
+    const lobby = await client.createLobby("default")
+    console.log(lobby)
+
+    const join = await client.joinLobby(lobby.lobbyId)
+    console.log(join)
+
+    await wait()
+    client.ws?.close()
+    await wait()
+    await client.connect()
+    await wait()
+    const leave = await client.leaveLobby()
+
+    console.log(leave)
+
+    await wait()
+    await client.joinLobby(lobby.lobbyId)
+    await client.leaveLobby()
+    await wait(5000)
+    client.ws?.close()
 }
 
 server.events.on("socketReady", ({ connection }) => {
@@ -52,14 +68,14 @@ server.events.on("socketReady", ({ connection }) => {
 })
 
 const logConnections = () => {
-    console.log(Object.keys(server.connections))
+    console.log("logConnections", Object.keys(server.connections))
 }
 
 server.events.on("addConnection", logConnections)
 server.events.on("removeConnection", logConnections)
 
 const logLobbies = () => {
-    console.log(Object.keys(server.lobbies))
+    console.log("logLobbies", Object.keys(server.lobbies))
 }
 
 server.events.on("removeLobby", logLobbies)

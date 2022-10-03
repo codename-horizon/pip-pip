@@ -6,6 +6,7 @@ import createHttpError from "http-errors"
 import { Server } from "."
 import { asyncHandler, handle404Error, handleError } from "../../lib/express"
 import { Connection } from "../connection"
+import { ConnectionLobbyJSON } from "../api/types"
 
 export function initializeRoutes<
     T extends PacketManagerSerializerMap,
@@ -35,14 +36,15 @@ export function initializeRoutes<
     router.post("/connection", asyncHandler(async (req: Request, res: Response) => {
         const connection = new Connection(server)
         server.addConnection(connection)
+        server.events.emit("createConnection", {connection})
         res.json(connection.toJson(true))
     }))
 
     // Get connection details
     router.get("/connection", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
-        const connection = server.getConnectionFromRequest(req)
-
-        res.json(connection?.toJson())
+        const connection = server.getConnectionFromRequest(req) as Connection<T, R, P>
+        
+        res.json(connection.toJson())
     }))
 
     // Create lobby details
@@ -68,7 +70,6 @@ export function initializeRoutes<
 
     // Create lobby
     router.post("/lobbies", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
-        console.log(req.body)
         if(typeof req.body.type !== "string") throw createHttpError(422, "Lobby type not specified.")
 
         const type = req.body.type
@@ -81,6 +82,43 @@ export function initializeRoutes<
         const lobby = server.createLobby(type)
 
         res.json(lobby.toJson())
+    }))
+
+    // Join a lobby
+    router.post("/lobbies/join", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+        if(typeof req.body.id !== "string") throw createHttpError(422, "ID required to specify lobby.")
+
+        const id = req.body.id
+
+        if(!(id in server.lobbies)) throw createHttpError(400, "Lobby not found.")
+
+        const lobby = server.lobbies[id]
+        const connection = server.getConnectionFromRequest(req) as Connection<T, R, P>
+
+        lobby.addConnection(connection)
+
+        const output: ConnectionLobbyJSON = {
+            connection: connection.toJson(),
+            lobby: lobby.toJson()
+        }
+
+        res.json(output)
+    }))
+
+    // Leave a lobby
+    router.post("/lobbies/leave", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+        const connection = server.getConnectionFromRequest(req) as Connection<T, R, P>
+        if(typeof connection.lobby === "undefined") throw createHttpError(400, "Connection not in lobby.")
+
+        const lobby = connection.lobby
+        lobby.removeConnection(connection)
+
+        const output: ConnectionLobbyJSON = {
+            connection: connection.toJson(),
+            lobby: lobby.toJson()
+        }
+
+        res.json(output)
     }))
 
     server.start = () => new Promise<void>((resolve) => {

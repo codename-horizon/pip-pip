@@ -108,9 +108,13 @@ export class Connection<
     destroy(){
         if(this.destroyed === false){
             this.destroyed = true
-            // TODO: remove from lobby
-            this.removeWebSocket()
+            if(typeof this.lobby !== "undefined"){
+                this.lobby.removeConnection(this)
+            }
             this.server.removeConnection(this)
+
+            this.removeWebSocket()
+
             this.events.emit("destroy")
             // TODO: Imrpove status change calls
             this.events.emit("statusChange", { status: this.status })
@@ -118,12 +122,25 @@ export class Connection<
     }
 
     setLobby(lobby: Lobby<T, R, P>){
+        if(typeof this.lobby !== "undefined"){
+            this.lobby.removeConnection(this)
+        }
         this.lobby = lobby
+        this.events.emit("lobbyJoin", { lobby })
+    }
+
+    removeLobby(){
+        if(this.lobby !== undefined){
+            const lobby = this.lobby
+            this.lobby = undefined
+            this.events.emit("lobbyLeave", { lobby })
+        }
     }
 
     toJson(showSensitive = false){
         const output: ConnectionJSON = {
             connectionId: this.id,
+            lobbyId: this.lobby?.id,
             status: this.status,
         }
 
