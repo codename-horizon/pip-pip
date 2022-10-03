@@ -4,6 +4,7 @@ import { WebSocket as NodeWebSocket } from "ws"
 import { EventEmitter, ServerSerializerMap, SERVER_DEFAULT_BASE_ROUTE, SERVER_HEADER_KEY } from "../../common"
 import { initializeAxios } from "./axios"
 import { ConnectionJSON } from "../api/types"
+import { initializeWebSockets } from "./websockets"
 
 export type ClientOptions = {
     authHeader: string,
@@ -46,6 +47,7 @@ export class Client<T extends PacketManagerSerializerMap>{
         }
 
         initializeAxios(this)
+        initializeWebSockets(this)
     }
 }
 
@@ -53,4 +55,9 @@ export interface Client<T extends PacketManagerSerializerMap>{
     // axios.ts
     api: AxiosInstance
     requestConnection: () => Promise<ConnectionJSON>
+
+    // websockets.ts
+    ws?: WebSocket | NodeWebSocket
+    connectWebSocket: () => Promise<void>
+    send: (data: string) => void
 }

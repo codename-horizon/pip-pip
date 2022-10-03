@@ -9,6 +9,9 @@ export function initializeWebSockets<
     P extends Record<string, any> = Record<string, any>,
 >(server: Server<T, R, P>){
     server.wss.on("connection", (ws: WebSocket) => {
+        const verifyTimeout = setTimeout(() => {
+            ws.close()
+        }, server.options.verifyTimeLimit) // 10 second verify timeout
         let verified = false
         let connection: Connection<T, R, P>
 
@@ -29,9 +32,10 @@ export function initializeWebSockets<
                 if(typeof targetConnection === "undefined"){
                     ws.close()
                 } else{
+                    clearTimeout(verifyTimeout)
                     verified = true
                     connection = targetConnection
-                    
+                    ws.send(connection.id) // Complete handhsake
                     connection.setWebSocket(ws)
                     server.events.emit("socketVerify", { ws, connection })
                 }
@@ -39,6 +43,7 @@ export function initializeWebSockets<
         })
 
         ws.on("close", () => {
+            clearTimeout(verifyTimeout)
             if(verified && typeof connection !== "undefined"){
                 server.events.emit("socketClose", { ws, connection })
             } else{

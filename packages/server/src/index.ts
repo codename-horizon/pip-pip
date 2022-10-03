@@ -24,6 +24,7 @@ type GameLobbyLocals = {
 
 const server = new Server<GamePacketManagerSerializerMap, GameConnectionLocals, GameLobbyLocals>(packetManager, {
     connectionIdleLifespan: 5000,
+    verifyTimeLimit: 5000,
 })
 
 const defaultLobbyOptions: LobbyOptions = {
@@ -38,6 +39,8 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     console.log(lobby)
 })
 
+const wait = (n = 1000) => new Promise(resolve => setTimeout(resolve, n))
+
 async function run(){
     console.clear()
     await server.start()
@@ -45,8 +48,10 @@ async function run(){
 
     const client = new Client(packetManager)
     const connection = await client.requestConnection()
+    await client.connectWebSocket()
     
-    console.log(connection)
+    server.broadcast("testing!")
+    server.broadcast(new ArrayBuffer(10))
 }
 
 run()

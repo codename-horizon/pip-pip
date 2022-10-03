@@ -7,6 +7,7 @@ import { Lobby } from "../lobby"
 import { generateId } from "../../common"
 import { ConnectionJSON } from "../api/types"
 import WebSocket, { RawData } from "ws"
+import { initializeWebSockets } from "./websockets"
 
 export type ConnectionLatencyRecord = {
     amount: number,
@@ -64,6 +65,7 @@ export class Connection<
             events: new EventEmitter("ConnectionPackets")
         }
         this.startIdle()
+        initializeWebSockets(this)
     }
 
     get latency(): ConnectionLatencyRecord{
@@ -115,33 +117,6 @@ export class Connection<
         }
     }
 
-    setWebSocket(ws: WebSocket){
-        this.ws = ws
-        this.ws.on("message", this.socketMessage.bind(this))
-        this.ws.on("close", this.socketClose.bind(this))
-        this.stopIdle() // Emits statusChange 
-    }
-
-    socketMessage(data: RawData){
-        //
-        this.events.emit("socketMessage", { data })
-    }
-
-    socketClose(){
-        //
-        this.events.emit("socketClose")
-    }
-
-    removeWebSocket(){
-        if(typeof this.ws !== "undefined"){
-            this.ws.off("close", this.socketClose.bind(this))
-            this.ws.off("message", this.socketClose.bind(this))
-            this.ws.close()
-        }
-        this.events.emit("statusChange", { status: this.status })
-        this.startIdle() // Emits status
-    }
-
     setLobby(lobby: Lobby<T, R, P>){
         this.lobby = lobby
     }
@@ -158,4 +133,14 @@ export class Connection<
 
         return output
     }
+}
+
+export interface Connection<
+    T extends PacketManagerSerializerMap,
+    R extends Record<string, any> = Record<string, any>,
+    P extends Record<string, any> = Record<string, any>,
+>{
+    setWebSocket: (ws: WebSocket) => void
+    removeWebSocket: () => void
+    send: (data: string | ArrayBuffer) => void
 }

@@ -19,8 +19,11 @@ export type ServerOptions = {
     authHeader: string,
     baseRoute: string,
     port: number,
+
     connectionIdleLifespan: number,
     lobbyIdleLifespan: number,
+    verifyTimeLimit: number,
+
     maxConnections: number,
     maxLobbies: number,
 }
@@ -36,6 +39,7 @@ export class Server<
         port: 3000,
         connectionIdleLifespan: 1000 * 60 * 5,
         lobbyIdleLifespan: 1000 * 60 * 5,
+        verifyTimeLimit: 1000 * 15,
         maxConnections: 512,
         maxLobbies: 64,
     }
@@ -87,12 +91,15 @@ export interface Server<
     routerAuthMiddleware: (req: Request, res: Response, next: NextFunction) => void
     start: () => Promise<void>
 
+    // websockets.ts
+
     // connection.ts
     getConnectionFromRequest: (req: Request) => Connection<T, R, P> | undefined
     getConnectionByConnectionToken: (connectionToken: string) => Connection<T, R, P> | undefined
     getConnectionByWebSocketToken: (websocketToken: string) => Connection<T, R, P> | undefined
     addConnection: (connection: Connection<T, R, P>) => void
     removeConnection: (connection: Connection<T, R, P>) => void
+    broadcast: (data: string | ArrayBuffer) => void
 
     // lobby.ts
     registerLobby: (type: string, options: LobbyOptions, initializer: LobbyInitializer<T>) => void

@@ -61,4 +61,10 @@ export function initializeConnectionMethods<
             connection.destroy()
         }
     }
+
+    server.broadcast = (data: string | ArrayBuffer) => {
+        for(const connectionId in server.connections){
+            server.connections[connectionId].send(data)
+        }
+    }
 }
