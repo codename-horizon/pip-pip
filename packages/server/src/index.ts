@@ -2,15 +2,7 @@ import { $uint8, ExtractSerializerMap, Packet, PacketManager, Server } from "@pi
 import { Client } from "@pip-pip/core/src/common"
 import { Connection } from "@pip-pip/core/src/networking/connection"
 import { LobbyOptions } from "@pip-pip/core/src/networking/lobby"
-
-const packetManager = new PacketManager({
-    shoot: new Packet({
-        count: $uint8,
-    }),
-    dodge: new Packet({
-        count: $uint8,
-    })
-})
+import { packetManager } from "@pip-pip/game/src/networking/packets"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 
@@ -47,11 +39,18 @@ async function run(){
     console.log("server running")
 
     const client = new Client(packetManager)
-    const connection = await client.requestConnection()
-    await client.connectWebSocket()
-    
-    server.broadcast("testing!")
-    server.broadcast(new ArrayBuffer(10))
+    await client.connect()
 }
+
+server.events.on("socketReady", ({ connection }) => {
+    connection.send(new Uint32Array([69]).buffer)
+})
+
+const logConnections = () => {
+    console.log(Object.keys(server.connections))
+}
+
+server.events.on("addConnection", logConnections)
+server.events.on("removeConnection", logConnections)
 
 run()

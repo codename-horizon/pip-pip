@@ -25,9 +25,11 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
 
         const closeHandler = () => {
             // close
+            client.events.emit("socketClose")
         }
 
         const messageHandler = (data: string | ArrayBuffer) => {
+            client.events.emit("socketMessage", { data, verified })
             if(verified === true){
                 console.log(data)
             } else{
@@ -35,6 +37,7 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
                     const connectionId = data
                     if(connectionId === client.connectionId){
                         verified = true
+                        client.events.emit("socketReady")
                         resolve()
                     }
                 }
@@ -61,4 +64,17 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
             client.ws = ws
         }
     })
+
+    client.connect = async () => {
+        try{
+            if(client.hasIdAndTokens){
+                await client.verifyConnection()
+            } else{
+                await client.requestConnection()
+            }
+        } catch(e){
+            await client.requestConnection()
+        }
+        await client.connectWebSocket()
+    }
 }

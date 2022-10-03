@@ -15,7 +15,7 @@ export type ServerEventMap<
     socketOpen: { ws: WebSocket },
 
     socketMessage: { ws: WebSocket, data: RawData, connection?: Connection<T, R, P> },
-    socketVerify: { ws: WebSocket, connection: Connection<T, R, P> },
+    socketReady: { ws: WebSocket, connection: Connection<T, R, P> },
 
     socketError: { ws: WebSocket, error: Error }
 

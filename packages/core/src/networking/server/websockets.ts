@@ -37,7 +37,7 @@ export function initializeWebSockets<
                     connection = targetConnection
                     ws.send(connection.id) // Complete handhsake
                     connection.setWebSocket(ws)
-                    server.events.emit("socketVerify", { ws, connection })
+                    server.events.emit("socketReady", { ws, connection })
                 }
             }
         })

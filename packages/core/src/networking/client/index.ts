@@ -5,6 +5,7 @@ import { EventEmitter, ServerSerializerMap, SERVER_DEFAULT_BASE_ROUTE, SERVER_HE
 import { initializeAxios } from "./axios"
 import { ConnectionJSON } from "../api/types"
 import { initializeWebSockets } from "./websockets"
+import { ClientEventMap } from "./events"
 
 export type ClientOptions = {
     authHeader: string,
@@ -16,12 +17,13 @@ export type ClientOptions = {
 }
 
 export class Client<T extends PacketManagerSerializerMap>{
+    events: EventEmitter<ClientEventMap<T>> = new EventEmitter("Client")
     options: ClientOptions = {
         authHeader: SERVER_HEADER_KEY,
         baseRoute: SERVER_DEFAULT_BASE_ROUTE,
 
         port: 3000,
-        host: "127.0.0.1",
+        host: "localhost",
         
         https: false,
         wss: false,
@@ -49,15 +51,21 @@ export class Client<T extends PacketManagerSerializerMap>{
         initializeAxios(this)
         initializeWebSockets(this)
     }
+
+    get hasIdAndTokens(){
+        return typeof this.connectionId === "string" && typeof this.connectionToken === "string" && typeof this.websocketToken === "string"
+    }
 }
 
 export interface Client<T extends PacketManagerSerializerMap>{
     // axios.ts
     api: AxiosInstance
     requestConnection: () => Promise<ConnectionJSON>
+    verifyConnection: () => Promise<ConnectionJSON>
 
     // websockets.ts
     ws?: WebSocket | NodeWebSocket
     connectWebSocket: () => Promise<void>
     send: (data: string) => void
+    connect: () => Promise<void>
 }

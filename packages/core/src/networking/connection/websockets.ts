@@ -13,6 +13,7 @@ export function initializeWebSockets<
     }
 
     const handleSocketClose = () => {
+        connection.removeWebSocket()
         connection.events.emit("socketClose")
     }
 
