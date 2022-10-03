@@ -1,14 +1,27 @@
-import { generateId } from "../../common"
+import http from "http"
+
+import { generateId, SERVER_DEFAULT_BASE_ROUTE } from "../../common"
 import { EventEmitter } from "../../common/events"
 import { PacketManager, PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
 import { Packet } from "../packets/packet"
 import { ServerSerializerMap } from "../packets/server"
-import { Connection } from "./connection"
+import { Connection } from "../connection"
 import { ServerEventMap } from "./events"
-import { Lobby, LobbyInitializer, LobbyOptions, LobbyType } from "./lobby"
+import { Lobby, LobbyInitializer, LobbyOptions, LobbyType } from "../lobby"
+import { initializeRoutes } from "./routes"
+import express, { Express, Request, Response, NextFunction } from "express"
+import { WebSocket, WebSocketServer } from "ws"
+import { initializeSockets } from "./sockets"
+import { initializeConnectionMethods } from "./connection"
+import { initializeLobbyMethods } from "./lobby"
 
 export type ServerOptions = {
+    baseRoute: string,
     port: number,
+    connectionIdleLifespan: number,
+    lobbyIdleLifespan: number,
+    maxConnections: number,
+    maxLobbies: number,
 }
 
 export class Server<
@@ -17,7 +30,12 @@ export class Server<
     P extends Record<string, any> = Record<string, any>,
 >{
     options: ServerOptions = {
+        baseRoute: SERVER_DEFAULT_BASE_ROUTE,
         port: 3000,
+        connectionIdleLifespan: 1000 * 60 * 5,
+        lobbyIdleLifespan: 1000 * 60 * 5,
+        maxConnections: 512,
+        maxLobbies: 64,
     }
 
     events: EventEmitter<ServerEventMap> = new EventEmitter()
@@ -32,11 +50,24 @@ export class Server<
         events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap>>
     }
 
+    app: Express
+    server: http.Server
+    wss: WebSocketServer
+
     constructor(packetManager: PacketManager<T>){
         this.packets = {
             manager: packetManager,
             events: new EventEmitter(),
         }
+
+        this.app = express()
+        this.server = http.createServer(this.app)
+        this.wss = new WebSocketServer({ server: this.server })
+
+        initializeRoutes(this)
+        initializeSockets(this)
+        initializeConnectionMethods(this)
+        initializeLobbyMethods(this)
     }
 
     setOptions(options: Partial<ServerOptions> = {}){
@@ -45,24 +76,16 @@ export class Server<
             ...options,
         }
     }
+}
 
-    registerLobby(type: string, options: LobbyOptions, initializer: LobbyInitializer<T>){
-        if(type in this.lobbyType) throw new Error(`Lobby Type "${type}" already registered in server.`)
-        this.lobbyType[type] = {
-            options,
-            initializer,
-        }
-    }
+export interface Server<
+    T extends PacketManagerSerializerMap,
+    R extends Record<string, any> = Record<string, any>,
+    P extends Record<string, any> = Record<string, any>,
+>{
+    start: () => Promise<void>
 
-    createLobby<K extends keyof typeof this.lobbyType>(type: K, id?: string){
-        if(!(type in this.lobbyType)) throw new Error(`Lobby type "${type}" does not exist.`)
-        const lobbyType = this.lobbyType[type]
-        const lobby = new Lobby(this, lobbyType.options)
-        lobbyType.initializer({
-            lobby,
-            server: this,
-        })
-        if(typeof id === "string") lobby.id = id
-        this.lobbies[lobby.id] = lobby
-    }
+    // lobby.ts
+    registerLobby: (type: string, options: LobbyOptions, initializer: LobbyInitializer<T>) => void
+    createLobby: <K extends keyof Server<T, R, P>["lobbyType"]>(type: K, id?: string) => void
 }

@@ -1,7 +1,7 @@
 import { PacketManagerSerializerMap } from "../packets/manager"
 import { Server } from "."
 
-export function initializeConnectionMethods<
+export function initializeSockets<
     T extends PacketManagerSerializerMap,
     R extends Record<string, any> = Record<string, any>,
     P extends Record<string, any> = Record<string, any>,

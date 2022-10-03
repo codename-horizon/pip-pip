@@ -1,6 +1,6 @@
 import { $uint8, ExtractSerializerMap, Packet, PacketManager, Server } from "@pip-pip/core"
-import { Connection } from "@pip-pip/core/src/networking/server/connection"
-import { LobbyOptions } from "@pip-pip/core/src/networking/server/lobby"
+import { Connection } from "@pip-pip/core/src/networking/connection"
+import { LobbyOptions } from "@pip-pip/core/src/networking/lobby"
 
 const packetManager = new PacketManager({
     shoot: new Packet({
@@ -10,8 +10,6 @@ const packetManager = new PacketManager({
         count: $uint8,
     })
 })
-
-console.log(packetManager.packets)
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 
@@ -24,16 +22,6 @@ type GameLobbyLocals = {
 }
 
 const server = new Server<GamePacketManagerSerializerMap, GameConnectionLocals, GameLobbyLocals>(packetManager)
-
-server.packets.events.on("shoot", () => {
-    //
-})
-
-server.connections.test = new Connection(server)
-server.connections.test.locals.name = "Mike"
-const con = server.connections.test
-console.log(con.locals.name)
-console.log(con.latency)
 
 const defaultLobbyOptions: LobbyOptions = {
     maxConnections: 8,
@@ -49,4 +37,6 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
 })
 
 server.createLobby("default")
-console.log(server.lobbies)
+server.start().then(() => {
+    console.log("nice")
+})
