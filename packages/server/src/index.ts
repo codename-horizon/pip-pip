@@ -50,16 +50,15 @@ async function run(){
             pi: Math.PI,
             n: Math.floor(Math.pow(10, Math.random() * 8))
         }),
-        name: "this",
+        name: "Mike",
         n: Math.PI,
     }
-    const code = client.packets.manager.packets.name.encode(input)
+    const code = client.packets.manager.serializers.name.encode(Array(4).fill(input))
     console.log(code, code.length)
-    // const buffer = new Uint8Array(code).buffer
-    const peak = client.packets.manager.packets.name.peekLength(code)
-    console.log(peak)
-    const decode = client.packets.manager.packets.name.decode(code)
-    console.log(decode)
+    const peak = client.packets.manager.serializers.name.peekLength(code)
+    const decode = client.packets.manager.decode(new Uint8Array(code).buffer)
+    console.log(new Uint8Array(code).buffer, decode)
+    
     // console.log(client.packets.manager.packets.name.dataLength, peak, buffer, input, decode)
 }
 

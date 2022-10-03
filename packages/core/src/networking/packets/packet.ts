@@ -4,7 +4,7 @@ export type PacketSerializerMap = {
     [dataKey: string]: PacketSerializer,
 }
 
-type GetPacketInput<T extends PacketSerializerMap> = {
+export type GetPacketInput<T extends PacketSerializerMap> = {
     [K in keyof T]: T[K] extends PacketSerializer<infer R> ? R : never
 }
 
@@ -60,21 +60,21 @@ export class Packet<T extends PacketSerializerMap>{
     decode(value: number[]){
         if(!this.decodable(value)) throw new Error("Cannot decode this message. Wrong ID.")
 
-        const output: Record<string, any> = {}
+        const output: GetPacketInput<T> = {} as GetPacketInput<T>
         let index = 1
 
         for(const key of this.keyOrder){
             const serializer = this.serializers[key]
             if(typeof serializer.length === "number"){
                 const slice = value.slice(index, index + serializer.length)
-                output[key] = serializer.decode(slice)
+                output[key as keyof typeof output] = serializer.decode(slice)
                 index += serializer.length
             } else{
                 const lenCode = value.slice(index, index + 2)
                 const length = new Uint8Array(new Uint16Array(lenCode).buffer)[0]
                 const totalLength = length + 2
                 const slice = value.slice(index, index + totalLength)
-                output[key] = serializer.decode(slice)
+                output[key as keyof typeof output] = serializer.decode(slice)
                 index += totalLength
             }
         }
