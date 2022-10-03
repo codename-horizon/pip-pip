@@ -119,8 +119,10 @@ export class Lobby<
     destroy(){
         if(this.destroyed === false){
             this.destroyed = true
-            // TODO: remove from lobby
-            // TODO: remove all connections
+            const connections = Object.values(this.connections)
+            for(const connection of connections){
+                this.removeConnection(connection)
+            }
             this.server.removeLobby(this)
             this.events.emit("destroy")
             // TODO: Imrpove status change calls
