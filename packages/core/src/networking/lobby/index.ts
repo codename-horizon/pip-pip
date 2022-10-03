@@ -4,6 +4,8 @@ import { EventEmitter } from "../../common/events"
 import { PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
 import { ServerSerializerMap } from "../packets/server"
 import { Connection } from "../connection"
+import { LobbyJSON } from "../api/types"
+import { LobbyEventMap } from "../server/events"
 
 export type LobbyInitializer<
     T extends PacketManagerSerializerMap,
@@ -14,11 +16,10 @@ export type LobbyInitializer<
     server: Server<T, R, P>,
 }) => void
 
-export type LobbyOptions = {
+export type LobbyTypeOptions = {
     maxInstances: number,
     maxConnections: number,
     userCreatable: boolean,
-    discoverable: boolean,
 }
 
 export type LobbyType<
@@ -26,8 +27,13 @@ export type LobbyType<
     R extends Record<string, any> = Record<string, any>,
     P extends Record<string, any> = Record<string, any>,
 > = {
-    options: LobbyOptions,
+    options: LobbyTypeOptions,
     initializer: LobbyInitializer<T, R, P>,
+}
+
+export enum LobbyStatus {
+    IDLE = 0,
+    ACTIVE = 1,
 }
 
 export class Lobby<
@@ -35,8 +41,11 @@ export class Lobby<
     R extends Record<string, any> = Record<string, any>,
     P extends Record<string, any> = Record<string, any>,
 >{
-    id = generateId()
-    options: LobbyOptions
+    id = generateId(8)
+    type: string
+
+    events: EventEmitter<LobbyEventMap<T, R, P>> = new EventEmitter()
+
     server: Server<T, R, P>
     connections: Record<string, Connection<T, R, P>> = {}
 
@@ -46,11 +55,65 @@ export class Lobby<
         events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap>>
     }
 
-    constructor(server: Server<T, R, P>, options: LobbyOptions){
-        this.options = options
+    idleTimeout?: NodeJS.Timeout
+    destroyed = false
+
+    constructor(server: Server<T, R, P>, type: string){
+        this.type = type
         this.server = server
         this.packets = {
             events: new EventEmitter("LobbyPackets")
         }
+        this.startIdle()
+    }
+
+    get status(){
+        if(typeof this.idleTimeout !== "undefined") return LobbyStatus.IDLE
+        return LobbyStatus.ACTIVE
+    }
+
+    startIdle(){
+        this.stopIdle()
+        this.idleTimeout = setTimeout(() => {
+            this.destroy()
+        }, this.server.options.lobbyIdleLifespan)
+        this.events.emit("idleStart")
+        this.events.emit("statusChange", { status: this.status })
+    }
+
+    stopIdle(){
+        if(typeof this.idleTimeout === "undefined") return
+        clearTimeout(this.idleTimeout)
+        this.idleTimeout = undefined
+        this.events.emit("idleEnd")
+        this.events.emit("statusChange", { status: this.status })
+    }
+
+    destroy(){
+        if(this.destroyed === false){
+            this.destroyed = true
+            // TODO: remove from lobby
+            // remove all connections
+            this.server.removeLobby(this)
+            this.events.emit("destroy")
+            // TODO: Imrpove status change calls
+            this.events.emit("statusChange", { status: this.status })
+        }
+    }
+
+    get typeOptions(){
+        return this.server.lobbyType[this.type].options
+    }
+
+    toJson(): LobbyJSON{
+        const output: LobbyJSON = {
+            lobbyId: this.id,
+            lobbyType: this.type,
+            connections: Object.keys(this.connections).length,
+            maxConnections: this.typeOptions.maxConnections,
+            status: this.status,
+        }
+
+        return output
     }
 }

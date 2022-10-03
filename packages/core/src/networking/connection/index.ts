@@ -123,7 +123,8 @@ export class Connection<
 
     toJson(showSensitive = false){
         const output: ConnectionJSON = {
-            connectionId: this.id
+            connectionId: this.id,
+            status: this.status,
         }
 
         if(showSensitive){

@@ -1,6 +1,7 @@
 import { PacketManagerSerializerMap } from "../packets/manager"
 import express, { Express, Router as createRouter, Request, Response, NextFunction } from "express"
 import cors from "cors"
+import bodyParser from "body-parser"
 import createHttpError from "http-errors"
 import { Server } from "."
 import { asyncHandler, handle404Error, handleError } from "../../lib/express"
@@ -12,6 +13,7 @@ export function initializeRoutes<
     P extends Record<string, any> = Record<string, any>,
 >(server: Server<T, R, P>){
     server.app.use(cors())
+    server.app.use(bodyParser.json())
 
     const router = createRouter()
 
@@ -43,7 +45,43 @@ export function initializeRoutes<
         res.json(connection?.toJson())
     }))
 
+    // Create lobby details
+    router.get("/lobbies", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+        if(typeof req.query.id !== "string") {
+            next()
+            return
+        }
 
+        const id = req.query.id
+
+        if(!(id in server.lobbies)) throw createHttpError(400, "Lobby not found.")
+
+        const lobby = server.lobbies[id]
+
+        res.json(lobby.toJson())
+    }))
+
+    // Get available lobbies
+    router.get("/lobbies", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+        throw createHttpError(400, "Not yet implemented.")
+    }))
+
+    // Create lobby
+    router.post("/lobbies", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+        console.log(req.body)
+        if(typeof req.body.type !== "string") throw createHttpError(422, "Lobby type not specified.")
+
+        const type = req.body.type
+
+        if(!(type in server.lobbyType)) throw createHttpError(400, "Lobby type not found.")
+
+        const lobbyType = server.lobbyType[type]
+        if(lobbyType.options.userCreatable === false) throw createHttpError(401, "Lobby cannot be created.")
+
+        const lobby = server.createLobby(type)
+
+        res.json(lobby.toJson())
+    }))
 
     server.start = () => new Promise<void>((resolve) => {
         // TODO: Register debugging routes if enabled in options

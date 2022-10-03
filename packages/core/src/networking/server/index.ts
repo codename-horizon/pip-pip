@@ -7,7 +7,7 @@ import { Packet } from "../packets/packet"
 import { ServerSerializerMap } from "../packets/server"
 import { Connection } from "../connection"
 import { ServerEventMap } from "./events"
-import { Lobby, LobbyInitializer, LobbyOptions, LobbyType } from "../lobby"
+import { Lobby, LobbyInitializer, LobbyTypeOptions, LobbyType } from "../lobby"
 import { initializeRoutes } from "./routes"
 import express, { Express, Router as createRouter, Request, Response, NextFunction } from "express"
 import { WebSocketServer } from "ws"
@@ -102,6 +102,7 @@ export interface Server<
     broadcast: (data: string | ArrayBuffer) => void
 
     // lobby.ts
-    registerLobby: (type: string, options: LobbyOptions, initializer: LobbyInitializer<T>) => void
-    createLobby: <K extends keyof Server<T, R, P>["lobbyType"]>(type: K, id?: string) => void
+    registerLobby: (type: string, options: LobbyTypeOptions, initializer: LobbyInitializer<T>) => void
+    createLobby: <K extends keyof Server<T, R, P>["lobbyType"]>(type: K, id?: string) => Lobby<T, R, P>
+    removeLobby: (lobby: Lobby<T, R, P>) => void
 }

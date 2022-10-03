@@ -1,6 +1,7 @@
 import { Connection, ConnectionStatus } from "../connection"
 import { PacketManagerSerializerMap } from "../packets/manager"
 import WebSocket, { RawData } from "ws"
+import { Lobby, LobbyStatus } from "../lobby"
 
 export type ServerEventMap<
     T extends PacketManagerSerializerMap,
@@ -11,6 +12,9 @@ export type ServerEventMap<
 
     addConnection: { connection: Connection<T, R, P> },
     removeConnection: { connection: Connection<T, R, P> },
+
+    createLobby: { lobby: Lobby<T, R, P> },
+    removeLobby: { lobby: Lobby<T, R, P> },
 
     socketOpen: { ws: WebSocket },
 
@@ -44,5 +48,10 @@ export type LobbyEventMap<
     R extends Record<string, any> = Record<string, any>,
     P extends Record<string, any> = Record<string, any>,
 > = {
-    start: undefined,
+    idleStart: undefined,
+    idleEnd: undefined,
+
+    statusChange: { status: LobbyStatus },
+
+    destroy: undefined,
 }

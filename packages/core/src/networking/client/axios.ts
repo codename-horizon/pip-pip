@@ -1,7 +1,7 @@
 import { Client } from "."
 import axios from "axios"
 import { PacketManagerSerializerMap } from "../packets/manager"
-import { ConnectionJSON } from "../api/types"
+import { ConnectionJSON, LobbyJSON } from "../api/types"
 
 export function initializeAxios<T extends PacketManagerSerializerMap>(client: Client<T>){
     const getHttpUrl = () => [
@@ -42,6 +42,11 @@ export function initializeAxios<T extends PacketManagerSerializerMap>(client: Cl
 
     client.verifyConnection = async () => {
         const { data } = await client.api.get<ConnectionJSON>("/connection")
+        return data
+    }
+
+    client.createLobby = async (type: string) => {
+        const { data } = await client.api.post<LobbyJSON>("/lobbies", { type })
         return data
     }
 }
