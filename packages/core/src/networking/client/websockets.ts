@@ -10,7 +10,7 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
         client.options.port,
     ].join("")
 
-    client.send = (data: string) => {
+    client.send = (data: string | ArrayBuffer) => {
         if(typeof client.ws === "undefined") return
         client.ws.send(data)
     }
@@ -31,7 +31,21 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
         const messageHandler = (data: string | ArrayBuffer) => {
             client.events.emit("socketMessage", { data, verified })
             if(verified === true){
-                console.log(data)
+                if(data instanceof ArrayBuffer){
+                    try{
+                        const decoded = client.packets.manager.decode(data)
+                        for(const key in decoded){
+                            const values = decoded[key] || []
+                            for(const value of values){
+                                client.packets.events.emit(key, {
+                                    data: value,
+                                } as any)
+                            }
+                        }
+                    } catch(e){
+                        console.warn(e)
+                    }
+                }
             } else{
                 if(typeof data === "string"){
                     const connectionId = data

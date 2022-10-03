@@ -70,6 +70,6 @@ export interface Client<T extends PacketManagerSerializerMap>{
     // websockets.ts
     ws?: WebSocket | NodeWebSocket
     connectWebSocket: () => Promise<void>
-    send: (data: string) => void
+    send: (data: string | ArrayBuffer) => void
     connect: () => Promise<void>
 }

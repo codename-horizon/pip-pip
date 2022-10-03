@@ -1,5 +1,5 @@
 import { $uint8, ExtractSerializerMap, Packet, PacketManager, Server } from "@pip-pip/core"
-import { $varstring, Client } from "@pip-pip/core/src/common"
+import { $varstring, Client, generateId } from "@pip-pip/core/src/common"
 import { Connection } from "@pip-pip/core/src/networking/connection"
 import { LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
 import { packetManager } from "@pip-pip/game/src/networking/packets"
@@ -44,22 +44,25 @@ async function run(){
     const client = new Client(packetManager)
     await client.connect()
 
-    
-    const input = {
-        id: JSON.stringify({
-            pi: Math.PI,
-            n: Math.floor(Math.pow(10, Math.random() * 8))
-        }),
-        name: "Mike",
-        n: Math.PI,
-    }
-    const code = client.packets.manager.serializers.name.encode(Array(4).fill(input))
-    console.log(code, code.length)
-    const peak = client.packets.manager.serializers.name.peekLength(code)
-    const decode = client.packets.manager.decode(new Uint8Array(code).buffer)
-    console.log(new Uint8Array(code).buffer, decode)
-    
-    // console.log(client.packets.manager.packets.name.dataLength, peak, buffer, input, decode)
+    const message = packetManager.serializers.name.encode({
+        id: generateId(),
+        name: generateId(),
+        n: Math.random()
+    })
+
+    const encoded = new Uint8Array(message).buffer
+
+    client.packets.events.on("name", ({ data }) => {
+        console.log("Client", data)
+        client.send(encoded)
+    })
+
+    server.packets.events.on("name", ({ ws, data, connection }) => {
+        console.log("Server", data)
+    })
+
+    console.log(message, message.length)
+    server.broadcast(encoded)
 }
 
 run()

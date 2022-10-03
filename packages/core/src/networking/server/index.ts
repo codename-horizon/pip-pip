@@ -53,7 +53,7 @@ export class Server<
 
     packets: {
         manager: PacketManager<T>,
-        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap>>
+        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap, R, P>>
     }
 
     app: Express

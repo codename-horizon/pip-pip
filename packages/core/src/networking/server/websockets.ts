@@ -21,10 +21,31 @@ export function initializeWebSockets<
             server.events.emit("socketError", { ws, error })
         })
 
+        ws.binaryType = "arraybuffer"
+
         ws.on("message", (data: RawData) => {
             server.events.emit("socketMessage", { ws, data, connection })
             if(verified === true){
-                //
+                if(data instanceof ArrayBuffer){
+                    try{
+                        const decoded = server.packets.manager.decode(data)
+                        for(const key in decoded){
+                            const values = decoded[key] || []
+                            for(const value of values){
+                                const event = {
+                                    connection,
+                                    data: value,
+                                    ws,
+                                }
+                                server.packets.events.emit(key, event as any)
+                                connection.packets.events.emit(key, event as any)
+                                connection.lobby?.packets.events.emit(key, event as any)
+                            }
+                        }
+                    } catch(e){
+                        console.warn(e)
+                    }
+                }
             } else{
                 // Handle handshake
                 const websocketToken = data.toString()

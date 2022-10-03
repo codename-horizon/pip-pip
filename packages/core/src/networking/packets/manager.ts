@@ -1,4 +1,5 @@
 
+import { Connection } from "../connection"
 import { GetPacketInput, Packet, PacketSerializerMap } from "./packet"
 import { serverPackets, ServerSerializerMap } from "./server"
 
@@ -68,10 +69,20 @@ export type ExtractSerializerMap<T> = T extends PacketManager<infer R> ? R : nev
 
 export type ServerPacketManager = BasePacketManager<ServerSerializerMap>
 
-export type ServerPacketManagerEventMap<T extends PacketManagerSerializerMap> = {
-    [K in keyof T]: undefined
+export type ServerPacketManagerEventMap<
+    T extends PacketManagerSerializerMap,
+    R extends Record<string, any> = Record<string, any>,
+    P extends Record<string, any> = Record<string, any>,
+> = {
+    [K in keyof T]: {
+        ws: WebSocket,
+        data: GetPacketInput<GetPacketSerializerMap<T[K]>>,
+        connection: Connection<T, R, P>,
+    }
 }
 
 export type ClientPacketManagerEventMap<T extends PacketManagerSerializerMap> = {
-    [K in keyof T]: undefined
+    [K in keyof T]: {
+        data: GetPacketInput<GetPacketSerializerMap<T[K]>>,
+    }
 }
