@@ -1,7 +1,7 @@
 export type PacketSerializer<T = any> = {
-    readonly length: number,
+    readonly length?: number,
     encode: (value: T) => Uint8Array,
-    decode: (value: Uint8Array) => T,
+    decode: (value: Uint8Array | number[]) => T,
 }
 
 type NumberArrayConstructor = Uint8ArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor
@@ -32,8 +32,36 @@ function createNumberSerializer(type: keyof typeof numberTypes): PacketSerialize
     }
 }
 
+const internalTextEncoder = new TextEncoder()
+const internalTextDecoder = new TextDecoder()
+
 export const $uint8 = createNumberSerializer("uint8")
 export const $uint16 = createNumberSerializer("uint16")
 export const $uint32 = createNumberSerializer("uint32")
 export const $float32 = createNumberSerializer("float32")
 export const $float64 = createNumberSerializer("float64")
+export const $varstring: PacketSerializer<string> = {
+    encode(value){
+        const encoded = internalTextEncoder.encode(value)
+        return new Uint8Array([
+            ...new Uint8Array(new Uint16Array([encoded.length]).buffer),
+            ...encoded,
+        ])
+    },
+    decode(value){
+        const arr = Array.from(value)
+        const length = new Uint16Array(arr.slice(0, 2))[0]
+        const stringCode = arr.slice(2, 2 + length)
+        return internalTextDecoder.decode(new Uint8Array(stringCode))
+    },
+}
+export const $string = (length: number): PacketSerializer<string> => ({
+    length,
+    encode(value){
+        const safeValue = String(value + " ".repeat(length)).substring(0, length)
+        return internalTextEncoder.encode(safeValue)
+    },
+    decode(value){
+        return internalTextDecoder.decode(new Uint8Array(value))
+    }
+})

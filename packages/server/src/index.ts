@@ -1,5 +1,5 @@
 import { $uint8, ExtractSerializerMap, Packet, PacketManager, Server } from "@pip-pip/core"
-import { Client } from "@pip-pip/core/src/common"
+import { $varstring, Client } from "@pip-pip/core/src/common"
 import { Connection } from "@pip-pip/core/src/networking/connection"
 import { LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
 import { packetManager } from "@pip-pip/game/src/networking/packets"
@@ -29,6 +29,9 @@ const defaultLobbyOptions: LobbyTypeOptions = {
 server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     // new lobby created!
     // console.log(lobby)
+    lobby.events.on("addConnection", ({ connection }) => {
+        console.log("someone connected!")
+    })
 })
 
 const wait = (n = 1000) => new Promise(resolve => setTimeout(resolve, n))
@@ -41,44 +44,23 @@ async function run(){
     const client = new Client(packetManager)
     await client.connect()
 
-    const lobby = await client.createLobby("default")
-    console.log(lobby)
-
-    const join = await client.joinLobby(lobby.lobbyId)
-    console.log(join)
-
-    await wait()
-    client.ws?.close()
-    await wait()
-    await client.connect()
-    await wait()
-    const leave = await client.leaveLobby()
-
-    console.log(leave)
-
-    await wait()
-    await client.joinLobby(lobby.lobbyId)
-    await client.leaveLobby()
-    await wait(5000)
-    client.ws?.close()
+    
+    const input = {
+        id: JSON.stringify({
+            pi: Math.PI,
+            n: Math.floor(Math.pow(10, Math.random() * 8))
+        }),
+        name: "this",
+        n: Math.PI,
+    }
+    const code = client.packets.manager.packets.name.encode(input)
+    console.log(code, code.length)
+    // const buffer = new Uint8Array(code).buffer
+    const peak = client.packets.manager.packets.name.peekLength(code)
+    console.log(peak)
+    const decode = client.packets.manager.packets.name.decode(code)
+    console.log(decode)
+    // console.log(client.packets.manager.packets.name.dataLength, peak, buffer, input, decode)
 }
-
-server.events.on("socketReady", ({ connection }) => {
-    connection.send(new Uint32Array([69]).buffer)
-})
-
-const logConnections = () => {
-    console.log("logConnections", Object.keys(server.connections))
-}
-
-server.events.on("addConnection", logConnections)
-server.events.on("removeConnection", logConnections)
-
-const logLobbies = () => {
-    console.log("logLobbies", Object.keys(server.lobbies))
-}
-
-server.events.on("removeLobby", logLobbies)
-server.events.on("createLobby", logLobbies)
 
 run()
