@@ -6,7 +6,7 @@ import { ConnectionEventMap } from "../server/events"
 import { Lobby } from "../lobby"
 import { generateId } from "../../common"
 import { ConnectionJSON } from "../api/types"
-import WebSocket from "ws"
+import WebSocket, { RawData } from "ws"
 
 export type ConnectionLatencyRecord = {
     amount: number,
@@ -117,12 +117,27 @@ export class Connection<
 
     setWebSocket(ws: WebSocket){
         this.ws = ws
-        // add listeners
+        this.ws.on("message", this.socketMessage.bind(this))
+        this.ws.on("close", this.socketClose.bind(this))
         this.stopIdle() // Emits statusChange 
     }
 
+    socketMessage(data: RawData){
+        //
+        this.events.emit("socketMessage", { data })
+    }
+
+    socketClose(){
+        //
+        this.events.emit("socketClose")
+    }
+
     removeWebSocket(){
-        this.ws?.close()
+        if(typeof this.ws !== "undefined"){
+            this.ws.off("close", this.socketClose.bind(this))
+            this.ws.off("message", this.socketClose.bind(this))
+            this.ws.close()
+        }
         this.events.emit("statusChange", { status: this.status })
         this.startIdle() // Emits status
     }

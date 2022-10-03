@@ -44,9 +44,9 @@ async function run(){
     console.log("server running")
 
     const client = new Client(packetManager)
-    await client.requestConnection()
-
-    console.log(client.connectionToken)
+    const connection = await client.requestConnection()
+    
+    console.log(connection)
 }
 
 run()

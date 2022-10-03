@@ -1,5 +1,6 @@
 import { Connection, ConnectionStatus } from "../connection"
 import { PacketManagerSerializerMap } from "../packets/manager"
+import WebSocket, { RawData } from "ws"
 
 export type ServerEventMap<
     T extends PacketManagerSerializerMap,
@@ -10,6 +11,16 @@ export type ServerEventMap<
 
     addConnection: { connection: Connection<T, R, P> },
     removeConnection: { connection: Connection<T, R, P> },
+
+    socketOpen: { ws: WebSocket },
+
+    socketMessage: { ws: WebSocket, data: RawData, connection?: Connection<T, R, P> },
+    socketVerify: { ws: WebSocket, connection: Connection<T, R, P> },
+
+    socketError: { ws: WebSocket, error: Error }
+
+    socketClose: { ws: WebSocket, connection: Connection<T, R, P> },
+    socketVerifyFail: { ws: WebSocket },
 }
 
 export type ConnectionEventMap<
@@ -21,6 +32,9 @@ export type ConnectionEventMap<
     idleEnd: undefined,
 
     statusChange: { status: ConnectionStatus },
+
+    socketClose: undefined,
+    socketMessage: { data: RawData },
 
     destroy: undefined,
 }
