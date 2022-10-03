@@ -11,6 +11,12 @@ export class BasePacketManager<T extends PacketManagerSerializerMap>{
 
     constructor(packets: T){{
         this.packets = packets
+
+        const p = Object.values(this.packets)
+        if(p.length > 256) throw new Error("Packet manager can only handle 256 packet types.")
+        for(let i = 0; i < p.length; i++){
+            p[i].setId(i)
+        }
     }}
 }
 
@@ -23,6 +29,8 @@ export class PacketManager<T extends PacketManagerSerializerMap>
         })
     }
 }
+
+export type ExtractSerializerMap<T> = T extends PacketManager<infer R> ? R : never
 
 export type ServerPacketManager = BasePacketManager<ServerSerializerMap>
 

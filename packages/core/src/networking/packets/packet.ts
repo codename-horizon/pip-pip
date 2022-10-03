@@ -9,14 +9,12 @@ type GetPacketInput<T extends PacketSerializerMap> = {
 }
 
 export class Packet<T extends PacketSerializerMap>{
-    id: number
+    id = 0
     serializers: T
-    keyOrder: string[] = []// Bugs out if Array<keyof T>
+    keyOrder: string[] = [] // Array<keyof T>
     messageLength = 0
 
-    constructor(id: number, serializers: T){
-        if(id < 0 || id > 255) throw new Error("ID must be an unsigned int8.")
-        this.id = id
+    constructor(serializers: T){
         this.serializers = serializers
         
         for(const key in serializers){
@@ -26,6 +24,11 @@ export class Packet<T extends PacketSerializerMap>{
         }
 
         this.keyOrder = this.keyOrder.sort()
+    }
+
+    setId(id: number){
+        if(id < 0 || id > 255) throw new Error("ID must be an unsigned int8.")
+        this.id = id
     }
 
     encode<I extends GetPacketInput<T>>(inputs: I | I[]){
