@@ -67,7 +67,7 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
             ws.binaryType = "arraybuffer"
             ws.addEventListener("open", openHandler)
             ws.addEventListener("close", closeHandler)
-            ws.addEventListener("message", (data) => {
+            ws.addEventListener("message", ({ data }) => {
                 messageHandler(data instanceof ArrayBuffer ? data : data.toString())
             })
             client.ws = ws

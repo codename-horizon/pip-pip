@@ -20,18 +20,19 @@ export type ServerEventMap<
 
     socketOpen: { ws: WebSocket },
 
-    socketMessage: { ws: WebSocket, data: RawData, connection?: Connection<T, R, P> },
     socketReady: { ws: WebSocket, connection: Connection<T, R, P> },
+
+    socketMessage: { ws: WebSocket, data: RawData, connection?: Connection<T, R, P> },
+    packetMessage: { 
+        packets: PacketManagerDecoded<T & ServerSerializerMap>,
+        ws: WebSocket, connection: Connection<T, R, P>,
+    }
 
     socketError: { ws: WebSocket, error: Error }
 
     socketClose: { ws: WebSocket, connection: Connection<T, R, P> },
     socketVerifyFail: { ws: WebSocket },
 
-    packetMessage: { 
-        packets: PacketManagerDecoded<T & ServerSerializerMap>,
-        ws: WebSocket, connection: Connection<T, R, P>,
-    }
 }
 
 export type ConnectionEventMap<
@@ -46,6 +47,10 @@ export type ConnectionEventMap<
 
     socketClose: undefined,
     socketMessage: { data: RawData },
+    packetMessage: { 
+        packets: PacketManagerDecoded<T & ServerSerializerMap>,
+        ws: WebSocket, connection: Connection<T, R, P>,
+    }
 
     lobbyJoin: { lobby: Lobby<T, R, P> },
     lobbyLeave: { lobby: Lobby<T, R, P> },
@@ -62,6 +67,12 @@ export type LobbyEventMap<
     idleEnd: undefined,
 
     statusChange: { status: LobbyStatus },
+
+    socketMessage: { data: RawData },
+    packetMessage: { 
+        packets: PacketManagerDecoded<T & ServerSerializerMap>,
+        ws: WebSocket, connection: Connection<T, R, P>,
+    }
 
     addConnection: { connection: Connection<T, R, P> },
     removeConnection: { connection: Connection<T, R, P> },

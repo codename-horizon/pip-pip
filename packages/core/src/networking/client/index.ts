@@ -55,6 +55,12 @@ export class Client<T extends PacketManagerSerializerMap>{
     get hasIdAndTokens(){
         return typeof this.connectionId === "string" && typeof this.connectionToken === "string" && typeof this.websocketToken === "string"
     }
+
+    get isReady(){
+        return this.hasIdAndTokens &&
+            typeof this.ws !== "undefined" &&
+            this.ws.readyState === this.ws.OPEN
+    }
 }
 
 export interface Client<T extends PacketManagerSerializerMap>{

@@ -1,17 +1,54 @@
-import { $float32, $float64, $uint16, $uint8, $varstring, Packet, PacketManager } from "@pip-pip/core/src/common";
+import { $float32, $float64, $uint16, $uint32, $uint8, $varstring, Packet, PacketManager } from "@pip-pip/core/src/common"
+import { Player } from "../logic/test"
 
 export const packetManager = new PacketManager({
-    shoot: new Packet({
-        a: $uint16,
-        b: $float32,
-        c: $float64,
+    tick: new Packet({
+        number: $uint32,
     }),
-    dodge: new Packet({
-        count: $uint8,
+    uploadChat: new Packet({
+        message: $varstring,
     }),
-    name: new Packet({
+    downloadMessage: new Packet({
+        order: $uint16,
+        playerId: $varstring,
+        message: $varstring,
+    }),
+    newPlayer: new Packet({
         id: $varstring,
-        name: $varstring,
-        n: $float32,
-    })
+        x: $float32,
+        y: $float32,
+    }),
+    movePlayer: new Packet({
+        id: $varstring,
+        
+        x: $float32,
+        y: $float32,
+        
+        vx: $float32,
+        vy: $float32,
+
+        am: $float32,
+        aa: $float32,
+        tr: $float32,
+    }),
+    removePlayer: new Packet({
+        id: $varstring,
+    }),
+})
+
+export const encodeNewPlayer = (player: Player) => packetManager.serializers.newPlayer.encode({
+    id: player.id,
+    x: player.physics.position.x,
+    y: player.physics.position.y,
+})
+
+export const encodeMovePlayer = (player: Player) => packetManager.serializers.movePlayer.encode({
+    id: player.id,
+    x: player.physics.position.x,
+    y: player.physics.position.y,
+    vx: player.physics.velocity.x,
+    vy: player.physics.velocity.y,
+    am: player.acceleration.magnitude,
+    aa: player.acceleration.angle,
+    tr: player.targetRotation,
 })

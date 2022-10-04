@@ -43,9 +43,12 @@ export function initializeWebSockets<
                                 connection.lobby?.packets.events.emit(key, event)
                             }
                         }
-                        server.events.emit("packetMessage", {
+                        const packetEvent = {
                             packets, ws, connection,
-                        })
+                        }
+                        server.events.emit("packetMessage", packetEvent)
+                        connection.events.emit("packetMessage", packetEvent)
+                        connection.lobby?.events.emit("packetMessage", packetEvent)
                     } catch(e){
                         console.warn(e)
                     }
