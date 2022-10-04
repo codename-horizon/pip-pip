@@ -1,3 +1,5 @@
+import { Concrete } from "../lib/types"
+
 export type EventMap = Record<string, any>
 export type EventKey<T extends EventMap> = string & keyof T
 export type EventCallback<T> = (params: T) => void
@@ -15,10 +17,10 @@ export type EventEmitterSubscriptionCallback<T extends EventMap> = (event: Event
 
 export class EventEmitter<T extends EventMap  = Record<string, never>>{
     name: string
-    listeners: {
+    private listeners: {
         [K in keyof T]?: Array<(params: T[K]) => void>;
     } = {}
-    subscribers: EventEmitterSubscriptionCallback<T>[] = []
+    private subscribers: EventEmitterSubscriptionCallback<T>[] = []
 
 
     constructor(name = "EVENT_EMITTER"){
@@ -72,8 +74,8 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
 }
 
 export class EventCollector<T extends EventMap>{
-    emitter: EventEmitter<T>
     pool: EventNameParmeter<T>[] = []
+    emitter: EventEmitter<T>
     limit: Array<keyof T>
 
     constructor(emitter: EventEmitter<T>, limit: Array<keyof T> = []){
@@ -82,18 +84,24 @@ export class EventCollector<T extends EventMap>{
         buildEventCollector(this)
     }
 
+    filter<K extends keyof T>(eventName: K){
+        const pool = (this.limit.length === 1 && this.limit[0] === eventName) ? this.pool : 
+            this.pool.filter(event => typeof event[eventName] !== "undefined")
+        return pool as Concrete<EventNameParmeter<{ [O in K]: T[O] }>>[]
+    }
+
     flush(){
         this.pool = []
     }
 }
 
 export interface EventCollector<T extends EventMap>{
-    catchEvent: (event: EventNameParmeter<T>) => void
+    collect: (event: EventNameParmeter<T>) => void
     destroy: () => void
 }
 
 function buildEventCollector<T extends EventMap>(collector: EventCollector<T>){
-    collector.catchEvent = (event: EventNameParmeter<T>) => {
+    collector.collect = (event: EventNameParmeter<T>) => {
         if(collector.limit.length === 0){
             collector.pool.push(event)
         } else{
@@ -104,9 +112,9 @@ function buildEventCollector<T extends EventMap>(collector: EventCollector<T>){
         }
     }
 
-    collector.emitter.subscribe(collector.catchEvent)
+    collector.emitter.subscribe(collector.collect)
 
     collector.destroy = () => {
-        collector.emitter.unsubscribe(collector.catchEvent)
+        collector.emitter.unsubscribe(collector.collect)
     }
 }

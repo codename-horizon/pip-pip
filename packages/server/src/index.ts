@@ -45,7 +45,7 @@ async function run(){
 
     const client = new Client(packetManager)
     await client.connect()
-    const collector = new EventCollector(client.events, ["packetMessage"])
+    const collector = new EventCollector(client.events)
 
     let message = packetManager.serializers.name.encode({
         id: generateId(),
@@ -74,11 +74,7 @@ async function run(){
     server.broadcast(encoded)
 
     setTimeout(() => {
-        console.log(collector.pool)
-        for(const event of collector.pool){
-            if(typeof event.packetMessage === "undefined") return
-            console.log(event.packetMessage.packets)
-        }
+        console.log(collector.filter("packetMessage"))
         collector.flush()
         console.log(collector.pool)
     }, 2000)
