@@ -11,8 +11,8 @@ import { Client } from '@pip-pip/core/src/client'
 import { encodeMovePlayer, encodePlayerInput, packetManager } from '@pip-pip/game/src/networking/packets'
 
 const client = new Client(packetManager, {
-    // host: "star-mag.at.playit.gg",
-    // port: 17294,
+    host: window.location.hostname,
+    port: 3000,
 })
 
 const clientEvents = new EventCollector(client.events)
