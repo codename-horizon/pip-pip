@@ -16,14 +16,14 @@ type GameLobbyLocals = {
 }
 
 const server = new Server<GamePacketManagerSerializerMap, GameConnectionLocals, GameLobbyLocals>(packetManager, {
-    connectionIdleLifespan: 5000,
-    lobbyIdleLifespan: 5000,
+    connectionIdleLifespan: 8000,
+    lobbyIdleLifespan: 8000,
     verifyTimeLimit: 5000,
 })
 
 const defaultLobbyOptions: LobbyTypeOptions = {
-    maxConnections: 8,
-    maxInstances: 20,
+    maxConnections: 32,
+    maxInstances: 32,
     userCreatable: true,
 }
 
@@ -129,8 +129,16 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
         lobbyEvents.flush()
     })
 
-    debugTick.on("tick", () => {
-        console.log(Object.keys(game.players))
+    debugTick.on("tick", async () => {
+        const pings: Record<string, number> = {}
+
+        const connections = Object.values(lobby.connections)
+
+        for(const connection of connections){
+            pings[connection.id] = await connection.getPing()
+        }
+
+        console.log(updateTick.getPerformance(), Object.entries(pings))
     })
 
     debugTick.startTick()

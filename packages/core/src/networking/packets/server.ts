@@ -1,12 +1,12 @@
 import { Packet } from "./packet"
-import { $uint32 } from "./serializer"
+import { $biguint64, $uint32 } from "./serializer"
 
 export const serverPackets = {
     ping: new Packet({
-        time: $uint32,
+        time: $biguint64,
     }),
     pong: new Packet({
-        time: $uint32,
+        time: $biguint64,
     }),
 }
 

@@ -35,12 +35,15 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
         this.listeners[eventName] = (this.listeners[eventName] || []).filter(f => f !== callback)
     }
 
-    once<K extends keyof T>(eventName: K, callback: EventCallback<T[K]>): void{
+    once<K extends keyof T>(eventName: K, callback: EventCallback<T[K]>){
         const temporaryCallback: typeof callback = (params) => {
             callback(params)
             this.off(eventName, temporaryCallback)
         }
         this.on(eventName, temporaryCallback)
+        return () => {
+            this.off(eventName, temporaryCallback)
+        }
     }
 
     emit<K extends keyof T>(eventName: K, ...params: EventUndefinedParam<T[K]>): void {

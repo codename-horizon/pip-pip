@@ -40,6 +40,22 @@ export const $uint16 = createNumberSerializer("uint16")
 export const $uint32 = createNumberSerializer("uint32")
 export const $float32 = createNumberSerializer("float32")
 export const $float64 = createNumberSerializer("float64")
+
+export const $biguint64: PacketSerializer<number> = {
+    length: 8,
+    encode(value){
+        return new Uint8Array(new BigUint64Array([BigInt(value)]).buffer)
+    },
+    decode(value){
+        const output = new BigUint64Array(1)
+        const int = new Uint8Array(output.buffer)
+        for(let i = 0; i < value.length; i++){
+            int[i] = value[i]
+        }
+        return Number(output[0])
+    }
+}
+
 export const $varstring: PacketSerializer<string> = {
     encode(value){
         const encoded = internalTextEncoder.encode(value)

@@ -78,4 +78,5 @@ export interface Client<T extends PacketManagerSerializerMap>{
     connectWebSocket: () => Promise<void>
     send: (data: string | ArrayBuffer) => void
     connect: () => Promise<void>
+    getPing: () => Promise<number>
 }

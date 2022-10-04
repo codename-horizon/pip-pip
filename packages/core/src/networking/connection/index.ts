@@ -34,7 +34,7 @@ export class Connection<
     R extends Record<string, any> = Record<string, any>,
     P extends Record<string, any> = Record<string, any>,
 >{
-    id = generateId(8)
+    id = generateId(4)
     token = {
         connection: generateId(64),
         websocket: generateId(64),
@@ -158,7 +158,9 @@ export interface Connection<
     R extends Record<string, any> = Record<string, any>,
     P extends Record<string, any> = Record<string, any>,
 >{
+    // websockets.ts
     setWebSocket: (ws: WebSocket) => void
     removeWebSocket: () => void
     send: (data: string | ArrayBuffer) => void
+    getPing: () => Promise<number>
 }

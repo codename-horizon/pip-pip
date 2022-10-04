@@ -4,6 +4,8 @@ export const SERVER_DEFAULT_BASE_ROUTE = "/hrzn"
 export const SERVER_DEFAULT_PORT = 3000
 export const SERVER_HEADER_KEY = "x-hrzn"
 
+export const MAX_PING = 999
+
 export const CLIENT_DEFAULT_TOKEN_KEY  = "hrznt"
 
 export enum LobbyDiscoveryMode {

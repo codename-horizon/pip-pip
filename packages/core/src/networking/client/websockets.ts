@@ -1,6 +1,9 @@
 import { Client } from "."
-import { PacketManagerSerializerMap } from "../packets/manager"
+import { ClientPacketManagerEventMap, PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
 import { RawData, WebSocket as NodeWebSocket } from "ws"
+import { ServerSerializerMap } from "../packets/server"
+import { EventEmitter } from "../../common/events"
+import { MAX_PING } from "../../lib/constants"
 
 export function initializeWebSockets<T extends PacketManagerSerializerMap>(client: Client<T>){
     const isBrowser = typeof window !== "undefined"
@@ -95,4 +98,35 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
         }
         await client.connectWebSocket()
     }
+
+    const pe = client.packets.events as EventEmitter<ClientPacketManagerEventMap<ServerSerializerMap>>
+
+    pe.on("ping", ({ data }) => {
+        const code = new Uint8Array(client.packets.manager.serializers.pong.encode({
+            time: data.time,
+        }))
+        client.send(code)
+    })
+
+    client.getPing = () => new Promise((resolve, reject) => {
+        let completed = false
+
+        const cancel = pe.once("pong", ({ data }) => {
+            const ping = Date.now() - data.time
+            completed = true
+            clearTimeout(timeout)
+            resolve(ping)
+        })
+
+        const timeout = setTimeout(() => {
+            if(completed === false){
+                cancel()
+                resolve(MAX_PING)
+            }
+        }, MAX_PING)
+
+        const code = client.packets.manager.serializers.ping.encode({ time: Date.now() })
+        const buffer = new Uint8Array(code).buffer
+        client.send(buffer)
+    })
 }

@@ -1,7 +1,9 @@
-import { PacketManagerSerializerMap } from "../packets/manager"
+import { PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
 import { Server } from "."
 import { Connection } from "../connection"
 import WebSocket, { RawData } from "ws"
+import { EventEmitter } from "../../common/events"
+import { ServerSerializerMap } from "../packets/server"
 
 export function initializeWebSockets<
     T extends PacketManagerSerializerMap,

@@ -1,6 +1,9 @@
 import WebSocket, { RawData } from "ws"
 import { Connection } from "."
-import { PacketManagerSerializerMap } from "../packets/manager"
+import { EventEmitter } from "../../common/events"
+import { MAX_PING } from "../../lib/constants"
+import { PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
+import { ServerSerializerMap } from "../packets/server"
 
 export function initializeWebSockets<
     T extends PacketManagerSerializerMap,
@@ -40,4 +43,37 @@ export function initializeWebSockets<
             connection.ws.send(data)
         }
     }
+
+    
+    const pe = connection.packets.events as EventEmitter<ServerPacketManagerEventMap<ServerSerializerMap>>
+
+    pe.on("ping", ({ data }) => {
+        const { pong } = connection.server.packets.manager.serializers
+        const code = new Uint8Array(pong.encode({
+            time: data.time,
+        }))
+        connection.send(code)
+    })
+
+    connection.getPing = () => new Promise((resolve, reject) => {
+        let completed = false
+
+        const cancel = pe.once("pong", ({ data }) => {
+            const ping = Date.now() - data.time
+            completed = true
+            clearTimeout(timeout)
+            resolve(ping)
+        })
+
+        const timeout = setTimeout(() => {
+            if(completed === false){
+                cancel()
+                resolve(MAX_PING)
+            }
+        }, MAX_PING)
+
+        const code = connection.server.packets.manager.serializers.ping.encode({ time: Date.now() })
+        const buffer = new Uint8Array(code).buffer
+        connection.send(buffer)
+    })
 }

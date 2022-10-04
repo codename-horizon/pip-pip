@@ -29,13 +29,14 @@ const renderTick = new Ticker(20, true, "Render")
 const updateTick = new Ticker(game.tps, false, "Update")
 const debugTick = new Ticker(4, false, "Debug")
 
-let lobbyId = ""
+let lobbyId = window.location.href.split("#")[1] || ""
 
-debugTick.on("tick", () => {
+debugTick.on("tick", async () => {
+    const ping = await client.getPing()
     const renderPerf = renderTick.getPerformance()
     const updatePerf = updateTick.getPerformance()
     const totalExecTime = Number(updatePerf.averageExecutionTime + renderPerf.averageExecutionTime).toFixed(2)
-    document.title = `${renderPerf.averageTPS.toFixed(2)}fps ${updatePerf.averageExecutionTime.toFixed(2)}+${renderPerf.averageExecutionTime.toFixed(2)}=${totalExecTime}ms`
+    document.title = `${renderPerf.averageTPS.toFixed(2)}fps ${updatePerf.averageExecutionTime.toFixed(2)}ms ${renderPerf.averageExecutionTime.toFixed(2)}ms ${ping}ms`
 })
 
 function setup(){
@@ -47,14 +48,17 @@ function setup(){
     onMounted(async () => {
         console.log(client)
         await client.connect()
-        if(confirm("Create a new lobby?")){
-            const lobby = await client.createLobby("default")
-            lobbyId = lobby.lobbyId
-        } else{
-            const _lobbyId = prompt("What lobby ID code?")
-            lobbyId = typeof _lobbyId === "string" ? _lobbyId : ""
+        if(lobbyId.length === 0){
+            if(confirm("Create a new lobby?")){
+                const lobby = await client.createLobby("default")
+                lobbyId = lobby.lobbyId
+            } else{
+                const _lobbyId = prompt("What lobby ID code?")
+                lobbyId = typeof _lobbyId === "string" ? _lobbyId : ""
+            }
         }
         console.log(lobbyId)
+        window.location.href = window.location.href.split("#")[0] + "#" + lobbyId
         await client.joinLobby(lobbyId)
 
         renderer.graphics.setContainer(container.value)
