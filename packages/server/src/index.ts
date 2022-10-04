@@ -37,7 +37,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     const game = new PipPipGame()
 
     // create fake players
-    for(let i = 0; i < 20; i++){
+    for(let i = 0; i < 16; i++){
         const player = new Player(generateId())
         player.physics.position.x = Math.random() * 500
         player.physics.position.y = Math.random() * 500
@@ -50,7 +50,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     const updateTick = new Ticker(game.tps, false, "Game")
     const debugTick = new Ticker(1, false, "Debug")
 
-    const sendPingInterval = Math.floor(game.tps / 8)
+    const sendPingInterval = Math.floor(game.tps / 4)
 
     const updatePlayerPing = (id: string) => {
         if(id in game.players && id in lobby.connections){
@@ -92,10 +92,11 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
                     player.physics.position.y = p.y
                     player.physics.velocity.x = p.vx
                     player.physics.velocity.y = p.vy
-                    player.acceleration.angle = p.aa
-                    player.acceleration.magnitude = p.am
-                    player.targetRotation = p.tr
-                    player.shooting = p.s
+                    player.acceleration.angle = p.accelerationAngle
+                    player.acceleration.magnitude = p.accelerationMagnitude
+                    player.targetRotation = p.targetRotation
+                    player.inputShooting = p.shooting
+                    player.inputReloading = p.reloading
                 }
             }
         }
@@ -175,7 +176,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
             Object.values(game.players).map(player => `${player.id}:${player.ping}ms`).join(" "))
     })
 
-    debugTick.startTick()
+    // debugTick.startTick()
     updateTick.startTick()
 
     lobby.events.on("destroy", () => {

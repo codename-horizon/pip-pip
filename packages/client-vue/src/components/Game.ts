@@ -32,7 +32,7 @@ const debugTick = new Ticker(4, false, "Debug")
 let lobbyId = window.location.href.split("#")[1] || ""
 let lastTick = 0
 
-new EventCollector(client.packets.events).on("collect", ({event}) => console.log(event))
+// new EventCollector(client.packets.events).on("collect", ({event}) => console.log(event))
 
 function setup(){
     const container = ref()
@@ -43,18 +43,23 @@ function setup(){
     onMounted(async () => {
         console.log(client)
         await client.connect()
-        if(lobbyId.length === 0){
-            if(confirm("Create a new lobby?")){
-                const lobby = await client.createLobby("default")
-                lobbyId = lobby.lobbyId
-            } else{
-                const _lobbyId = prompt("What lobby ID code?")
-                lobbyId = typeof _lobbyId === "string" ? _lobbyId : ""
+        try{
+            if(lobbyId.length === 0){
+                if(confirm("Create a new lobby?")){
+                    const lobby = await client.createLobby("default")
+                    lobbyId = lobby.lobbyId
+                } else{
+                    const _lobbyId = prompt("What lobby ID code?")
+                    lobbyId = typeof _lobbyId === "string" ? _lobbyId : ""
+                }
             }
+            window.location.href = window.location.href.split("#")[0] + "#" + lobbyId
+            await client.joinLobby(lobbyId)
+        } catch(e){
+            console.warn(e)
+            const lobby = await client.createLobby("default")
+            lobbyId = lobby.lobbyId
         }
-        console.log(lobbyId)
-        window.location.href = window.location.href.split("#")[0] + "#" + lobbyId
-        await client.joinLobby(lobbyId)
 
         renderer.graphics.setContainer(container.value)
         renderer.setup()
@@ -79,9 +84,6 @@ function setup(){
                     } else{
                         packetIsOld = true
                     }
-                    // if(packetIsOld){
-                    // }
-                    console.log(game.tickNumber, t.number, lastTick)
                 }
                 for(const p of packets.removePlayer || []){
                     const player = game.players[p.id]
@@ -127,9 +129,9 @@ function setup(){
                             player.physics.position.y = p.y
                             player.physics.velocity.x = p.vx
                             player.physics.velocity.y = p.vy
-                            player.acceleration.angle = p.aa
-                            player.acceleration.magnitude = p.am
-                            player.targetRotation = p.tr
+                            player.acceleration.angle = p.accelerationAngle
+                            player.acceleration.magnitude = p.accelerationMagnitude
+                            player.targetRotation = p.targetRotation
                         }
                     }
                 }
@@ -148,7 +150,7 @@ function setup(){
                     lobbyId,
                     ping: player.ping + "ms",
                     mag: player.debugMagModifier.toFixed(2),
-                    shooting: player.shooting,
+                    shooting: player.inputShooting,
                     reloading: player.isReloading ? player.reloadTimeLeft : false,
                     ammo: player.ammo,
                 }
@@ -185,8 +187,8 @@ function setup(){
                 player.targetRotation = mouseAngle
     
                 // shooting
-                player.shooting = mouse.state.down
-                if(keyboard.state.KeyR) player.reload()
+                player.inputShooting = mouse.state.down || keyboard.state.Space
+                player.inputReloading = keyboard.state.KeyR
             }
 
             // update the game

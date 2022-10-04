@@ -5,12 +5,12 @@ export class Ship{
     aim = 0.8
 
     agility = 0.75
-    acceleration = 5
+    acceleration = 3
     
     reloadDuration = 1200
     shootInterval = 3
     bullet = {
-        count: 16,
+        count: 40,
         speed: 20,
         size: 20,
     }
@@ -76,7 +76,9 @@ export class Player{
 
     lastShotTick = -100
 
-    shooting = false
+    inputShooting = false
+    inputReloading = false
+
     acceleration = {
         angle: 0,
         magnitude: 0,
@@ -186,8 +188,8 @@ export class PipPipGame{
         for(const player of players){
             if(typeof player.ship !== "undefined"){
                 // shooting
-                if(player.shooting === true){
-                    if(player.ammo === 0){
+                if(player.inputShooting === true){
+                    if(player.ammo === 0 || player.inputReloading){
                         player.reload()
                     } else if(player.isReadyToShoot){
                         if(this.tickNumber >= player.lastShotTick + player.ship.shootInterval){

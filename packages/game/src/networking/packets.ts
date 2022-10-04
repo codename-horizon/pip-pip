@@ -23,29 +23,28 @@ export const packetManager = new PacketManager({
     }),
     movePlayer: new Packet({
         id: $varstring,
-        
         x: $float32,
         y: $float32,
-        
         vx: $float32,
         vy: $float32,
-
-        am: $float32,
-        aa: $float32,
-        tr: $float32,
+        accelerationMagnitude: $float32,
+        accelerationAngle: $float32,
+        targetRotation: $float32,
     }),
     playerInput: new Packet({
         x: $float64,
         y: $float64,
-        
         vx: $float64,
         vy: $float64,
-
-        am: $float64,
-        aa: $float64,
-        tr: $float64,
-
-        s: $bool,
+        accelerationMagnitude: $float64,
+        accelerationAngle: $float64,
+        targetRotation: $float64,
+        shooting: $bool,
+        reloading: $bool,
+    }),
+    playerCombat: new Packet({
+        ammo: $uint8,
+        reloadingTime: $uint16,
     }),
     shootBullet: new Packet({
         playerId: $varstring,
@@ -75,9 +74,9 @@ export const encodeMovePlayer = (player: Player) => packetManager.serializers.mo
     y: player.physics.position.y,
     vx: player.physics.velocity.x,
     vy: player.physics.velocity.y,
-    am: player.acceleration.magnitude,
-    aa: player.acceleration.angle,
-    tr: player.targetRotation,
+    accelerationMagnitude: player.acceleration.magnitude,
+    accelerationAngle: player.acceleration.angle,
+    targetRotation: player.targetRotation,
 })
 
 export const encodePlayerInput = (player: Player) => packetManager.serializers.playerInput.encode({
@@ -85,10 +84,11 @@ export const encodePlayerInput = (player: Player) => packetManager.serializers.p
     y: player.physics.position.y,
     vx: player.physics.velocity.x,
     vy: player.physics.velocity.y,
-    am: player.acceleration.magnitude,
-    aa: player.acceleration.angle,
-    tr: player.targetRotation,
-    s: player.shooting,
+    accelerationMagnitude: player.acceleration.magnitude,
+    accelerationAngle: player.acceleration.angle,
+    targetRotation: player.targetRotation,
+    shooting: player.inputShooting,
+    reloading: player.inputReloading,
 })
 
 export const encodeBullet = (bullet: Bullet) => packetManager.serializers.shootBullet.encode({
