@@ -1,5 +1,5 @@
 import { $uint8, ExtractSerializerMap, Packet, PacketManager, Server } from "@pip-pip/core"
-import { $varstring, Client, generateId } from "@pip-pip/core/src/common"
+import { $varstring, Client, EventCollector, EventEmitter, generateId } from "@pip-pip/core/src/common"
 import { Connection } from "@pip-pip/core/src/networking/connection"
 import { LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
 import { packetManager } from "@pip-pip/game/src/networking/packets"
@@ -36,6 +36,9 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
 
 const wait = (n = 1000) => new Promise(resolve => setTimeout(resolve, n))
 
+const collector = new EventCollector(server.events)
+
+
 async function run(){
     console.clear()
     await server.start()
@@ -44,11 +47,17 @@ async function run(){
     const client = new Client(packetManager)
     await client.connect()
 
-    const message = packetManager.serializers.name.encode({
+    let message = packetManager.serializers.name.encode({
         id: generateId(),
         name: generateId(),
         n: Math.random()
     })
+
+    message = message.concat(packetManager.serializers.name.encode({
+        id: "mike",
+        name: "meg",
+        n: 69,
+    }))
 
     const encoded = new Uint8Array(message).buffer
 
@@ -63,6 +72,12 @@ async function run(){
 
     console.log(message, message.length)
     server.broadcast(encoded)
+
+    setTimeout(() => {
+        console.log(collector.pool)
+        collector.flush()
+        console.log(collector.pool)
+    }, 5000)
 }
 
 run()
