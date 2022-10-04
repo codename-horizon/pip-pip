@@ -3,7 +3,7 @@ import { $varstring, Client, EventCollector, EventEmitter, generateId, Ticker } 
 import { Connection } from "@pip-pip/core/src/networking/connection"
 import { LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
 import { PipPipGame, Player, Ship } from "@pip-pip/game"
-import { encodeMovePlayer, encodeNewPlayer, encodePlayerPing, packetManager } from "@pip-pip/game/src/networking/packets"
+import { encodeBullet, encodeMovePlayer, encodeNewPlayer, encodePlayerPing, packetManager } from "@pip-pip/game/src/networking/packets"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 
@@ -27,8 +27,22 @@ const defaultLobbyOptions: LobbyTypeOptions = {
     userCreatable: true,
 }
 
+// server.events.on("createConnection", ({ connection }) => {
+//     connection.events.on("statusChange", ({ status }) => {
+//         console.log(connection.id, status)
+//     })
+// })
+
 server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     const game = new PipPipGame()
+
+    // create fake players
+    for(let i = 0; i < 20; i++){
+        const player = new Player(generateId())
+        player.physics.position.x = Math.random() * 500
+        player.physics.position.y = Math.random() * 500
+        game.addPlayer(player)
+    }
 
     const lobbyEvents = new EventCollector(lobby.events)
     const gameEvents = new EventCollector(game.events)
@@ -36,7 +50,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     const updateTick = new Ticker(game.tps, false, "Game")
     const debugTick = new Ticker(1, false, "Debug")
 
-    const sendPingInterval = Math.floor(game.tps / 2)
+    const sendPingInterval = Math.floor(game.tps / 8)
 
     const updatePlayerPing = (id: string) => {
         if(id in game.players && id in lobby.connections){
@@ -71,7 +85,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
         }
         for(const event of lobbyEvents.filter("packetMessage")){
             const { packets, connection } = event.packetMessage
-            for(const p of packets.movePlayer || []){
+            for(const p of packets.playerInput || []){
                 const player = game.players[connection.id]
                 if(typeof player !== "undefined"){
                     player.physics.position.x = p.x
@@ -81,6 +95,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
                     player.acceleration.angle = p.aa
                     player.acceleration.magnitude = p.am
                     player.targetRotation = p.tr
+                    player.shooting = p.s
                 }
             }
         }
@@ -101,10 +116,6 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
             commonMessages.push(packetManager.serializers.removePlayer.encode({
                 id: player.id,
             }))
-        }
-
-        if(gameEvents.pool.length > 0){
-            console.log(gameEvents.pool)
         }
 
         const connections = Object.values(lobby.connections)
@@ -135,6 +146,13 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
                 if(game.tickNumber % sendPingInterval === 0){
                     connectionMessages.push(encodePlayerPing(player))
                 }
+            }
+
+            // log bullets
+            for(const event of gameEvents.filter("addBullet")){
+                const { bullet } = event.addBullet
+                if(bullet.owner?.id === connection.id) continue
+                connectionMessages.push(encodeBullet(bullet))
             }
 
             for(const message of connectionMessages){

@@ -56,6 +56,16 @@ export const $biguint64: PacketSerializer<number> = {
     }
 }
 
+export const $bool: PacketSerializer<boolean> = {
+    length: 1,
+    encode(value){
+        return $uint8.encode(value === true ? 1 : 0)
+    },
+    decode(value){
+        return $uint8.decode(value) === 1
+    }
+}
+
 export const $varstring: PacketSerializer<string> = {
     encode(value){
         const encoded = internalTextEncoder.encode(value)
@@ -64,13 +74,23 @@ export const $varstring: PacketSerializer<string> = {
             ...encoded,
         ])
     },
-    decode(value){
+    decode(value){ 
         const arr = Array.from(value)
         const length = new Uint16Array(arr.slice(0, 2))[0]
         const stringCode = arr.slice(2, 2 + length)
         return internalTextDecoder.decode(new Uint8Array(stringCode))
     },
 }
+
+export const $json = <T extends Record<string, any>>(): PacketSerializer<T> => ({
+    encode(value){
+        return $varstring.encode(JSON.stringify(value))
+    },
+    decode(value){
+        return JSON.parse($varstring.decode(value))
+    },
+})
+
 export const $string = (length: number): PacketSerializer<string> => ({
     length,
     encode(value){

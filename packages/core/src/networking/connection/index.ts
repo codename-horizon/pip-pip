@@ -24,9 +24,9 @@ timedout
 */
 
 export enum ConnectionStatus {
-    IDLE = 0,
-    READY = 1,
-    DESTROYED = 2,
+    IDLE = "idle",
+    READY = "ready",
+    DESTROYED = "destroyed",
 }
 
 export class Connection<

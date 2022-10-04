@@ -32,9 +32,9 @@ export type LobbyType<
 }
 
 export enum LobbyStatus {
-    IDLE = 0,
-    ACTIVE = 1,
-    DESTROYED = 2,
+    IDLE = "idle",
+    ACTIVE = "active",
+    DESTROYED = "destroyed",
 }
 
 export class Lobby<

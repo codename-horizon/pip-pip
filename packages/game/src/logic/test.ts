@@ -4,8 +4,8 @@ import * as PIXI from "pixi.js"
 export class Ship{
     aim = 0.8
 
-    agility = 0.6
-    acceleration = 3
+    agility = 0.75
+    acceleration = 5
     
     reloadDuration = 1200
     shootInterval = 3
@@ -116,7 +116,15 @@ export type PipPipGameEventMap = {
     removeBullet: { bullet: Bullet },
 }
 
+export type PipPipGameOptions = {
+    shootingAuthority: boolean
+}
+
 export class PipPipGame{
+    options: PipPipGameOptions = {
+        shootingAuthority: false,
+    }
+
     events: EventEmitter<PipPipGameEventMap> = new EventEmitter()
 
     players: Record<string, Player> = {}
@@ -132,7 +140,11 @@ export class PipPipGame{
     readonly tps = 20
     readonly deltaMs = 1000 / this.tps
 
-    constructor(){
+    constructor(options: Partial<PipPipGameOptions> = {}){
+        this.options = {
+            ...this.options,
+            ...options,
+        }
         this.physics.options.baseTps = this.tps
     }
 

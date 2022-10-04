@@ -1,4 +1,4 @@
-import { PipPipGame, Player, Ship } from "@pip-pip/game/src/logic/test";
+import { Bullet, PipPipGame, Player, Ship } from "@pip-pip/game/src/logic/test";
 import { defineComponent, onMounted, ref } from "vue";
 import * as PIXI from "pixi.js"
 import ship1 from "../assets/ship-1.png"
@@ -8,7 +8,7 @@ import { PipPipGameRenderer } from "../game/render";
 
 
 import { Client } from '@pip-pip/core/src/client'
-import { encodeMovePlayer, packetManager } from '@pip-pip/game/src/networking/packets'
+import { encodeMovePlayer, encodePlayerInput, packetManager } from '@pip-pip/game/src/networking/packets'
 
 const client = new Client(packetManager, {
     // host: "star-mag.at.playit.gg",
@@ -30,6 +30,9 @@ const updateTick = new Ticker(game.tps, false, "Update")
 const debugTick = new Ticker(4, false, "Debug")
 
 let lobbyId = window.location.href.split("#")[1] || ""
+let lastTick = 0
+
+new EventCollector(client.packets.events).on("collect", ({event}) => console.log(event))
 
 function setup(){
     const container = ref()
@@ -65,32 +68,20 @@ function setup(){
         updateTick.on("tick", ({ deltaMs, deltaTime }) => {
             // Handle incoming messages
             for(const event of clientEvents.filter("packetMessage")){
+                let packetIsOld = false
                 const { packets } = event.packetMessage
                 for(const t of packets.syncTick || []){
-                    console.log(game.tickNumber, t.number)
                     game.tickNumber = t.number
                 }
-                for(const p of packets.newPlayer || []){
-                    const player = new Player(p.id)
-                    player.ship = new Ship()
-                    player.physics.position.x = p.x
-                    player.physics.position.y = p.y
-                    game.addPlayer(player)
-                    console.log("new player", p)
-                }
-                for(const p of packets.movePlayer || []){
-                    const player = game.players[p.id]
-                    if(typeof player !== "undefined"){
-                        // if(player.id === client.connectionId && player.acceleration.magnitude > 0) continue
-                        if(player.id === client.connectionId) continue
-                        player.physics.position.x = p.x
-                        player.physics.position.y = p.y
-                        player.physics.velocity.x = p.vx
-                        player.physics.velocity.y = p.vy
-                        player.acceleration.angle = p.aa
-                        player.acceleration.magnitude = p.am
-                        player.targetRotation = p.tr
+                for(const t of packets.tick || []){
+                    if(t.number > lastTick){
+                        lastTick = t.number
+                    } else{
+                        packetIsOld = true
                     }
+                    // if(packetIsOld){
+                    // }
+                    console.log(game.tickNumber, t.number, lastTick)
                 }
                 for(const p of packets.removePlayer || []){
                     const player = game.players[p.id]
@@ -102,6 +93,44 @@ function setup(){
                     const player = game.players[p.id]
                     if(typeof player !== "undefined"){
                         player.ping = p.ping
+                    }
+                }
+                for(const p of packets.newPlayer || []){
+                    const player = new Player(p.id)
+                    player.ship = new Ship()
+                    player.physics.position.x = p.x
+                    player.physics.position.y = p.y
+                    game.addPlayer(player)
+                    console.log("new player", p)
+                }
+                for(const b of packets.shootBullet || []){
+                    const bullet = new Bullet()
+                    const player = game.players[b.playerId]
+                    if(typeof player !== "undefined"){
+                        bullet.setOwner(player)
+                    }
+                    bullet.physics.position.x = b.x
+                    bullet.physics.position.y = b.y
+                    bullet.physics.velocity.x = b.vx
+                    bullet.physics.velocity.y = b.vy
+                    game.addBullet(bullet)
+                    console.log(b)
+                }
+                // Discard data if packet is old
+                if(packetIsOld === false){
+                    for(const p of packets.movePlayer || []){
+                        const player = game.players[p.id]
+                        if(typeof player !== "undefined"){
+                            // if(player.id === client.connectionId && player.acceleration.magnitude > 0) continue
+                            if(player.id === client.connectionId) continue
+                            player.physics.position.x = p.x
+                            player.physics.position.y = p.y
+                            player.physics.velocity.x = p.vx
+                            player.physics.velocity.y = p.vy
+                            player.acceleration.angle = p.aa
+                            player.acceleration.magnitude = p.am
+                            player.targetRotation = p.tr
+                        }
                     }
                 }
             }
@@ -170,7 +199,7 @@ function setup(){
                     packetManager.serializers.tick.encode({ number: game.tickNumber }),
                 ]
 
-                messages.push(encodeMovePlayer(player))
+                messages.push(encodePlayerInput(player))
 
                 for(const message of messages){
                     code = code.concat(message)

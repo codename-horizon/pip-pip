@@ -4,6 +4,7 @@ import { Connection } from "../connection"
 import WebSocket, { RawData } from "ws"
 import { EventEmitter } from "../../common/events"
 import { ServerSerializerMap } from "../packets/server"
+import { getForceLatency } from "../../lib/server-env"
 
 export function initializeWebSockets<
     T extends PacketManagerSerializerMap,
@@ -31,45 +32,51 @@ export function initializeWebSockets<
         ws.binaryType = "arraybuffer"
 
         ws.on("message", (data: RawData) => {
-            server.events.emit("socketMessage", { ws, data, connection })
-            if(verified === true){
-                if(data instanceof ArrayBuffer){
-                    try{
-                        const packets = server.packets.manager.decode(data)
-                        for(const key in packets){
-                            const values = packets[key] || []
-                            for(const value of values){
-                                const event: any = { connection, data: value, ws, packets } // TODO: Fix typing
-                                server.packets.events.emit(key, event)
-                                connection.packets.events.emit(key, event)
-                                connection.lobby?.packets.events.emit(key, event)
+            const receive = () => {
+                server.events.emit("socketMessage", { ws, data, connection })
+                if(verified === true){
+                    if(data instanceof ArrayBuffer){
+                        try{
+                            const packets = server.packets.manager.decode(data)
+                            for(const key in packets){
+                                const values = packets[key] || []
+                                for(const value of values){
+                                    const event: any = { connection, data: value, ws, packets } // TODO: Fix typing
+                                    server.packets.events.emit(key, event)
+                                    connection.packets.events.emit(key, event)
+                                    connection.lobby?.packets.events.emit(key, event)
+                                }
                             }
+                            const packetEvent = {
+                                packets, ws, connection,
+                            }
+                            server.events.emit("packetMessage", packetEvent)
+                            connection.events.emit("packetMessage", packetEvent)
+                            connection.lobby?.events.emit("packetMessage", packetEvent)
+                        } catch(e){
+                            console.warn(e)
                         }
-                        const packetEvent = {
-                            packets, ws, connection,
-                        }
-                        server.events.emit("packetMessage", packetEvent)
-                        connection.events.emit("packetMessage", packetEvent)
-                        connection.lobby?.events.emit("packetMessage", packetEvent)
-                    } catch(e){
-                        console.warn(e)
+                    }
+                } else{
+                // Handle handshake
+                    const websocketToken = data.toString()
+                    const targetConnection = server.getConnectionByWebSocketToken(websocketToken)
+                    if(typeof targetConnection === "undefined"){
+                        ws.close()
+                    } else{
+                        clearTimeout(verifyTimeout)
+                        verified = true
+                        connection = targetConnection
+                        connection.setWebSocket(ws)
+                        connection.send(connection.id) // Complete handhsake
+                        server.events.emit("socketReady", { ws, connection })
                     }
                 }
-            } else{
-                // Handle handshake
-                const websocketToken = data.toString()
-                const targetConnection = server.getConnectionByWebSocketToken(websocketToken)
-                if(typeof targetConnection === "undefined"){
-                    ws.close()
-                } else{
-                    clearTimeout(verifyTimeout)
-                    verified = true
-                    connection = targetConnection
-                    ws.send(connection.id) // Complete handhsake
-                    connection.setWebSocket(ws)
-                    server.events.emit("socketReady", { ws, connection })
-                }
             }
+
+            const latency = getForceLatency()
+            if(latency === 0) receive()
+            else setTimeout(receive, latency)
         })
 
         ws.on("close", () => {
