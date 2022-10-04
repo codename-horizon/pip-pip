@@ -1,111 +1,85 @@
-import { AxiosInstance } from "axios"
+import { ClientPacketManagerEventMap, PacketManager, PacketManagerSerializerMap } from "../packets/manager"
+import { Axios, AxiosInstance } from "axios"
 import { WebSocket as NodeWebSocket } from "ws"
-
-import { CLIENT_DEFAULT_TOKEN_KEY, SERVER_DEFAULT_BASE_ROUTE } from "../../lib/constants"
-import { EventEmitter } from "../../events"
-import { ClientPacketEventMap, internalPacketMap, InternalPacketMap, PacketDecoded, PacketManager, PacketMap } from "../packets"
-import { ConnectionJSON } from "../server/connection"
-import { initializeApi as initializeApiHandler } from "./axios"
-import { initializeSocketHandler } from "./sockets"
-import { initializeTokenHandler } from "./token"
+import { EventEmitter, ServerSerializerMap, SERVER_DEFAULT_BASE_ROUTE, SERVER_DEFAULT_HEADER_KEY, SERVER_DEFAULT_MAX_PING } from "../../common"
+import { initializeAxios } from "./axios"
+import { ConnectionJSON, ConnectionLobbyJSON, LobbyJSON } from "../api/types"
+import { initializeWebSockets } from "./websockets"
+import { ClientEventMap } from "./events"
 
 export type ClientOptions = {
+    authHeader: string,
     baseRoute: string,
     port: number,
     host: string,
-    udpProtocol: string,
-    tcpProtocol: string,
-    tokenKey: string,
+    https: boolean,
+    wss: boolean,
+    maxPing: number,
 }
 
-export enum ClientStatus {
-    IDLE = 0,
-    IDLE_REGISTERED = 1,
-    IDLE_CONNECTED = 2,
-    READY = 4,
-} 
+export class Client<T extends PacketManagerSerializerMap>{
+    events: EventEmitter<ClientEventMap<T>> = new EventEmitter("Client")
+    options: ClientOptions = {
+        authHeader: SERVER_DEFAULT_HEADER_KEY,
+        baseRoute: SERVER_DEFAULT_BASE_ROUTE,
 
-export type ClientEvents = {
-    connect: undefined,
-    statusChange: ClientStatus,
-    tokenSet: undefined,
-    tokenUnset: undefined,
+        port: 3000,
+        host: "localhost",
+        
+        https: false,
+        wss: false,
+
+        maxPing: SERVER_DEFAULT_MAX_PING,
+    }
+
+    packets: {
+        manager: PacketManager<T>,
+        events: EventEmitter<ClientPacketManagerEventMap<T & ServerSerializerMap>>,
+    }
     
-    socketOpen: undefined,
-    socketRegister: undefined,
-    socketError: undefined,
-    socketMessage: undefined,
-    socketClose: undefined,
+    connectionId?: string
+    connectionToken?: string
+    websocketToken?: string
 
-    packetError: { data: string },
-}
-
-export type ClientTypes = {
-    PacketMap: PacketMap,
-    PublicConnectionData: Record<string, any>,
-}
-
-export class Client<T extends ClientTypes>{
-    options: ClientOptions
-    token?: string
-    status: ClientStatus = ClientStatus.IDLE
-
-    clientEvents: EventEmitter<ClientEvents> = new EventEmitter("Client")
-    packetEvents: EventEmitter<ClientPacketEventMap<T["PacketMap"] & InternalPacketMap>> = new EventEmitter("ClientPacket")
-
-    packetManager!: PacketManager<T["PacketMap"] & InternalPacketMap>
-
-    ws?: WebSocket | NodeWebSocket
-    api!: AxiosInstance
-
-    constructor(options: Partial<ClientOptions>){
+    constructor(packetManager: PacketManager<T>, options: Partial<ClientOptions> = {}){
         this.options = {
-            udpProtocol: "ws",
-            tcpProtocol: "http",
-            host: "localhost",
-            port: 3000,
-            baseRoute: SERVER_DEFAULT_BASE_ROUTE,
-            tokenKey: CLIENT_DEFAULT_TOKEN_KEY,
+            ...this.options,
             ...options,
         }
+        this.packets = {
+            manager: packetManager,
+            events: new EventEmitter("ClientPackets"),
+        }
 
-        initializeTokenHandler(this)
-        initializeApiHandler(this)
-        initializeSocketHandler(this)
-
-        this.syncToken()
+        initializeAxios(this)
+        initializeWebSockets(this)
     }
 
-    setStatus(status: ClientStatus){
-        this.status = status
-        this.clientEvents.emit("statusChange", this.status)
+    get hasIdAndTokens(){
+        return typeof this.connectionId === "string" && typeof this.connectionToken === "string" && typeof this.websocketToken === "string"
     }
 
-    setPacketMap(packetMap: T["PacketMap"]){
-        this.packetManager = new PacketManager({ ...packetMap, ...internalPacketMap })
+    get isReady(){
+        return this.hasIdAndTokens &&
+            typeof this.ws !== "undefined" &&
+            this.ws.readyState === this.ws.OPEN
     }
 }
 
-export interface Client<T extends ClientTypes>{
-    // Token methods defined in ./token.ts
-    setToken: (token?: string) => void
-    syncToken: () => void
+export interface Client<T extends PacketManagerSerializerMap>{
+    // axios.ts
+    api: AxiosInstance
+    requestConnection: () => Promise<ConnectionJSON>
+    verifyConnection: () => Promise<ConnectionJSON>
 
-    // API methods defined in ./axios.ts
-    getTcpUrl: () => string
-    getUdpUrl: () => string
-    registerConnection: () => Promise<ConnectionJSON<T["PublicConnectionData"]>>
-    getLobbies: () => Promise<void>
-    getLobbyInfo: (id: string) => Promise<void>
-    createLobby: (id?: string, type?: string) => Promise<void>
+    createLobby: (type: string) => Promise<LobbyJSON>
+    joinLobby: (id: string) => Promise<ConnectionLobbyJSON>
+    leaveLobby: () => Promise<ConnectionLobbyJSON>
 
-    // Socket methods defiend in ./sockets.ts
-    isBrowser: () => boolean
-    connectSocket: () => Promise<void>
-    handleSocketOpen: () => void
-    handleSocketMessage: (data: string) => void
-    handleSocketError: () => void
-    handleSocketClose: () => void
-    sendSocketData: (data: string) => void
-    closeSocket: () => void
+    // websockets.ts
+    ws?: WebSocket | NodeWebSocket
+    connectWebSocket: () => Promise<void>
+    send: (data: string | ArrayBuffer) => void
+    connect: () => Promise<void>
+    getPing: () => Promise<number>
 }

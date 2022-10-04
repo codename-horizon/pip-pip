@@ -1,4 +1,4 @@
-import { generateId, PointPhysicsObject, PointPhysicsWorld, radianDifference } from "@pip-pip/core/src/client"
+import { EventEmitter, generateId, SERVER_DEFAULT_MAX_PING, PointPhysicsObject, PointPhysicsWorld, radianDifference } from "@pip-pip/core/src/common"
 import * as PIXI from "pixi.js"
 
 export class Ship{
@@ -82,6 +82,8 @@ export class Player{
         magnitude: 0,
     }
 
+    ping = SERVER_DEFAULT_MAX_PING
+
     constructor(id: string){
         this.id = id
         this.physics.collision.enabled = true
@@ -107,7 +109,16 @@ export class Player{
     }
 }
 
+export type PipPipGameEventMap = {
+    addPlayer: { player: Player },
+    removePlayer: { player: Player },
+    addBullet: { bullet: Bullet },
+    removeBullet: { bullet: Bullet },
+}
+
 export class PipPipGame{
+    events: EventEmitter<PipPipGameEventMap> = new EventEmitter()
+
     players: Record<string, Player> = {}
     bullets: Record<string, Bullet> = {}
 
@@ -136,21 +147,25 @@ export class PipPipGame{
     addPlayer(player: Player){
         this.players[player.id] = player
         this.physics.addObject(player.physics)
+        this.events.emit("addPlayer", { player })
     }
 
     removePlayer(player: Player){
         delete this.players[player.id]
         player.physics.destroy()
+        this.events.emit("removePlayer", { player })
     }
 
     addBullet(bullet: Bullet){
         this.bullets[bullet.id] = bullet
         this.physics.addObject(bullet.physics)
+        this.events.emit("addBullet", { bullet })
     }
 
     removeBullet(bullet: Bullet){
         delete this.bullets[bullet.id]
         bullet.physics.destroy()
+        this.events.emit("removeBullet", { bullet })
     }
 
     update(){
@@ -208,7 +223,7 @@ export class PipPipGame{
         const bullets = Object.values(this.bullets)
 
         for(const bullet of bullets){
-            // kill bullet
+            // collision checks
         }
 
         this.physics.update(this.deltaMs)
@@ -218,7 +233,7 @@ export class PipPipGame{
             bullet.lifespan -= this.deltaMs
             if(bullet.lifespan <= 0){
                 this.removeBullet(bullet)
-            }
+            } 
         }
 
         this.tickNumber++

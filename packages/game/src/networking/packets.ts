@@ -1,28 +1,66 @@
-import { Array1DPacket, Array2DPacket, NumberPacket, StringPacket } from "@pip-pip/core/src/common"
+import { $float32, $float64, $uint16, $uint32, $uint8, $varstring, Packet, PacketManager } from "@pip-pip/core/src/common"
+import { Player } from "../logic/test"
 
+export const packetManager = new PacketManager({
+    tick: new Packet({
+        number: $uint32,
+    }),
+    syncTick: new Packet({
+        number: $uint32,
+    }),
+    uploadChat: new Packet({
+        message: $varstring,
+    }),
+    downloadMessage: new Packet({
+        order: $uint16,
+        playerId: $varstring,
+        message: $varstring,
+    }),
+    newPlayer: new Packet({
+        id: $varstring,
+        x: $float32,
+        y: $float32,
+    }),
+    movePlayer: new Packet({
+        id: $varstring,
+        
+        x: $float32,
+        y: $float32,
+        
+        vx: $float32,
+        vy: $float32,
 
-export type PipPipPacketMap = {
-    "gameTick": NumberPacket,
+        am: $float32,
+        aa: $float32,
+        tr: $float32,
+    }),
+    playerPing: new Packet({
+        id: $varstring,
+        ping: $uint16,
+    }),
+    removePlayer: new Packet({
+        id: $varstring,
+    }),
+})
 
-    "playerConnect": StringPacket,
-    "playerDisconnect": StringPacket,
-    "playerInfo": StringPacket,
-    "playerChangeStatus": StringPacket,
+export const encodeNewPlayer = (player: Player) => packetManager.serializers.newPlayer.encode({
+    id: player.id,
+    x: player.physics.position.x,
+    y: player.physics.position.y,
+})
 
-    "playerPosition": Array1DPacket<[number, number, number, number, number]>,
-    "playerPositions": Array2DPacket<[string, number, number, number, number, number][]>,
-}
+export const encodeMovePlayer = (player: Player) => packetManager.serializers.movePlayer.encode({
+    id: player.id,
+    x: player.physics.position.x,
+    y: player.physics.position.y,
+    vx: player.physics.velocity.x,
+    vy: player.physics.velocity.y,
+    am: player.acceleration.magnitude,
+    aa: player.acceleration.angle,
+    tr: player.targetRotation,
+})
 
-const packetCodeBank = "0123456789abcdefghijklmnopqrstuvwxyz".split("")
-
-export const pipPipPacketMap: PipPipPacketMap = {
-    "gameTick": new NumberPacket(packetCodeBank.shift() as string),
-
-    "playerConnect": new StringPacket(packetCodeBank.shift() as string),
-    "playerDisconnect": new StringPacket(packetCodeBank.shift() as string),
-    "playerInfo": new StringPacket(packetCodeBank.shift() as string),
-    "playerChangeStatus": new StringPacket(packetCodeBank.shift() as string),
-
-    "playerPosition": new Array1DPacket(packetCodeBank.shift() as string),
-    "playerPositions": new Array2DPacket(packetCodeBank.shift() as string),
-}
+export const encodePlayerPing = (player: Player) => packetManager.serializers.playerPing.encode({
+    id: player.id,
+    ping: player.ping,
+})

@@ -1,140 +1,110 @@
 import http from "http"
 
-import express, { Express, Request, Response, NextFunction } from "express"
-import { WebSocket, WebSocketServer } from "ws"
-import { initializeServerErrorRoutes, initializeServerRouter, startServer } from "./routes"
+import { generateId, SERVER_DEFAULT_BASE_ROUTE, SERVER_DEFAULT_HEADER_KEY, SERVER_DEFAULT_MAX_PING } from "../../common"
+import { EventEmitter } from "../../common/events"
+import { PacketManager, PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
+import { Packet } from "../packets/packet"
+import { ServerSerializerMap } from "../packets/server"
+import { Connection } from "../connection"
+import { ServerEventMap } from "./events"
+import { Lobby, LobbyInitializer, LobbyTypeOptions, LobbyType } from "../lobby"
+import { initializeRoutes } from "./routes"
+import express, { Express, Router as createRouter, Request, Response, NextFunction } from "express"
+import { WebSocketServer } from "ws"
+import { initializeWebSockets } from "./websockets"
+import { initializeConnectionMethods } from "./connection"
+import { initializeLobbyMethods } from "./lobby"
 
-import { SERVER_DEFAULT_BASE_ROUTE } from "../../lib/constants"
-import { EventEmitter } from "../../events"
-import { internalPacketMap, InternalPacketMap, PacketManager, PacketMap } from "../packets"
-import { ServerPacketEventMap } from "../packets/events"
-import { initializeSocketListeners } from "./sockets"
-import { Connection, ConnectionData, ConnectionId, ConnectionJSON, ConnectionStatus, ConnectionToken, initializeConnectionHandlers } from "./connection"
-import { RequiredOnly } from "../../lib/types"
-import createHttpError from "http-errors"
-
-export type ServerEvents<T extends ServerTypes> = {
-    beforeStart: undefined,
-    start: undefined,
-
-    socketOpen: undefined,
-    socketRegister: {
-        ws: WebSocket,
-        connection: Connection<T["ConnectionData"]>,
-    },
-    socketError: undefined,
-    socketMessage: {
-        data: string, ws: WebSocket,
-        connection?: Connection<T["ConnectionData"]>,
-    },
-    socketClose: {
-        ws: WebSocket,
-        connection?: Connection<T["ConnectionData"]>,
-    },
-
-    packetError: { data: string, ws: WebSocket, connection?: Connection<T["ConnectionData"]>},
-
-    registerConnection: { connection: Connection<T["ConnectionData"]> },
-    destroyConnection: { connection: Connection<T["ConnectionData"]> },
-    connectionIdleStart: { connection: Connection<T["ConnectionData"]> },
-    connectionIdleEnd: { connection: Connection<T["ConnectionData"]> },
-    connectionStatusChange: { connection: Connection<T["ConnectionData"]>, status: ConnectionStatus },
-}
-
-export type ServerOptions<T extends ServerTypes> = {
+export type ServerOptions = {
+    authHeader: string,
     baseRoute: string,
     port: number,
+
     connectionIdleLifespan: number,
+    lobbyIdleLifespan: number,
+    verifyTimeLimit: number,
 
-    connectionDataFactory: () => T["ConnectionData"],
+    maxConnections: number,
+    maxLobbies: number,
+    maxPing: number,
 }
 
-export type ServerTypes = {
-    ConnectionData: ConnectionData,
-    PacketMap: PacketMap,
-}
+export class Server<
+    T extends PacketManagerSerializerMap,
+    R extends Record<string, any> = Record<string, any>,
+    P extends Record<string, any> = Record<string, any>,
+>{
+    options: ServerOptions = {
+        authHeader: SERVER_DEFAULT_HEADER_KEY,
+        baseRoute: SERVER_DEFAULT_BASE_ROUTE,
+        port: 3000,
+        connectionIdleLifespan: 1000 * 60 * 5,
+        lobbyIdleLifespan: 1000 * 60 * 5,
+        verifyTimeLimit: 1000 * 15,
+        maxConnections: 512,
+        maxLobbies: 64,
+        maxPing: SERVER_DEFAULT_MAX_PING,
+    }
 
-export class Server<T extends ServerTypes>{
-    options: ServerOptions<T>
+    events: EventEmitter<ServerEventMap<T, R, P>> = new EventEmitter("Server")
+
+    connections: Record<string, Connection<T, R, P>> = {}
+    lobbies: Record<string, Lobby<T, R, P>> = {}
+
+    lobbyType: Record<string, LobbyType<T, R, P>> = {}
+
+    packets: {
+        manager: PacketManager<T>,
+        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap, R, P>>
+    }
 
     app: Express
     server: http.Server
     wss: WebSocketServer
 
-    connections: Record<ConnectionId, Connection<T["ConnectionData"]>> = {}
-
-    serverEvents: EventEmitter<ServerEvents<T>> = new EventEmitter("Server")
-    packetEvents: EventEmitter<ServerPacketEventMap<T["PacketMap"] & InternalPacketMap, T>> = new EventEmitter("ServerPacket")
-
-    packetManager!: PacketManager<T["PacketMap"] & InternalPacketMap>
-
-    constructor(options: RequiredOnly<ServerOptions<T>, "connectionDataFactory">){
+    constructor(packetManager: PacketManager<T>, options: Partial<ServerOptions> = {}){
         this.options = {
-            baseRoute: SERVER_DEFAULT_BASE_ROUTE,
-            port: 3000,
-            connectionIdleLifespan: 5000,
+            ...this.options,
             ...options,
         }
 
-        // Setup servers
+        this.packets = {
+            manager: packetManager,
+            events: new EventEmitter("ServerPackets"),
+        }
+
         this.app = express()
         this.server = http.createServer(this.app)
         this.wss = new WebSocketServer({ server: this.server })
 
-        initializeServerRouter(this)
-        initializeSocketListeners(this)
-        initializeConnectionHandlers(this)
-    }
-
-    setPacketMap(packetMap: T["PacketMap"]){
-        this.packetManager = new PacketManager({ ...packetMap, ...internalPacketMap })
-    }
-
-    async getConnectionFromRequest(req: Request){
-        if(typeof req.headers.authorization !== "undefined"){
-            const token = req.headers.authorization
-            const connection = await this.getConnectionByToken(token)
-            if(typeof connection !== "undefined"){
-                return connection
-            }
-        }
-    }
-
-    async authMiddleware(req: Request, res: Response, next: NextFunction){
-        const connection = await this.getConnectionFromRequest(req)
-        if(typeof connection === "undefined"){
-            throw createHttpError(401, "Connection unavailable.")
-        }
-        next()
-    }
-
-    async start(){
-        this.serverEvents.emit("beforeStart")
-        // Add error handler before starting server
-        initializeServerErrorRoutes(this)
-
-        // Start server
-        await startServer(this)
-        this.serverEvents.emit("start")
+        initializeRoutes(this)
+        initializeWebSockets(this)
+        initializeConnectionMethods(this)
+        initializeLobbyMethods(this)
     }
 }
 
-export interface Server<T extends ServerTypes>{
+export interface Server<
+    T extends PacketManagerSerializerMap,
+    R extends Record<string, any> = Record<string, any>,
+    P extends Record<string, any> = Record<string, any>,
+>{
+    // routes.ts
+    routerAuthMiddleware: (req: Request, res: Response, next: NextFunction) => void
+    start: () => Promise<void>
 
-    // Connection methods defined in ./connection.ts
-    createConnection: () => Promise<Connection<T["ConnectionData"]>>
-    registerConnection: (connection: Connection<T["ConnectionData"]>) => void
-    getConnectionByToken: (token: ConnectionToken) => Promise<Connection<T["ConnectionData"]> | undefined>
-    destroyConnection: (connection: Connection<T["ConnectionData"]>) => void
-    startConnectionIdle: (connection: Connection<T["ConnectionData"]>) => void
-    endConnectionIdle: (connection: Connection<T["ConnectionData"]>) => void
-    getConnectionJSON: (connection: Connection<T["ConnectionData"]>) => ConnectionJSON<T["ConnectionData"]["public"]>
-    setConnectionStatus: (connection: Connection<T["ConnectionData"]>, status: ConnectionStatus) => void
+    // websockets.ts
 
-    // Socket methods defined in ./sockets.ts
-    handleSocketOpen: (ws: WebSocket) => void
-    handleSocketRegister: (ws: WebSocket, connection: Connection<T["ConnectionData"]>) => void
-    handleSocketError: (ws: WebSocket, err: Error) => void
-    handleSocketMessage: (data: string, ws: WebSocket, connection?: Connection<T["ConnectionData"]>) => void
-    handleSocketClose: (ws: WebSocket, connection?: Connection<T["ConnectionData"]>) => void
+    // connection.ts
+    getConnectionFromRequest: (req: Request) => Connection<T, R, P> | undefined
+    getConnectionByConnectionToken: (connectionToken: string) => Connection<T, R, P> | undefined
+    getConnectionByWebSocketToken: (websocketToken: string) => Connection<T, R, P> | undefined
+    addConnection: (connection: Connection<T, R, P>) => void
+    removeConnection: (connection: Connection<T, R, P>) => void
+    broadcast: (data: string | ArrayBuffer) => void
+
+    // lobby.ts
+    registerLobby: (type: string, options: LobbyTypeOptions, initializer: LobbyInitializer<T>) => void
+    createLobby: <K extends keyof Server<T, R, P>["lobbyType"]>(type: K, id?: string) => Lobby<T, R, P>
+    removeLobby: (lobby: Lobby<T, R, P>) => void
 }

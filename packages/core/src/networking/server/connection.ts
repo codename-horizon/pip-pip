@@ -1,106 +1,70 @@
-import { WebSocket } from "ws"
-import { Server, ServerTypes } from "."
-import { generateId } from "../../common"
+import { PacketManagerSerializerMap } from "../packets/manager"
+import express, { Express, Router as createRouter, Request, Response, NextFunction } from "express"
+import { Server } from "."
+import { Connection } from "../connection"
 
-export type ConnectionData = {
-    public: Record<string, any>,
-    private: Record<string, any>,
-}
-
-export enum ConnectionStatus {
-    IDLE = 0,
-    READY = 1,
-}
-
-export type ConnectionId = string
-export type ConnectionToken = string
-
-export type Connection<T extends ConnectionData> = {
-    id: ConnectionId,
-    token: ConnectionToken,
-    data: T,
-    status: ConnectionStatus,
-
-    ws?: WebSocket,
-    _idleTimeout?: NodeJS.Timeout,
-}
-
-export type ConnectionJSON<T extends Record<string, any>> = {
-    id: ConnectionId,
-    token?: ConnectionToken,
-    data: T,
-    status: ConnectionStatus,
-}
-
-export function initializeConnectionHandlers<T extends ServerTypes>(server: Server<T>){
-    server.createConnection = async () => {
-        const connection: Connection<T["ConnectionData"]> = {
-            id: generateId(),
-            token: generateId(64),
-            data: server.options.connectionDataFactory(),
-            status: ConnectionStatus.IDLE,
-        }
-
-        server.startConnectionIdle(connection)
-
-        await server.registerConnection(connection)
-
-        return connection
-    }
-
-    server.setConnectionStatus = (connection: Connection<T["ConnectionData"]>, status: ConnectionStatus) => {
-        connection.status = status
-        server.serverEvents.emit("connectionStatusChange", { connection, status })
-    }
-
-    server.registerConnection = async (connection: Connection<T["ConnectionData"]>) => {
-        if(connection.id in server.connections){
-            throw new Error(`Connection ID ${connection.id} already registered in server.`)
-        }
-        server.connections[connection.id] = connection
-        server.serverEvents.emit("registerConnection", { connection })
-    }
-
-    server.getConnectionByToken = async (token: ConnectionToken) => {
-        for(const id in server.connections){
-            const connection = server.connections[id]
-            if(connection.token === token){
+export function initializeConnectionMethods<
+    T extends PacketManagerSerializerMap,
+    R extends Record<string, any> = Record<string, any>,
+    P extends Record<string, any> = Record<string, any>,
+>(server: Server<T, R, P>){
+    server.getConnectionFromRequest = (req: Request) => {
+        if(typeof req.headers[server.options.authHeader] !== "undefined"){
+            const connectionToken = req.headers[server.options.authHeader]
+            if(typeof connectionToken === "string"){
+                const connection = server.getConnectionByConnectionToken(connectionToken)
                 return connection
             }
         }
+
+        return undefined
     }
 
-    server.destroyConnection = async (connection: Connection<T["ConnectionData"]>) => {
-        if(!(connection.id in server.connections)){
-            throw new Error(`Connection ID ${connection.id} does not exist in server.`)
+    server.getConnectionByConnectionToken = (connectionToken: string) => {
+        for(const connectionId in server.connections){
+            const connection = server.connections[connectionId]
+            if(connection.token.connection === connectionToken) return connection
         }
-        if(typeof connection.ws !== "undefined"){
-            connection.ws.close()
+        return undefined
+    }
+
+    server.getConnectionByWebSocketToken = (websocketToken: string) => {
+        for(const connectionId in server.connections){
+            const connection = server.connections[connectionId]
+            if(connection.token.websocket === websocketToken) return connection
         }
-        delete server.connections[connection.id]
-        server.serverEvents.emit("destroyConnection", { connection })
+        return undefined
     }
 
-    server.startConnectionIdle = (connection: Connection<T["ConnectionData"]>) => {
-        connection._idleTimeout = setTimeout(() => {
-            server.destroyConnection(connection)
-        }, server.options.connectionIdleLifespan)
-        server.serverEvents.emit("connectionIdleStart", { connection })
-        server.setConnectionStatus(connection, ConnectionStatus.IDLE)
+    server.addConnection = (connection: Connection<T, R, P>) => {
+        if(connection.id in server.connections){
+            throw new Error(`Connection "${connection.id}" already exists.`)
+        }
+
+        const connections = Object.values(server.connections)
+        if(connections.length >= server.options.maxConnections){
+            throw new Error("Server has reached max connections.")
+        }
+
+        server.connections[connection.id] = connection
+        server.events.emit("addConnection", {
+            connection,
+        })
     }
 
-    server.endConnectionIdle = (connection: Connection<T["ConnectionData"]>) => {
-        if(typeof connection._idleTimeout !== "undefined"){
-            clearTimeout(connection._idleTimeout)
-            server.serverEvents.emit("connectionIdleEnd", { connection })
+    server.removeConnection = (connection: Connection<T, R, P>) => {
+        if(connection.id in server.connections){
+            delete server.connections[connection.id]
+            server.events.emit("removeConnection", {
+                connection,
+            })
+            connection.destroy()
         }
     }
 
-    server.getConnectionJSON = (connection: Connection<T["ConnectionData"]>): ConnectionJSON<T["ConnectionData"]["public"]> => {
-        return {
-            id: connection.id,
-            data: connection.data.public,
-            status: connection.status,
+    server.broadcast = (data: string | ArrayBuffer) => {
+        for(const connectionId in server.connections){
+            server.connections[connectionId].send(data)
         }
     }
 }

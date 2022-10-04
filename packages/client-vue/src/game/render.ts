@@ -1,4 +1,4 @@
-import { PIXIGraphics, radianDifference } from "@pip-pip/core/src/client"
+import { Client, PIXIGraphics, radianDifference } from "@pip-pip/core/src/client"
 import { PipPipGame } from "@pip-pip/game"
 import * as PIXI from "pixi.js"
 import ship1 from "../assets/ship-1.png"
@@ -23,6 +23,7 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 const ship = PIXI.Texture.from(ship1)
 
 export class PipPipGameRenderer{
+    client!: Client
     graphics = new PIXIGraphics()
     smoothing = {
         playerMovement: 10,
@@ -48,6 +49,10 @@ export class PipPipGameRenderer{
 
     setGame(game: PipPipGame){
         this.game = game
+    }
+
+    setClient(client: Client){
+        this.client = client
     }
 
     render(deltaMs: number){
@@ -84,6 +89,14 @@ export class PipPipGameRenderer{
             }
         }
         // check what players were removed
+        for(const playerId in this.players){
+            const gamePlayer = this.game.players[playerId]
+            const graphicPlayer = this.players[playerId]
+            if(typeof gamePlayer === "undefined"){
+                this.playersContainer.removeChild(graphicPlayer.object)
+                delete this.players[playerId]
+            }
+        }
         // update players
         for(const playerId in this.players){
             const gamePlayer = this.game.players[playerId]
@@ -101,7 +114,7 @@ export class PipPipGameRenderer{
 
             graphicPlayer.object.rotation = graphicPlayer.rotation
 
-            if(playerId === "single"){
+            if(playerId === this.client.connectionId){
                 this.playersContainer.position.x = this.graphics.app.view.width / 2 - graphicPlayer.x
                 this.playersContainer.position.y = this.graphics.app.view.height / 2 - graphicPlayer.y
             }

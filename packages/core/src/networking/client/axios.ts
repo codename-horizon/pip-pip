@@ -1,21 +1,17 @@
+import { Client } from "."
 import axios from "axios"
-import { Client, ClientTypes } from "."
-import { ConnectionJSON } from "../server/connection"
+import { PacketManagerSerializerMap } from "../packets/manager"
+import { ConnectionJSON, ConnectionLobbyJSON, LobbyJSON } from "../api/types"
 
-export function initializeApi<T extends ClientTypes>(client: Client<T>){
-    client.getTcpUrl = () => [
-        client.options.tcpProtocol, "://", 
-        client.options.host, ":", client.options.port,
-        client.options.baseRoute,
-    ].join("")
-
-    client.getUdpUrl = () => [
-        client.options.udpProtocol, "://", 
-        client.options.host, ":", client.options.port,
+export function initializeAxios<T extends PacketManagerSerializerMap>(client: Client<T>){
+    const getHttpUrl = () => [
+        client.options.https ? "https" : "http",
+        "://", client.options.host, ":",
+        client.options.port, client.options.baseRoute,
     ].join("")
 
     client.api = axios.create({
-        baseURL: client.getTcpUrl(),
+        baseURL: getHttpUrl(),
         headers: {
             "Accept": "application/json",
             "Content-Type": "application/json; charset=utf-8",
@@ -23,26 +19,44 @@ export function initializeApi<T extends ClientTypes>(client: Client<T>){
     })
 
     client.api.interceptors.request.use((config) => {
-        const token = client.token
+        const { connectionToken } = client
+
         if(
             typeof config.headers !== "undefined" &&
-            typeof token === "string" &&
-            token?.length > 0
+            typeof connectionToken === "string" &&
+            connectionToken.length > 0
         ){
-            config.headers.authorization = token
+            config.headers[client.options.authHeader] = connectionToken
         }
+
         return config
     })
 
-    client.registerConnection = async () => {
-        const { data } = await client.api.get<ConnectionJSON<T["PublicConnectionData"]>>("/register")
-        client.setToken(data.token)
+    client.requestConnection = async () => {
+        const { data } = await client.api.post<ConnectionJSON>("/connection")
+        client.connectionId = data.connectionId
+        client.connectionToken = data.connectionToken
+        client.websocketToken = data.websocketToken
         return data
     }
-}
 
-export const test = {
-    hello(){
-        console.log("hi")
+    client.verifyConnection = async () => {
+        const { data } = await client.api.get<ConnectionJSON>("/connection")
+        return data
+    }
+
+    client.createLobby = async (type: string) => {
+        const { data } = await client.api.post<LobbyJSON>("/lobbies", { type })
+        return data
+    }
+
+    client.joinLobby = async (id: string) => {
+        const { data } = await client.api.post<ConnectionLobbyJSON>("/lobbies/join", { id })
+        return data
+    }
+
+    client.leaveLobby = async () => {
+        const { data } = await client.api.post<ConnectionLobbyJSON>("/lobbies/leave")
+        return data
     }
 }

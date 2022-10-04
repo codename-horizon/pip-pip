@@ -1,6 +1,6 @@
 import { EventEmitter } from "./events"
-import { PickRecord, TypeOrFactoryType } from "./lib/types"
-import { isObject } from "./lib/utils"
+import { PickRecord, TypeOrFactoryType } from "../lib/types"
+import { isObject } from "../lib/utils"
 
 export type StateSnapshot<T> = {
     time: number,

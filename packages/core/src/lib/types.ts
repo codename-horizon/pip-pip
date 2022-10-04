@@ -18,3 +18,5 @@ export type PickRecord<T extends Record<string, unknown>> = Pick<T, OmitNever<No
 export type PickArray<T extends Record<string, unknown>> = Pick<T, OmitNever<NonArrayToNever<T>>>
 
 export type TypeOrFactoryType<T> = T | ((value: Readonly<T>) => T)
+
+export type Concrete<T> = T extends Partial<infer R> ? R : T
