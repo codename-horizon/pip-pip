@@ -53,9 +53,11 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     const sendPingInterval = Math.floor(game.tps / 4)
 
     const updatePlayerPing = (id: string) => {
-        if(id in game.players && id in lobby.connections){
+        if(id in lobby.connections){
             lobby.connections[id].getPing().then(ping => {
-                game.players[id].ping = ping
+                if(id in game.players){
+                    game.players[id].ping = ping
+                }
             })
         }
     }
