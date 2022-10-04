@@ -5,6 +5,9 @@ export const packetManager = new PacketManager({
     tick: new Packet({
         number: $uint32,
     }),
+    syncTick: new Packet({
+        number: $uint32,
+    }),
     uploadChat: new Packet({
         message: $varstring,
     }),
@@ -31,6 +34,10 @@ export const packetManager = new PacketManager({
         aa: $float32,
         tr: $float32,
     }),
+    playerPing: new Packet({
+        id: $varstring,
+        ping: $uint16,
+    }),
     removePlayer: new Packet({
         id: $varstring,
     }),
@@ -51,4 +58,9 @@ export const encodeMovePlayer = (player: Player) => packetManager.serializers.mo
     am: player.acceleration.magnitude,
     aa: player.acceleration.angle,
     tr: player.targetRotation,
+})
+
+export const encodePlayerPing = (player: Player) => packetManager.serializers.playerPing.encode({
+    id: player.id,
+    ping: player.ping,
 })

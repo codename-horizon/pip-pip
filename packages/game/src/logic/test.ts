@@ -1,4 +1,4 @@
-import { EventEmitter, generateId, PointPhysicsObject, PointPhysicsWorld, radianDifference } from "@pip-pip/core/src/common"
+import { EventEmitter, generateId, SERVER_DEFAULT_MAX_PING, PointPhysicsObject, PointPhysicsWorld, radianDifference } from "@pip-pip/core/src/common"
 import * as PIXI from "pixi.js"
 
 export class Ship{
@@ -81,6 +81,8 @@ export class Player{
         angle: 0,
         magnitude: 0,
     }
+
+    ping = SERVER_DEFAULT_MAX_PING
 
     constructor(id: string){
         this.id = id

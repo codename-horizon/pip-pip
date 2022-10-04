@@ -3,7 +3,7 @@ import { $varstring, Client, EventCollector, EventEmitter, generateId, Ticker } 
 import { Connection } from "@pip-pip/core/src/networking/connection"
 import { LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
 import { PipPipGame, Player, Ship } from "@pip-pip/game"
-import { encodeMovePlayer, encodeNewPlayer, packetManager } from "@pip-pip/game/src/networking/packets"
+import { encodeMovePlayer, encodeNewPlayer, encodePlayerPing, packetManager } from "@pip-pip/game/src/networking/packets"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 
@@ -36,13 +36,30 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     const updateTick = new Ticker(game.tps, false, "Game")
     const debugTick = new Ticker(1, false, "Debug")
 
+    const sendPingInterval = Math.floor(game.tps / 2)
+
+    const updatePlayerPing = (id: string) => {
+        if(id in game.players && id in lobby.connections){
+            lobby.connections[id].getPing().then(ping => {
+                game.players[id].ping = ping
+            })
+        }
+    }
+
     updateTick.on("tick", ({ deltaMs, deltaTime }) => {
+        if(game.tickNumber % sendPingInterval === 0){
+            const players = Object.values(game.players)
+            for(const player of players){
+                updatePlayerPing(player.id)
+            }
+        }
         for(const event of lobbyEvents.filter("addConnection")){
             const { connection } = event.addConnection
             const player = new Player(connection.id)
             player.ship = new Ship()
             player.physics.position.x = Math.random() * 100
             player.physics.position.y = Math.random() * 100
+            updatePlayerPing(player.id)
             game.addPlayer(player)
         }
         for(const event of lobbyEvents.filter("removeConnection")){
@@ -103,6 +120,8 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
             for(const event of gameEvents.filter("addPlayer")){
                 const newPlayer = event.addPlayer.player
                 if(newPlayer.id === connection.id){
+                    // if player is new
+                    connectionMessages.push(packetManager.serializers.syncTick.encode({ number: game.tickNumber }))
                     for(const player of players){
                         if(newPlayer.id === player.id) continue
                         connectionMessages.push(encodeNewPlayer(player))
@@ -113,6 +132,9 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
             // log player motion
             for(const player of players){
                 connectionMessages.push(encodeMovePlayer(player))
+                if(game.tickNumber % sendPingInterval === 0){
+                    connectionMessages.push(encodePlayerPing(player))
+                }
             }
 
             for(const message of connectionMessages){
@@ -129,16 +151,10 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
         lobbyEvents.flush()
     })
 
-    debugTick.on("tick", async () => {
-        const pings: Record<string, number> = {}
-
-        const connections = Object.values(lobby.connections)
-
-        for(const connection of connections){
-            pings[connection.id] = await connection.getPing()
-        }
-
-        console.log(updateTick.getPerformance(), Object.entries(pings))
+    debugTick.on("tick", () => {
+        console.log(
+            updateTick.getPerformance().averageExecutionTime.toFixed(2) + "ms", 
+            Object.values(game.players).map(player => `${player.id}:${player.ping}ms`).join(" "))
     })
 
     debugTick.startTick()

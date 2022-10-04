@@ -1,7 +1,7 @@
 import WebSocket, { RawData } from "ws"
 import { Connection } from "."
 import { EventEmitter } from "../../common/events"
-import { MAX_PING } from "../../lib/constants"
+import { SERVER_DEFAULT_MAX_PING } from "../../lib/constants"
 import { PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
 import { ServerSerializerMap } from "../packets/server"
 
@@ -68,9 +68,9 @@ export function initializeWebSockets<
         const timeout = setTimeout(() => {
             if(completed === false){
                 cancel()
-                resolve(MAX_PING)
+                resolve(connection.server.options.maxPing)
             }
-        }, MAX_PING)
+        }, connection.server.options.maxPing)
 
         const code = connection.server.packets.manager.serializers.ping.encode({ time: Date.now() })
         const buffer = new Uint8Array(code).buffer

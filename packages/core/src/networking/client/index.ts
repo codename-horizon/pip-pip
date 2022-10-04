@@ -1,7 +1,7 @@
 import { ClientPacketManagerEventMap, PacketManager, PacketManagerSerializerMap } from "../packets/manager"
 import { Axios, AxiosInstance } from "axios"
 import { WebSocket as NodeWebSocket } from "ws"
-import { EventEmitter, ServerSerializerMap, SERVER_DEFAULT_BASE_ROUTE, SERVER_HEADER_KEY } from "../../common"
+import { EventEmitter, ServerSerializerMap, SERVER_DEFAULT_BASE_ROUTE, SERVER_DEFAULT_HEADER_KEY, SERVER_DEFAULT_MAX_PING } from "../../common"
 import { initializeAxios } from "./axios"
 import { ConnectionJSON, ConnectionLobbyJSON, LobbyJSON } from "../api/types"
 import { initializeWebSockets } from "./websockets"
@@ -14,12 +14,13 @@ export type ClientOptions = {
     host: string,
     https: boolean,
     wss: boolean,
+    maxPing: number,
 }
 
 export class Client<T extends PacketManagerSerializerMap>{
     events: EventEmitter<ClientEventMap<T>> = new EventEmitter("Client")
     options: ClientOptions = {
-        authHeader: SERVER_HEADER_KEY,
+        authHeader: SERVER_DEFAULT_HEADER_KEY,
         baseRoute: SERVER_DEFAULT_BASE_ROUTE,
 
         port: 3000,
@@ -27,6 +28,8 @@ export class Client<T extends PacketManagerSerializerMap>{
         
         https: false,
         wss: false,
+
+        maxPing: SERVER_DEFAULT_MAX_PING,
     }
 
     packets: {

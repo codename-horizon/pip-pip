@@ -1,6 +1,6 @@
 import http from "http"
 
-import { generateId, SERVER_DEFAULT_BASE_ROUTE, SERVER_HEADER_KEY } from "../../common"
+import { generateId, SERVER_DEFAULT_BASE_ROUTE, SERVER_DEFAULT_HEADER_KEY, SERVER_DEFAULT_MAX_PING } from "../../common"
 import { EventEmitter } from "../../common/events"
 import { PacketManager, PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
 import { Packet } from "../packets/packet"
@@ -26,6 +26,7 @@ export type ServerOptions = {
 
     maxConnections: number,
     maxLobbies: number,
+    maxPing: number,
 }
 
 export class Server<
@@ -34,7 +35,7 @@ export class Server<
     P extends Record<string, any> = Record<string, any>,
 >{
     options: ServerOptions = {
-        authHeader: SERVER_HEADER_KEY,
+        authHeader: SERVER_DEFAULT_HEADER_KEY,
         baseRoute: SERVER_DEFAULT_BASE_ROUTE,
         port: 3000,
         connectionIdleLifespan: 1000 * 60 * 5,
@@ -42,6 +43,7 @@ export class Server<
         verifyTimeLimit: 1000 * 15,
         maxConnections: 512,
         maxLobbies: 64,
+        maxPing: SERVER_DEFAULT_MAX_PING,
     }
 
     events: EventEmitter<ServerEventMap<T, R, P>> = new EventEmitter("Server")

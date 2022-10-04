@@ -31,14 +31,6 @@ const debugTick = new Ticker(4, false, "Debug")
 
 let lobbyId = window.location.href.split("#")[1] || ""
 
-debugTick.on("tick", async () => {
-    const ping = await client.getPing()
-    const renderPerf = renderTick.getPerformance()
-    const updatePerf = updateTick.getPerformance()
-    const totalExecTime = Number(updatePerf.averageExecutionTime + renderPerf.averageExecutionTime).toFixed(2)
-    document.title = `${renderPerf.averageTPS.toFixed(2)}fps ${updatePerf.averageExecutionTime.toFixed(2)}ms ${renderPerf.averageExecutionTime.toFixed(2)}ms ${ping}ms`
-})
-
 function setup(){
     const container = ref()
     const debugJson = ref<Record<string, any>>({})
@@ -74,7 +66,8 @@ function setup(){
             // Handle incoming messages
             for(const event of clientEvents.filter("packetMessage")){
                 const { packets } = event.packetMessage
-                for(const t of packets.tick || []){
+                for(const t of packets.syncTick || []){
+                    console.log(game.tickNumber, t.number)
                     game.tickNumber = t.number
                 }
                 for(const p of packets.newPlayer || []){
@@ -105,17 +98,26 @@ function setup(){
                         game.removePlayer(player)
                     }
                 }
+                for(const p of packets.playerPing || []){
+                    const player = game.players[p.id]
+                    if(typeof player !== "undefined"){
+                        player.ping = p.ping
+                    }
+                }
             }
 
             const player = game.players[client.connectionId || ""]
             if(typeof player !== "undefined"){
                 debugJson.value.game = {
+                    fps: renderTick.getPerformance().averageTPS.toFixed(2) + "Hz",
+                    execTime: updateTick.getPerformance().averageExecutionTime.toFixed(2) + "ms",
                     "tick": game.tickNumber,
                     deltaMs, deltaTime,
                     entities: Object.keys(game.physics.objects).length,
-                    lobbyId,
                 }
                 debugJson.value.player = {
+                    lobbyId,
+                    ping: player.ping + "ms",
                     mag: player.debugMagModifier.toFixed(2),
                     shooting: player.shooting,
                     reloading: player.isReloading ? player.reloadTimeLeft : false,
