@@ -187,9 +187,12 @@ export class PipPipGame{
 
         for(const player of players){
             if(typeof player.ship !== "undefined"){
+                if(player.inputReloading === true && player.isReadyToShoot === true){
+                    player.reload()
+                }
                 // shooting
                 if(player.inputShooting === true){
-                    if(player.ammo === 0 || player.inputReloading){
+                    if(player.ammo === 0){
                         player.reload()
                     } else if(player.isReadyToShoot){
                         if(this.tickNumber >= player.lastShotTick + player.ship.shootInterval){
