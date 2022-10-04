@@ -18,6 +18,7 @@ const server = new Server<GamePacketManagerSerializerMap, GameConnectionLocals, 
     connectionIdleLifespan: 5000,
     lobbyIdleLifespan: 5000,
     verifyTimeLimit: 5000,
+    maxConnections: 1,
 })
 
 const defaultLobbyOptions: LobbyTypeOptions = {

@@ -9,6 +9,11 @@ export function initializeWebSockets<
     P extends Record<string, any> = Record<string, any>,
 >(server: Server<T, R, P>){
     server.wss.on("connection", (ws: WebSocket) => {
+        if(server.wss.clients.values.length >= server.options.maxConnections){
+            ws.close()
+            throw new Error("WebSocket connected but max connections has already been reached.")
+        }
+
         const verifyTimeout = setTimeout(() => {
             ws.close()
         }, server.options.verifyTimeLimit) // 10 second verify timeout
@@ -32,14 +37,10 @@ export function initializeWebSockets<
                         for(const key in packets){
                             const values = packets[key] || []
                             for(const value of values){
-                                const event = {
-                                    connection,
-                                    data: value,
-                                    ws, packets,
-                                }
-                                server.packets.events.emit(key, event as any)
-                                connection.packets.events.emit(key, event as any)
-                                connection.lobby?.packets.events.emit(key, event as any)
+                                const event: any = { connection, data: value, ws, packets } // TODO: Fix typing
+                                server.packets.events.emit(key, event)
+                                connection.packets.events.emit(key, event)
+                                connection.lobby?.packets.events.emit(key, event)
                             }
                         }
                         server.events.emit("packetMessage", {
@@ -76,4 +77,6 @@ export function initializeWebSockets<
         })
 
     })
+
+    server.wss.on("error", console.warn)
 }

@@ -24,8 +24,11 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
         }
 
         const closeHandler = () => {
-            // close
-            client.events.emit("socketClose")
+            if(verified){
+                client.events.emit("socketClose")
+            } else{
+                reject()
+            }
         }
 
         const messageHandler = (data: string | ArrayBuffer) => {

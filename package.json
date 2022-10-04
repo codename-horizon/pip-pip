@@ -9,7 +9,7 @@
   "private": true,
   "scripts": {
     "uninstall": "rm -rf node_modules/ packages/*/node_modules",
-    "server": "yarn workspace @pip-pip/server",
+    "server": "DEBUG_HRZN_EVENTS=true NODE_ENV=development yarn workspace @pip-pip/server",
     "client": "yarn workspace @pip-pip/client-vue",
     "game": "yarn workspace @pip-pip/game",
     "core": "yarn workspace @pip-pip/core"
