@@ -93,10 +93,16 @@ export class Player{
     }
 
     reload(){
-        if(typeof this.ship === "undefined") return
-        if(this.ammo >= this.ship.bullet.count) return
-        if(this.isReloading) return
-        this.reloadTimeLeft = this.ship.reloadDuration
+        if(this.canReload === true && typeof this.ship !== "undefined"){
+            this.reloadTimeLeft = this.ship.reloadDuration
+        }
+    }
+
+    get canReload(){
+        if(typeof this.ship === "undefined") return false
+        if(this.ammo >= this.ship.bullet.count) return false
+        if(this.isReloading) return false
+        return true
     }
 
     get isReadyToShoot(){
@@ -116,6 +122,8 @@ export type PipPipGameEventMap = {
     removePlayer: { player: Player },
     addBullet: { bullet: Bullet },
     removeBullet: { bullet: Bullet },
+    playerReloadStart: { player: Player },
+    playerReloadEnd: { player: Player },
 }
 
 export type PipPipGameOptions = {
@@ -182,18 +190,25 @@ export class PipPipGame{
         this.events.emit("removeBullet", { bullet })
     }
 
+    triggerPlayerReload(player: Player){
+        if(player.canReload){
+            player.reload()
+            this.events.emit("playerReloadStart", { player })
+        }
+    }
+
     update(){
         const players = Object.values(this.players)
 
         for(const player of players){
             if(typeof player.ship !== "undefined"){
-                if(player.inputReloading === true && player.isReadyToShoot === true){
-                    player.reload()
+                if(player.inputReloading === true){
+                    this.triggerPlayerReload(player)
                 }
                 // shooting
                 if(player.inputShooting === true){
                     if(player.ammo === 0){
-                        player.reload()
+                        this.triggerPlayerReload(player)
                     } else if(player.isReadyToShoot){
                         if(this.tickNumber >= player.lastShotTick + player.ship.shootInterval){
                             // shoot
@@ -217,6 +232,7 @@ export class PipPipGame{
                     if(player.reloadTimeLeft <= 0){
                         player.reloadTimeLeft = 0
                         player.ammo = player.ship.bullet.count
+                        this.events.emit("playerReloadEnd", { player })
                     }
                 }
 

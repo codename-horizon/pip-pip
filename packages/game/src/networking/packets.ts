@@ -42,9 +42,9 @@ export const packetManager = new PacketManager({
         shooting: $bool,
         reloading: $bool,
     }),
-    playerCombat: new Packet({
+    playerGun: new Packet({
         ammo: $uint8,
-        reloadingTime: $uint16,
+        reloadTimeLeft: $uint16,
     }),
     shootBullet: new Packet({
         playerId: $varstring,
@@ -89,6 +89,11 @@ export const encodePlayerInput = (player: Player) => packetManager.serializers.p
     targetRotation: player.targetRotation,
     shooting: player.inputShooting,
     reloading: player.inputReloading,
+})
+
+export const encodePlayerGun = (player: Player) => packetManager.serializers.playerGun.encode({
+    ammo: player.ammo,
+    reloadTimeLeft: player.reloadTimeLeft,
 })
 
 export const encodeBullet = (bullet: Bullet) => packetManager.serializers.shootBullet.encode({

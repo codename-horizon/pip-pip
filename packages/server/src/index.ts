@@ -3,7 +3,7 @@ import { $varstring, Client, EventCollector, EventEmitter, generateId, Ticker } 
 import { Connection } from "@pip-pip/core/src/networking/connection"
 import { LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
 import { PipPipGame, Player, Ship } from "@pip-pip/game"
-import { encodeBullet, encodeMovePlayer, encodeNewPlayer, encodePlayerPing, packetManager } from "@pip-pip/game/src/networking/packets"
+import { encodeBullet, encodeMovePlayer, encodeNewPlayer, encodePlayerGun, encodePlayerPing, packetManager } from "@pip-pip/game/src/networking/packets"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 
@@ -75,6 +75,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
             player.physics.position.y = Math.random() * 100
             updatePlayerPing(player.id)
             game.addPlayer(player)
+            game.triggerPlayerReload(player)
         }
         for(const event of lobbyEvents.filter("removeConnection")){
             const { connection } = event.removeConnection
@@ -128,12 +129,19 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
                 ...commonMessages
             ]
 
+            const updatePlayerReload = (player: Player) => {
+                if(player.id === connection.id){
+                    connectionMessages.push(encodePlayerGun(player))
+                }
+            }
+
             // if the player is new, send every other player
             for(const event of gameEvents.filter("addPlayer")){
                 const newPlayer = event.addPlayer.player
                 if(newPlayer.id === connection.id){
                     // if player is new
                     connectionMessages.push(packetManager.serializers.syncTick.encode({ number: game.tickNumber }))
+                    updatePlayerReload(newPlayer)
                     for(const player of players){
                         if(newPlayer.id === player.id) continue
                         connectionMessages.push(encodeNewPlayer(player))
@@ -147,6 +155,16 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
                 if(game.tickNumber % sendPingInterval === 0){
                     connectionMessages.push(encodePlayerPing(player))
                 }
+            }
+            
+            // update player gun
+            for(const event of gameEvents.filter("playerReloadStart")){
+                const { player } = event.playerReloadStart
+                updatePlayerReload(player)
+            }
+            for(const event of gameEvents.filter("playerReloadEnd")){
+                const { player } = event.playerReloadEnd
+                updatePlayerReload(player)
             }
 
             // log bullets

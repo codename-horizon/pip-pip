@@ -97,6 +97,15 @@ function setup(){
                         player.ping = p.ping
                     }
                 }
+                for(const p of packets.playerGun || []){
+                    if(typeof client.connectionId !== "undefined"){
+                        const player = game.players[client.connectionId]
+                        if(typeof player !== "undefined"){
+                            player.ammo = p.ammo
+                            player.reloadTimeLeft = p.reloadTimeLeft
+                        }
+                    }
+                }
                 for(const p of packets.newPlayer || []){
                     const player = new Player(p.id)
                     player.ship = new Ship()
@@ -116,7 +125,6 @@ function setup(){
                     bullet.physics.velocity.x = b.vx
                     bullet.physics.velocity.y = b.vy
                     game.addBullet(bullet)
-                    console.log(b)
                 }
                 // Discard data if packet is old
                 if(packetIsOld === false){
