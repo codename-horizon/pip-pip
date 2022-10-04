@@ -34,50 +34,30 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     })
 })
 
-const wait = (n = 1000) => new Promise(resolve => setTimeout(resolve, n))
-
-
-
 async function run(){
-    console.clear()
     await server.start()
-    console.log("server running")
 
-    const client = new Client(packetManager)
-    await client.connect()
-    const collector = new EventCollector(client.events)
+    const artLines = [
+        "---------------- WELCOME TO ----------------",
+        "██████╗░██╗██████╗░░░░░░░██████╗░██╗██████╗░",
+        "██╔══██╗██║██╔══██╗░░░░░░██╔══██╗██║██╔══██╗",
+        "██████╔╝██║██████╔╝█████╗██████╔╝██║██████╔╝",
+        "██╔═══╝░██║██╔═══╝░╚════╝██╔═══╝░██║██╔═══╝░",
+        "██║░░░░░██║██║░░░░░░░░░░░██║░░░░░██║██║░░░░░",
+        "╚═╝░░░░░╚═╝╚═╝░░░░░░░░░░░╚═╝░░░░░╚═╝╚═╝░░░░░",
+        `---------- http://localhost:${server.options.port} -----------`,
+    ]
 
-    let message = packetManager.serializers.name.encode({
-        id: generateId(),
-        name: generateId(),
-        n: Math.random()
+    console.log(artLines.join("\n"))
+
+    const conLobWatch = new EventCollector(server.events, ["addConnection", "createConnection", "createLobby", "removeConnection", "removeLobby"])
+    conLobWatch.on("collect", ({ event }) => {
+        console.log({
+            connections: Object.keys(server.connections),
+            lobbies: Object.keys(server.lobbies),
+        })
+        conLobWatch.flush()
     })
-
-    message = message.concat(packetManager.serializers.name.encode({
-        id: "mike",
-        name: "meg",
-        n: 69,
-    }))
-
-    const encoded = new Uint8Array(message).buffer
-
-    client.packets.events.on("name", ({ data }) => {
-        console.log("Client", data)
-        client.send(encoded)
-    })
-
-    server.packets.events.on("name", ({ ws, data, connection }) => {
-        console.log("Server", data)
-    })
-
-    console.log(message, message.length)
-    server.broadcast(encoded)
-
-    setTimeout(() => {
-        console.log(collector.filter("packetMessage"))
-        collector.flush()
-        console.log(collector.pool)
-    }, 2000)
 }
 
 run()

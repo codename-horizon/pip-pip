@@ -44,8 +44,12 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
     }
 
     emit<K extends keyof T>(eventName: K, ...params: EventUndefinedParam<T[K]>): void {
-        console.log(new Date().toISOString(), `[${this.name}] eventName: ${eventName.toString()}` + 
-            (params[0] ? `, params: ${params}` : ""))
+        if(typeof process !== "undefined" && typeof process.env !== "undefined"){
+            if(typeof process.env.DEBUG_HRZN_EVENTS !== "undefined"){
+                console.log(new Date().toISOString(), `[${this.name}] eventName: ${eventName.toString()}` + 
+                    (params[0] ? `, params: ${params}` : ""))
+            }
+        }
 
         for(const callback of this.listeners[eventName] || []){
             callback(params[0] as T[K])
@@ -73,12 +77,19 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
     }
 }
 
-export class EventCollector<T extends EventMap>{
+export type EventCollectorEventMap<T extends EventMap> = {
+    collect: {
+        event: EventNameParmeter<T>,
+    },
+}
+
+export class EventCollector<T extends EventMap> extends EventEmitter<EventCollectorEventMap<T>>{
     pool: EventNameParmeter<T>[] = []
     emitter: EventEmitter<T>
     limit: Array<keyof T>
 
-    constructor(emitter: EventEmitter<T>, limit: Array<keyof T> = []){
+    constructor(emitter: EventEmitter<T>, limit: Array<keyof T> = [], id = "Collector"){
+        super(id)
         this.emitter = emitter
         this.limit = limit
         buildEventCollector(this)
@@ -95,19 +106,23 @@ export class EventCollector<T extends EventMap>{
     }
 }
 
-export interface EventCollector<T extends EventMap>{
+export interface EventCollector<T extends EventMap> extends EventEmitter<EventCollectorEventMap<T>>{
     collect: (event: EventNameParmeter<T>) => void
     destroy: () => void
 }
 
 function buildEventCollector<T extends EventMap>(collector: EventCollector<T>){
     collector.collect = (event: EventNameParmeter<T>) => {
-        if(collector.limit.length === 0){
+        const callback = () => {
             collector.pool.push(event)
+            collector.emit("collect", { event })
+        }
+        if(collector.limit.length === 0){
+            callback()
         } else{
             const eventName = Object.keys(event)[0]
             if(collector.limit.includes(eventName)){
-                collector.pool.push(event)
+                callback()
             }
         }
     }
