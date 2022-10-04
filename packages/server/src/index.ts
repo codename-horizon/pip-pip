@@ -36,7 +36,6 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
 
 const wait = (n = 1000) => new Promise(resolve => setTimeout(resolve, n))
 
-const collector = new EventCollector(server.events)
 
 
 async function run(){
@@ -46,6 +45,7 @@ async function run(){
 
     const client = new Client(packetManager)
     await client.connect()
+    const collector = new EventCollector(client.events, ["packetMessage"])
 
     let message = packetManager.serializers.name.encode({
         id: generateId(),
@@ -75,9 +75,13 @@ async function run(){
 
     setTimeout(() => {
         console.log(collector.pool)
+        for(const event of collector.pool){
+            if(typeof event.packetMessage === "undefined") return
+            console.log(event.packetMessage.packets)
+        }
         collector.flush()
         console.log(collector.pool)
-    }, 5000)
+    }, 2000)
 }
 
 run()

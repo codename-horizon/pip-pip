@@ -28,20 +28,23 @@ export function initializeWebSockets<
             if(verified === true){
                 if(data instanceof ArrayBuffer){
                     try{
-                        const decoded = server.packets.manager.decode(data)
-                        for(const key in decoded){
-                            const values = decoded[key] || []
+                        const packets = server.packets.manager.decode(data)
+                        for(const key in packets){
+                            const values = packets[key] || []
                             for(const value of values){
                                 const event = {
                                     connection,
                                     data: value,
-                                    ws,
+                                    ws, packets,
                                 }
                                 server.packets.events.emit(key, event as any)
                                 connection.packets.events.emit(key, event as any)
                                 connection.lobby?.packets.events.emit(key, event as any)
                             }
                         }
+                        server.events.emit("packetMessage", {
+                            packets, ws, connection,
+                        })
                     } catch(e){
                         console.warn(e)
                     }

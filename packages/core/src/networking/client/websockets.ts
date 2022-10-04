@@ -33,15 +33,16 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
             if(verified === true){
                 if(data instanceof ArrayBuffer){
                     try{
-                        const decoded = client.packets.manager.decode(data)
-                        for(const key in decoded){
-                            const values = decoded[key] || []
+                        const packets = client.packets.manager.decode(data)
+                        for(const key in packets){
+                            const values = packets[key] || []
                             for(const value of values){
                                 client.packets.events.emit(key, {
-                                    data: value,
+                                    data: value, packets,
                                 } as any)
                             }
                         }
+                        client.events.emit("packetMessage", { packets })
                     } catch(e){
                         console.warn(e)
                     }

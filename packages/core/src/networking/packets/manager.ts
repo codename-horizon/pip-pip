@@ -78,11 +78,13 @@ export type ServerPacketManagerEventMap<
         ws: WebSocket,
         data: GetPacketInput<GetPacketSerializerMap<T[K]>>,
         connection: Connection<T, R, P>,
+        packets: PacketManagerDecoded<T & ServerSerializerMap>,
     }
 }
 
 export type ClientPacketManagerEventMap<T extends PacketManagerSerializerMap> = {
     [K in keyof T]: {
         data: GetPacketInput<GetPacketSerializerMap<T[K]>>,
+        packets: PacketManagerDecoded<T & ServerSerializerMap>,
     }
 }

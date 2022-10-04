@@ -4,7 +4,11 @@ export type EventCallback<T> = (params: T) => void
 export type EventUndefinedParam<T> = undefined extends T ? [param?: T] : [param: T]
 
 export type EventNameParmeter<T extends EventMap> = {
-    [K in keyof T]?: T[K]
+    [K in keyof T]?: T[K] extends undefined ? EmptyEventParams : T[K]
+}
+
+export class EmptyEventParams{
+
 }
 
 export type EventEmitterSubscriptionCallback<T extends EventMap> = (event: EventNameParmeter<T>) => void
@@ -46,7 +50,7 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
         }
         
         const event = {
-            [eventName]: params[0],
+            [eventName]: typeof params[0] === "undefined" ? new EmptyEventParams() : params[0],
         } as EventNameParmeter<T>
 
         for(const subscriberCallback of this.subscribers){
@@ -70,9 +74,11 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
 export class EventCollector<T extends EventMap>{
     emitter: EventEmitter<T>
     pool: EventNameParmeter<T>[] = []
+    limit: Array<keyof T>
 
-    constructor(emitter: EventEmitter<T>){
+    constructor(emitter: EventEmitter<T>, limit: Array<keyof T> = []){
         this.emitter = emitter
+        this.limit = limit
         buildEventCollector(this)
     }
 
@@ -88,7 +94,14 @@ export interface EventCollector<T extends EventMap>{
 
 function buildEventCollector<T extends EventMap>(collector: EventCollector<T>){
     collector.catchEvent = (event: EventNameParmeter<T>) => {
-        collector.pool.push(event)
+        if(collector.limit.length === 0){
+            collector.pool.push(event)
+        } else{
+            const eventName = Object.keys(event)[0]
+            if(collector.limit.includes(eventName)){
+                collector.pool.push(event)
+            }
+        }
     }
 
     collector.emitter.subscribe(collector.catchEvent)

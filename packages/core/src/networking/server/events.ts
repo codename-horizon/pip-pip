@@ -1,7 +1,8 @@
 import { Connection, ConnectionStatus } from "../connection"
-import { PacketManagerSerializerMap } from "../packets/manager"
+import { PacketManagerDecoded, PacketManagerSerializerMap } from "../packets/manager"
 import WebSocket, { RawData } from "ws"
 import { Lobby, LobbyStatus } from "../lobby"
+import { ServerSerializerMap } from "../packets/server"
 
 export type ServerEventMap<
     T extends PacketManagerSerializerMap,
@@ -26,6 +27,11 @@ export type ServerEventMap<
 
     socketClose: { ws: WebSocket, connection: Connection<T, R, P> },
     socketVerifyFail: { ws: WebSocket },
+
+    packetMessage: { 
+        packets: PacketManagerDecoded<T & ServerSerializerMap>,
+        ws: WebSocket, connection: Connection<T, R, P>,
+    }
 }
 
 export type ConnectionEventMap<
