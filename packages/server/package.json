@@ -4,8 +4,9 @@
   "main": "./src/index.ts",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon --watch ./src --watch ../core/src --watch ../game/src ./src/index.ts",
-    "dev:latency": "HRZN_FORCE_LATENCY=60 HRZN_FORCE_JITTER=20 yarn dev"
+    "dev": "NODE_ENV=development nodemon --watch ./src --watch ../core/src --watch ../game/src ./src/index.ts",
+    "dev:latency": "HRZN_FORCE_LATENCY=60 HRZN_FORCE_JITTER=20 yarn dev",
+    "prod": "NODE_ENV=production ts-node ./src/index.ts"
 
   },
   "peerDependencies": {
