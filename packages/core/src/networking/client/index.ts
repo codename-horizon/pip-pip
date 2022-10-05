@@ -1,10 +1,13 @@
-import { ClientPacketManagerEventMap, PacketManager, PacketManagerSerializerMap } from "../packets/manager"
-import { Axios, AxiosInstance } from "axios"
+import { AxiosInstance } from "axios"
 import { WebSocket as NodeWebSocket } from "ws"
-import { EventEmitter, ServerSerializerMap, SERVER_DEFAULT_BASE_ROUTE, SERVER_DEFAULT_HEADER_KEY, SERVER_DEFAULT_MAX_PING } from "../../common"
-import { initializeAxios } from "./axios"
+
+import { SERVER_DEFAULT_BASE_ROUTE, SERVER_DEFAULT_HEADER_KEY, SERVER_DEFAULT_MAX_PING } from "../../lib/constants"
+import { ClientPacketManagerEventMap, PacketManager, PacketManagerSerializerMap } from "../packets/manager"
 import { ConnectionJSON, ConnectionLobbyJSON, LobbyJSON } from "../api/types"
+import { ServerSerializerMap } from "../packets/server"
 import { initializeWebSockets } from "./websockets"
+import { EventEmitter } from "../../common/events"
+import { initializeAxios } from "./axios"
 import { ClientEventMap } from "./events"
 
 export type ClientOptions = {

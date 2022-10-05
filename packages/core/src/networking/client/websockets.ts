@@ -1,9 +1,9 @@
-import { Client } from "."
-import { ClientPacketManagerEventMap, PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
 import { RawData, WebSocket as NodeWebSocket } from "ws"
+
+import { ClientPacketManagerEventMap, PacketManagerSerializerMap } from "../packets/manager"
 import { ServerSerializerMap } from "../packets/server"
 import { EventEmitter } from "../../common/events"
-import { SERVER_DEFAULT_MAX_PING } from "../../lib/constants"
+import { Client } from "."
 
 export function initializeWebSockets<T extends PacketManagerSerializerMap>(client: Client<T>){
     const isBrowser = typeof window !== "undefined"

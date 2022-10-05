@@ -1,11 +1,11 @@
-import { Server } from "../server"
-import { generateId } from "../../common"
-import { EventEmitter } from "../../common/events"
 import { PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
 import { ServerSerializerMap } from "../packets/server"
+import { EventEmitter } from "../../common/events"
+import { LobbyEventMap } from "../server/events"
+import { generateId } from "../../lib/utils"
 import { Connection } from "../connection"
 import { LobbyJSON } from "../api/types"
-import { LobbyEventMap } from "../server/events"
+import { Server } from "../server"
 
 export type LobbyInitializer<
     T extends PacketManagerSerializerMap,

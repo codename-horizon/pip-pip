@@ -1,6 +1,10 @@
-import { Client, PIXIGraphics, radianDifference } from "@pip-pip/core/src/client"
-import { PipPipGame } from "@pip-pip/game"
 import * as PIXI from "pixi.js"
+
+import { PIXIGraphics } from "@pip-pip/core/src/client/graphics/pixi"
+import { Client } from "@pip-pip/core/src/networking/client"
+import { radianDifference } from "@pip-pip/core/src/math"
+import { PipPipGame } from "@pip-pip/game/src/logic"
+
 import ship1 from "../assets/ship-1.png"
 
 export type PlayerGraphic = {
@@ -23,7 +27,7 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 const ship = PIXI.Texture.from(ship1)
 
 export class PipPipGameRenderer{
-    client!: Client
+    client!: Client<any>
     graphics = new PIXIGraphics()
     smoothing = {
         playerMovement: 10,
@@ -51,7 +55,7 @@ export class PipPipGameRenderer{
         this.game = game
     }
 
-    setClient(client: Client){
+    setClient(client: Client<any>){
         this.client = client
     }
 

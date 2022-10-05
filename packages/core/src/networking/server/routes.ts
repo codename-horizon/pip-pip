@@ -1,12 +1,13 @@
-import { PacketManagerSerializerMap } from "../packets/manager"
-import express, { Express, Router as createRouter, Request, Response, NextFunction } from "express"
-import cors from "cors"
-import bodyParser from "body-parser"
+import { Router as createRouter, Request, Response, NextFunction } from "express"
 import createHttpError from "http-errors"
-import { Server } from "."
+import bodyParser from "body-parser"
+import cors from "cors"
+
 import { asyncHandler, handle404Error, handleError } from "../../lib/express"
-import { Connection } from "../connection"
+import { PacketManagerSerializerMap } from "../packets/manager"
 import { ConnectionLobbyJSON } from "../api/types"
+import { Connection } from "../connection"
+import { Server } from "."
 
 export function initializeRoutes<
     T extends PacketManagerSerializerMap,

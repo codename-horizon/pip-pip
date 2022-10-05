@@ -1,7 +1,8 @@
+import { Request } from "express"
+
 import { PacketManagerSerializerMap } from "../packets/manager"
-import express, { Express, Router as createRouter, Request, Response, NextFunction } from "express"
-import { Server } from "."
 import { Connection } from "../connection"
+import { Server } from "."
 
 export function initializeConnectionMethods<
     T extends PacketManagerSerializerMap,

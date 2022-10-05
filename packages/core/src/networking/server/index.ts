@@ -1,19 +1,18 @@
+import express, { Express, Request, Response, NextFunction } from "express"
+import { WebSocketServer } from "ws"
 import http from "http"
 
-import { generateId, SERVER_DEFAULT_BASE_ROUTE, SERVER_DEFAULT_HEADER_KEY, SERVER_DEFAULT_MAX_PING } from "../../common"
-import { EventEmitter } from "../../common/events"
+import { SERVER_DEFAULT_BASE_ROUTE, SERVER_DEFAULT_HEADER_KEY, SERVER_DEFAULT_MAX_PING } from "../../lib/constants"
 import { PacketManager, PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
-import { Packet } from "../packets/packet"
+import { Lobby, LobbyInitializer, LobbyTypeOptions, LobbyType } from "../lobby"
+import { initializeConnectionMethods } from "./connection"
 import { ServerSerializerMap } from "../packets/server"
+import { initializeWebSockets } from "./websockets"
+import { EventEmitter } from "../../common/events"
+import { initializeLobbyMethods } from "./lobby"
+import { initializeRoutes } from "./routes"
 import { Connection } from "../connection"
 import { ServerEventMap } from "./events"
-import { Lobby, LobbyInitializer, LobbyTypeOptions, LobbyType } from "../lobby"
-import { initializeRoutes } from "./routes"
-import express, { Express, Router as createRouter, Request, Response, NextFunction } from "express"
-import { WebSocketServer } from "ws"
-import { initializeWebSockets } from "./websockets"
-import { initializeConnectionMethods } from "./connection"
-import { initializeLobbyMethods } from "./lobby"
 
 export type ServerOptions = {
     authHeader: string,

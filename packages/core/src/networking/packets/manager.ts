@@ -1,7 +1,7 @@
 
-import { Connection } from "../connection"
 import { GetPacketInput, Packet, PacketSerializerMap } from "./packet"
 import { serverPackets, ServerSerializerMap } from "./server"
+import { Connection } from "../connection"
 
 export type PacketManagerSerializerMap = {
     [packetName: string]: Packet<PacketSerializerMap>,

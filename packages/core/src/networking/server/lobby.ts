@@ -1,6 +1,6 @@
+import { Lobby, LobbyInitializer, LobbyTypeOptions } from "../lobby"
 import { PacketManagerSerializerMap } from "../packets/manager"
 import { Server } from "."
-import { Lobby, LobbyInitializer, LobbyTypeOptions } from "../lobby"
 
 export function initializeLobbyMethods<
     T extends PacketManagerSerializerMap,

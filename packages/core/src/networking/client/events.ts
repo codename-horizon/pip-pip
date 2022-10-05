@@ -1,5 +1,5 @@
-import { PacketManagerDecoded, PacketManagerSerializerMap } from "../packets/manager";
-import { ServerSerializerMap } from "../packets/server";
+import { PacketManagerDecoded, PacketManagerSerializerMap } from "../packets/manager"
+import { ServerSerializerMap } from "../packets/server"
 
 export type ClientEventMap<T extends PacketManagerSerializerMap> = {
     socketReady: undefined,

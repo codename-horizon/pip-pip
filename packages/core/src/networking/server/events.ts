@@ -1,8 +1,9 @@
-import { Connection, ConnectionStatus } from "../connection"
-import { PacketManagerDecoded, PacketManagerSerializerMap } from "../packets/manager"
 import WebSocket, { RawData } from "ws"
-import { Lobby, LobbyStatus } from "../lobby"
+
+import { PacketManagerDecoded, PacketManagerSerializerMap } from "../packets/manager"
+import { Connection, ConnectionStatus } from "../connection"
 import { ServerSerializerMap } from "../packets/server"
+import { Lobby, LobbyStatus } from "../lobby"
 
 export type ServerEventMap<
     T extends PacketManagerSerializerMap,

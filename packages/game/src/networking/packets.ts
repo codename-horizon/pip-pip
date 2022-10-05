@@ -1,5 +1,10 @@
-import { $bool, $float16, $float32, $float64, $string, $uint16, $uint32, $uint8, $varstring, ExtractSerializerMap, Packet, PacketManager } from "@pip-pip/core/src/common"
-import { Bullet, PipPipGame, Player } from "../logic/test"
+import { $bool, $float16, $float64, $string, $uint16, $uint32, $uint8, $varstring } from "@pip-pip/core/src/networking/packets/serializer"
+import { PacketManager } from "@pip-pip/core/src/networking/packets/manager"
+import { Packet } from "@pip-pip/core/src/networking/packets/packet"
+
+import { Bullet } from "../logic/bullet"
+import { Player } from "../logic/player"
+import { PipPipGame } from "../logic"
 
 export const CONNECTION_ID_LENGTH = 2
 

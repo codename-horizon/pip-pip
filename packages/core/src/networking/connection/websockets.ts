@@ -1,10 +1,10 @@
 import WebSocket, { RawData } from "ws"
-import { Connection } from "."
-import { EventEmitter } from "../../common/events"
-import { SERVER_DEFAULT_MAX_PING } from "../../lib/constants"
-import { getForceLatency } from "../../lib/server-env"
+
 import { PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
 import { ServerSerializerMap } from "../packets/server"
+import { getForceLatency } from "../../lib/server-env"
+import { EventEmitter } from "../../common/events"
+import { Connection } from "."
 
 export function initializeWebSockets<
     T extends PacketManagerSerializerMap,

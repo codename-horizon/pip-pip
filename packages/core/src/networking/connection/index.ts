@@ -1,13 +1,14 @@
-import { Server } from "../server"
-import { EventEmitter } from "../../common/events"
+import WebSocket from "ws"
+
 import { PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
 import { ServerSerializerMap } from "../packets/server"
 import { ConnectionEventMap } from "../server/events"
-import { Lobby } from "../lobby"
-import { generateId } from "../../common"
-import { ConnectionJSON } from "../api/types"
-import WebSocket, { RawData } from "ws"
+import { EventEmitter } from "../../common/events"
 import { initializeWebSockets } from "./websockets"
+import { ConnectionJSON } from "../api/types"
+import { generateId } from "../../lib/utils"
+import { Server } from "../server"
+import { Lobby } from "../lobby"
 
 export type ConnectionLatencyRecord = {
     amount: number,

@@ -1,7 +1,8 @@
-import { Client } from "."
 import axios from "axios"
-import { PacketManagerSerializerMap } from "../packets/manager"
+
 import { ConnectionJSON, ConnectionLobbyJSON, LobbyJSON } from "../api/types"
+import { PacketManagerSerializerMap } from "../packets/manager"
+import { Client } from "."
 
 export function initializeAxios<T extends PacketManagerSerializerMap>(client: Client<T>){
     const getHttpUrl = () => [

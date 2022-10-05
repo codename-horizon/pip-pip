@@ -1,8 +1,14 @@
-import { ExtractSerializerMap, Server } from "@pip-pip/core"
-import { EventCollector, generateId, Ticker } from "@pip-pip/core/src/common"
+import { ExtractSerializerMap } from "@pip-pip/core/src/networking/packets/manager"
 import { LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
-import { PipPipGame, Player, Ship } from "@pip-pip/game"
+import { EventCollector } from "@pip-pip/core/src/common/events"
+import { Server } from "@pip-pip/core/src/networking/server"
+import { Ticker } from "@pip-pip/core/src/common/ticker"
+import { generateId } from "@pip-pip/core/src/lib/utils"
+
 import { CONNECTION_ID_LENGTH, encode, packetManager } from "@pip-pip/game/src/networking/packets"
+import { Player } from "@pip-pip/game/src/logic/player"
+import { PipPipGame } from "@pip-pip/game/src/logic"
+import { Ship } from "@pip-pip/game/src/logic/ship"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 

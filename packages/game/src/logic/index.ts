@@ -1,124 +1,10 @@
-import { EventEmitter, generateId, SERVER_DEFAULT_MAX_PING, PointPhysicsObject, PointPhysicsWorld, radianDifference } from "@pip-pip/core/src/common"
-import * as PIXI from "pixi.js"
+import { EventEmitter } from "@pip-pip/core/src/common/events"
+import { PointPhysicsWorld } from "@pip-pip/core/src/physics"
+import { radianDifference } from "@pip-pip/core/src/math"
 
-export class Ship{
-    aim = 0.8
+import { Bullet } from "./bullet"
+import { Player } from "./player"
 
-    agility = 0.75
-    acceleration = 3
-    
-    reloadDuration = 1200
-    shootInterval = 3
-    bullet = {
-        count: 20,
-        speed: 20,
-        size: 20,
-    }
-
-    constructor(){
-        //
-    }
-}
-
-export class Bullet{
-    id: string
-    physics: PointPhysicsObject = new PointPhysicsObject()
-    lifespan = 5000
-
-    owner?: Player
-
-    speed = 40
-    radius = 20
-    rotation = 0
-
-    constructor(id: string = generateId()){
-        this.id = id
-        this.physics.setId(id)
-        this.physics.mass = 1
-        this.physics.radius = this.radius
-        this.physics.airResistance = 0
-        this.physics.collision.channels = [1]
-        this.physics.collision.excludeChannels = [1]
-    }
-
-    setOwner(player: Player){
-        this.owner = player
-        this.physics.collision.excludeObjects = [player.physics]
-    }
-    
-    setPosition(x: number, y: number){
-        this.physics.position.x = x
-        this.physics.position.y = y
-    }
-
-    setTrajectory(angle: number, speed?: number){
-        const s = typeof speed === "undefined" ? this.speed : speed
-        this.physics.velocity.x = Math.cos(angle) * s
-        this.physics.velocity.y = Math.sin(angle) * s
-        this.rotation = angle
-    }
-}
-
-export class Player{
-    id: string
-
-    ai = false
-
-    physics: PointPhysicsObject = new PointPhysicsObject()
-
-    ship?: Ship
-
-    debugMagModifier = 0
-
-    targetRotation = 0
-    aimRotation = 0
-
-    reloadTimeLeft = 0
-    ammo = 0
-
-    lastShotTick = -100
-
-    inputShooting = false
-    inputReloading = false
-
-    acceleration = {
-        angle: 0,
-        magnitude: 0,
-    }
-
-    ping = SERVER_DEFAULT_MAX_PING
-
-    constructor(id: string){
-        this.id = id
-        this.physics.mass = 500
-        this.physics.collision.enabled = true
-        this.physics.collision.channels = []
-    }
-
-    reload(){
-        if(this.canReload === true && typeof this.ship !== "undefined"){
-            this.reloadTimeLeft = this.ship.reloadDuration
-        }
-    }
-
-    get canReload(){
-        if(typeof this.ship === "undefined") return false
-        if(this.ammo >= this.ship.bullet.count) return false
-        if(this.isReloading) return false
-        return true
-    }
-
-    get isReadyToShoot(){
-        if(this.isReloading) return false
-        if(this.ammo === 0) return false
-        return true
-    }
-
-    get isReloading(){
-        if(this.reloadTimeLeft === 0) return false
-        return true
-    }
-}
 
 export type PipPipGameEventMap = {
     addPlayer: { player: Player },
@@ -247,8 +133,11 @@ export class PipPipGame{
                             player.acceleration.magnitude = 0
                             if(distance > 100){
                                 // move forward if facing player
+                                player.acceleration.angle = player.aimRotation
                                 if(Math.abs(radianDifference(angle, player.aimRotation)) < Math.PI / 4){
-                                    player.acceleration.angle = player.aimRotation
+                                    player.acceleration.magnitude = 0.5
+                                }
+                                if(Math.abs(radianDifference(angle, player.aimRotation)) < Math.PI / 8){
                                     player.acceleration.magnitude = 1
                                 }
                             } else if(distance > 500){
@@ -258,7 +147,7 @@ export class PipPipGame{
                                 player.acceleration.angle = -player.aimRotation
                                 player.acceleration.magnitude = 1
                             }
-                            if(Math.abs(radianDifference(angle, player.aimRotation)) < Math.PI / 8){
+                            if(Math.abs(radianDifference(angle, player.aimRotation)) < Math.PI / 16){
                                 player.inputShooting = true
                                 player.inputReloading = false
                             }
