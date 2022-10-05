@@ -3,7 +3,7 @@ import { $varstring, Client, EventCollector, EventEmitter, generateId, Ticker } 
 import { Connection } from "@pip-pip/core/src/networking/connection"
 import { LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
 import { PipPipGame, Player, Ship } from "@pip-pip/game"
-import { encodeBullet, encodeMovePlayer, encodeNewPlayer, encodePlayerGun, encodePlayerPing, packetManager } from "@pip-pip/game/src/networking/packets"
+import { CONNECTION_ID_LENGTH, encodeBullet, encodeMovePlayer, encodeNewPlayer, encodePlayerGun, encodePlayerPing, packetManager } from "@pip-pip/game/src/networking/packets"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 
@@ -19,6 +19,7 @@ const server = new Server<GamePacketManagerSerializerMap, GameConnectionLocals, 
     connectionIdleLifespan: 8000,
     lobbyIdleLifespan: 8000,
     verifyTimeLimit: 5000,
+    connectionIdLength: CONNECTION_ID_LENGTH,
 })
 
 const defaultLobbyOptions: LobbyTypeOptions = {

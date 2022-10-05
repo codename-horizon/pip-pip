@@ -20,6 +20,9 @@ export type ServerOptions = {
     baseRoute: string,
     port: number,
 
+    connectionIdLength: number,
+    lobbyIdLength: number,
+
     connectionIdleLifespan: number,
     lobbyIdleLifespan: number,
     verifyTimeLimit: number,
@@ -38,6 +41,8 @@ export class Server<
         authHeader: SERVER_DEFAULT_HEADER_KEY,
         baseRoute: SERVER_DEFAULT_BASE_ROUTE,
         port: 3000,
+        connectionIdLength: 4,
+        lobbyIdLength: 4,
         connectionIdleLifespan: 1000 * 60 * 5,
         lobbyIdleLifespan: 1000 * 60 * 5,
         verifyTimeLimit: 1000 * 15,

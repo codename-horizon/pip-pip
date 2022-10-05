@@ -1,15 +1,24 @@
+import { Float16Array, Float16ArrayConstructor } from "@petamoriken/float16"
+
 export type PacketSerializer<T = any> = {
     readonly length?: number,
     encode: (value: T) => Uint8Array,
     decode: (value: Uint8Array | number[]) => T,
 }
 
-type NumberArrayConstructor = Uint8ArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor
+type NumberArrayConstructor = 
+    Uint8ArrayConstructor | 
+    Uint16ArrayConstructor | 
+    Uint32ArrayConstructor | 
+    Float16ArrayConstructor | 
+    Float32ArrayConstructor | 
+    Float64ArrayConstructor
 
 const numberTypes = {
     uint8: [1, Uint8Array],
     uint16: [2, Uint16Array],
     uint32: [4, Uint32Array],
+    float16: [2, Float16Array],
     float32: [4, Float32Array],
     float64: [8, Float64Array],
 }
@@ -38,6 +47,7 @@ const internalTextDecoder = new TextDecoder()
 export const $uint8 = createNumberSerializer("uint8")
 export const $uint16 = createNumberSerializer("uint16")
 export const $uint32 = createNumberSerializer("uint32")
+export const $float16 = createNumberSerializer("float16")
 export const $float32 = createNumberSerializer("float32")
 export const $float64 = createNumberSerializer("float64")
 

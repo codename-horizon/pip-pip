@@ -1,5 +1,7 @@
-import { $bool, $float32, $float64, $uint16, $uint32, $uint8, $varstring, Packet, PacketManager } from "@pip-pip/core/src/common"
+import { $bool, $float16, $float32, $float64, $string, $uint16, $uint32, $uint8, $varstring, Packet, PacketManager } from "@pip-pip/core/src/common"
 import { Bullet, Player } from "../logic/test"
+
+export const CONNECTION_ID_LENGTH = 2
 
 export const packetManager = new PacketManager({
     tick: new Packet({
@@ -13,23 +15,23 @@ export const packetManager = new PacketManager({
     }),
     downloadMessage: new Packet({
         order: $uint16,
-        playerId: $varstring,
+        playerId: $string(CONNECTION_ID_LENGTH),
         message: $varstring,
     }),
     newPlayer: new Packet({
-        id: $varstring,
+        id: $string(CONNECTION_ID_LENGTH),
         x: $float32,
         y: $float32,
     }),
     movePlayer: new Packet({
-        id: $varstring,
-        x: $float32,
-        y: $float32,
-        vx: $float32,
-        vy: $float32,
-        accelerationMagnitude: $float32,
-        accelerationAngle: $float32,
-        targetRotation: $float32,
+        id: $string(CONNECTION_ID_LENGTH),
+        x: $float16,
+        y: $float16,
+        vx: $float16,
+        vy: $float16,
+        accelerationMagnitude: $float16,
+        accelerationAngle: $float16,
+        targetRotation: $float16,
     }),
     playerInput: new Packet({
         x: $float64,
@@ -47,18 +49,18 @@ export const packetManager = new PacketManager({
         reloadTimeLeft: $uint16,
     }),
     shootBullet: new Packet({
-        playerId: $varstring,
+        playerId: $string(CONNECTION_ID_LENGTH),
         x: $float32,
         y: $float32,
         vx: $float32,
         vy: $float32,
     }),
     playerPing: new Packet({
-        id: $varstring,
+        id: $string(CONNECTION_ID_LENGTH),
         ping: $uint16,
     }),
     removePlayer: new Packet({
-        id: $varstring,
+        id: $string(CONNECTION_ID_LENGTH),
     }),
 })
 

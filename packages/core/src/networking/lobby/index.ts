@@ -42,7 +42,7 @@ export class Lobby<
     R extends Record<string, any> = Record<string, any>,
     P extends Record<string, any> = Record<string, any>,
 >{
-    id = generateId(8)
+    id: string
     type: string
 
     events: EventEmitter<LobbyEventMap<T, R, P>> = new EventEmitter("Lobby")
@@ -62,6 +62,7 @@ export class Lobby<
     constructor(server: Server<T, R, P>, type: string){
         this.type = type
         this.server = server
+        this.id = generateId(this.server.options.lobbyIdLength)
         this.packets = {
             events: new EventEmitter("LobbyPackets")
         }

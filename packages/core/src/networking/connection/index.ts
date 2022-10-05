@@ -34,7 +34,7 @@ export class Connection<
     R extends Record<string, any> = Record<string, any>,
     P extends Record<string, any> = Record<string, any>,
 >{
-    id = generateId(4)
+    id: string
     token = {
         connection: generateId(64),
         websocket: generateId(64),
@@ -61,6 +61,7 @@ export class Connection<
 
     constructor(server: Server<T, R, P>){
         this.server = server
+        this.id = generateId(this.server.options.connectionIdLength)
         this.packets = {
             events: new EventEmitter("ConnectionPackets")
         }
