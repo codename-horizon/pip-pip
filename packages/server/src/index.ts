@@ -34,7 +34,10 @@ const defaultLobbyOptions: LobbyTypeOptions = {
 // })
 
 server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
-    const game = new PipPipGame()
+    const game = new PipPipGame({
+        shootAiBullets: true,
+        calculateAi: true,
+    })
 
     // create fake players
     for(let i = 0; i < 16; i++){

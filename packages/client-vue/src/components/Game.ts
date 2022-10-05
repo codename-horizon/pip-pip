@@ -12,7 +12,10 @@ const client = new Client(packetManager, {
 
 const clientEvents = new EventCollector(client.events)
 
-const game = new PipPipGame()
+const game = new PipPipGame({
+    shootAiBullets: false,
+    calculateAi: true,
+})
 const renderer = new PipPipGameRenderer()
 const keyboard = new KeyboardListener()
 const mouse = new MouseListener()

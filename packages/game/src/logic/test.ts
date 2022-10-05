@@ -10,7 +10,7 @@ export class Ship{
     reloadDuration = 1200
     shootInterval = 3
     bullet = {
-        count: 40,
+        count: 20,
         speed: 20,
         size: 20,
     }
@@ -130,12 +130,14 @@ export type PipPipGameEventMap = {
 }
 
 export type PipPipGameOptions = {
-    shootingAuthority: boolean
+    shootAiBullets: boolean,
+    calculateAi: boolean,
 }
 
 export class PipPipGame{
     options: PipPipGameOptions = {
-        shootingAuthority: false,
+        shootAiBullets: false,
+        calculateAi: true,
     }
 
     events: EventEmitter<PipPipGameEventMap> = new EventEmitter()
@@ -234,7 +236,7 @@ export class PipPipGame{
             if(typeof player.ship !== "undefined"){
 
                 // handle AI
-                if(player.ai === true){
+                if(player.ai === true && this.options.calculateAi){
                     // point and move towards nearest non AI
                     const nearest = this.getNearestPlayerTo(player, false)
                     if(typeof nearest !== "undefined"){
@@ -278,18 +280,20 @@ export class PipPipGame{
                     if(player.ammo === 0){
                         this.triggerPlayerReload(player)
                     } else if(player.isReadyToShoot){
-                        if(this.tickNumber >= player.lastShotTick + player.ship.shootInterval){
-                            // shoot
-                            const bullet = new Bullet()
-                            bullet.setOwner(player)
-                            const offset = player.physics.radius / 4
-                            const x = player.physics.position.x + Math.cos(player.aimRotation) * offset
-                            const y = player.physics.position.y + Math.sin(player.aimRotation) * offset
-                            bullet.setPosition(x, y)
-                            bullet.setTrajectory(player.aimRotation)
-                            this.addBullet(bullet)
-                            player.ammo--
-                            player.lastShotTick = this.tickNumber
+                        if(player.ai === false || (player.ai === true && this.options.shootAiBullets)){
+                            if(this.tickNumber >= player.lastShotTick + player.ship.shootInterval){
+                                // shoot
+                                const bullet = new Bullet()
+                                bullet.setOwner(player)
+                                const offset = player.physics.radius / 4
+                                const x = player.physics.position.x + Math.cos(player.aimRotation) * offset
+                                const y = player.physics.position.y + Math.sin(player.aimRotation) * offset
+                                bullet.setPosition(x, y)
+                                bullet.setTrajectory(player.aimRotation)
+                                this.addBullet(bullet)
+                                player.ammo--
+                                player.lastShotTick = this.tickNumber
+                            }
                         }
                     }
                 }
