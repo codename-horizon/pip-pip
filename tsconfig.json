@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "composite": true,
+        "target": "es2016",
+        "module": "commonjs",
+        "strict": true,
+        "isolatedModules": true,
+        "skipLibCheck": true,
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+
+        "baseUrl": ".",
+        "paths": {
+            "@pip-pip/core/*": ["packages/core/src/*"],
+            "@pip-pip/game/*": ["packages/game/src/*"]
+        },
+    }
+}
