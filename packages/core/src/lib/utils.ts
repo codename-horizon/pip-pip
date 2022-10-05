@@ -1,6 +1,11 @@
-export function generateId(length = 4){
+export function generateId(length = 4, reference?: string[]){
     const pool = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMOPQRSTUVWXYZ"
-    return Array(length).fill(null).map(() => pool[Math.floor(Math.random()*pool.length)]).join("")
+    const getRandom = () => Array(length).fill(null).map(() => pool[Math.floor(Math.random()*pool.length)]).join("")
+    if(typeof reference === "undefined") return getRandom()
+    if(reference.length >= Math.pow(pool.length, length)) throw new Error("No unique ID permutations left.")
+    let output = getRandom()
+    while(reference.includes(output)) output = getRandom()
+    return output
 }
 
 export function getKeyDuplicates(...args: Record<string, unknown>[]){
