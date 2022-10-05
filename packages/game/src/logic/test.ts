@@ -34,7 +34,7 @@ export class Bullet{
     constructor(id: string = generateId()){
         this.id = id
         this.physics.setId(id)
-        this.physics.mass = 5
+        this.physics.mass = 1
         this.physics.radius = this.radius
         this.physics.airResistance = 0
         this.physics.collision.channels = [1]
@@ -62,6 +62,8 @@ export class Bullet{
 export class Player{
     id: string
 
+    ai = false
+
     physics: PointPhysicsObject = new PointPhysicsObject()
 
     ship?: Ship
@@ -88,6 +90,7 @@ export class Player{
 
     constructor(id: string){
         this.id = id
+        this.physics.mass = 500
         this.physics.collision.enabled = true
         this.physics.collision.channels = []
     }
@@ -197,14 +200,79 @@ export class PipPipGame{
         }
     }
 
+    getNearestPlayerTo(player: Player, ai?: boolean){
+        const output: {
+            dx: number, dy: number,
+            distance: number, player: Player,
+        } = {
+            dx: 0, dy: 0,
+            distance: Infinity,
+            player,
+        }
+        const players = Object.values(this.players)
+        for(const otherPlayer of players){
+            if(otherPlayer === player) continue
+            if(typeof ai !== "undefined" && otherPlayer.ai !== ai) continue
+            const dx = otherPlayer.physics.position.x - player.physics.position.x
+            const dy = otherPlayer.physics.position.y - player.physics.position.y
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            if(dist < output.distance){
+                output.distance = dist
+                output.dx = dx
+                output.dy = dy
+                output.player = player
+            }
+        }
+        if(output.distance === Infinity) return
+        return output
+    }
+
     update(){
         const players = Object.values(this.players)
 
         for(const player of players){
             if(typeof player.ship !== "undefined"){
+
+                // handle AI
+                if(player.ai === true){
+                    // point and move towards nearest non AI
+                    const nearest = this.getNearestPlayerTo(player, false)
+                    if(typeof nearest !== "undefined"){
+                        const { distance, dx, dy } = nearest
+                        const angle = Math.atan2(dy, dx)
+                        if(distance < 200){
+                            player.targetRotation = angle
+                            player.acceleration.magnitude = 0
+                            if(distance > 100){
+                                // move forward if facing player
+                                if(Math.abs(radianDifference(angle, player.aimRotation)) < Math.PI / 4){
+                                    player.acceleration.angle = player.aimRotation
+                                    player.acceleration.magnitude = 1
+                                }
+                            } else if(distance > 500){
+                                // stay
+                            } else{
+                                // move back
+                                player.acceleration.angle = -player.aimRotation
+                                player.acceleration.magnitude = 1
+                            }
+                            if(Math.abs(radianDifference(angle, player.aimRotation)) < Math.PI / 8){
+                                player.inputShooting = true
+                                player.inputReloading = false
+                            }
+                        } else{
+                            player.acceleration.magnitude = 0
+                            player.inputShooting = false
+                            player.inputReloading = true
+                        }
+                    }
+                }
+
+                // trigger reload
                 if(player.inputReloading === true){
                     this.triggerPlayerReload(player)
                 }
+
                 // shooting
                 if(player.inputShooting === true){
                     if(player.ammo === 0){
@@ -241,10 +309,11 @@ export class PipPipGame{
                 
                 // accelerate players
                 if(player.acceleration.magnitude > 0){
+                    const inputMag = Math.min(1, Math.max(0, Math.abs(player.acceleration.magnitude)))
                     const angleDiff = radianDifference(player.acceleration.angle, player.aimRotation)
                     const magModifier = Math.pow(player.ship.agility + (1 - Math.abs(angleDiff) / Math.PI) * (1 - player.ship.agility), 2)
                     player.debugMagModifier = magModifier
-                    const mag = player.ship.acceleration * player.acceleration.magnitude * magModifier
+                    const mag = player.ship.acceleration * inputMag * magModifier
                     const x = Math.cos(player.acceleration.angle) * mag
                     const y = Math.sin(player.acceleration.angle) * mag
                     player.physics.velocity.qx += x

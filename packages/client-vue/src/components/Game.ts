@@ -1,14 +1,9 @@
 import { Bullet, PipPipGame, Player, Ship } from "@pip-pip/game/src/logic/test";
 import { defineComponent, onMounted, ref } from "vue";
-import * as PIXI from "pixi.js"
-import ship1 from "../assets/ship-1.png"
-import { assets } from "../game/assets";
-import { degreeDifference, EventCollector, generateId, KeyboardListener, MouseListener, PIXIGraphics, Ticker } from "@pip-pip/core/src/client";
+import { EventCollector, KeyboardListener, MouseListener, Ticker } from "@pip-pip/core/src/client";
 import { PipPipGameRenderer } from "../game/render";
-
-
 import { Client } from '@pip-pip/core/src/client'
-import { encodeMovePlayer, encodePlayerInput, packetManager } from '@pip-pip/game/src/networking/packets'
+import { encode, packetManager } from '@pip-pip/game/src/networking/packets'
 
 const client = new Client(packetManager, {
     host: window.location.hostname,
@@ -34,6 +29,27 @@ let lastTick = 0
 
 // new EventCollector(client.packets.events).on("collect", ({event}) => console.log(event))
 
+async function findLobby(){
+    if(lobbyId.length > 0){
+        try{
+            await client.joinLobby(lobbyId)
+            window.location.hash = lobbyId
+            return
+        } catch(e){
+            console.warn(e)
+            alert(`Could not connect to lobby ${lobbyId}`)
+        }
+    }
+    if(confirm("Create a new lobby?")){
+        const lobby = await client.createLobby("default")
+        lobbyId = lobby.lobbyId
+    } else{
+        const _lobbyId = prompt("What lobby ID code?")
+        lobbyId = typeof _lobbyId === "string" ? _lobbyId : ""
+    }
+    await findLobby()
+}
+
 function setup(){
     const container = ref()
     const debugJson = ref<Record<string, any>>({})
@@ -43,23 +59,8 @@ function setup(){
     onMounted(async () => {
         console.log(client)
         await client.connect()
-        try{
-            if(lobbyId.length === 0){
-                if(confirm("Create a new lobby?")){
-                    const lobby = await client.createLobby("default")
-                    lobbyId = lobby.lobbyId
-                } else{
-                    const _lobbyId = prompt("What lobby ID code?")
-                    lobbyId = typeof _lobbyId === "string" ? _lobbyId : ""
-                }
-            }
-            window.location.href = window.location.href.split("#")[0] + "#" + lobbyId
-            await client.joinLobby(lobbyId)
-        } catch(e){
-            console.warn(e)
-            const lobby = await client.createLobby("default")
-            lobbyId = lobby.lobbyId
-        }
+
+        await findLobby()
 
         renderer.graphics.setContainer(container.value)
         renderer.setup()
@@ -109,6 +110,7 @@ function setup(){
                 for(const p of packets.newPlayer || []){
                     const player = new Player(p.id)
                     player.ship = new Ship()
+                    player.ai = p.ai
                     player.physics.position.x = p.x
                     player.physics.position.y = p.y
                     game.addPlayer(player)
@@ -206,10 +208,10 @@ function setup(){
             if(typeof player !== "undefined"){
                 let code: number[] = []
                 const messages = [
-                    packetManager.serializers.tick.encode({ number: game.tickNumber }),
+                    encode.tick(game),
                 ]
 
-                messages.push(encodePlayerInput(player))
+                messages.push(encode.playerInput(player))
 
                 for(const message of messages){
                     code = code.concat(message)

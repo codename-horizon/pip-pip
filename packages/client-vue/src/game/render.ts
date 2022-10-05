@@ -74,7 +74,7 @@ export class PipPipGameRenderer{
                 // create new player
                 const object = new PIXI.Sprite(ship)
                 const palyer = this.game.players[gamePlayerId]
-                object.scale.set(palyer.physics.mass / 100 * 2)
+                object.scale.set(2)
                 object.interactive = false
                 object.anchor.set(0.5)
                 this.players[gamePlayerId] = {
