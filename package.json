@@ -14,7 +14,7 @@
     "client": "yarn workspace @pip-pip/client-vue",
     "game": "yarn workspace @pip-pip/game",
     "core": "yarn workspace @pip-pip/core",
-    "build": "yarn clear && yarn core build && yarn game build && yarn server build && yarn client build && node build",
-    "build:prod": "yarn uninstall && yarn && yarn build"
+    "build": "bash ./scripts/build.sh",
+    "deploy": "bash ./scripts/deploy.sh"
   }
 }
