@@ -9,10 +9,12 @@
   "private": true,
   "scripts": {
     "uninstall": "rm -rf node_modules/ packages/*/node_modules",
-    "clear": "rm -rf ./packages/*/dist",
+    "clear": "rm -rf ./packages/*/dist ./packages/*/tsconfig.tsbuildinfo",
     "server": "yarn workspace @pip-pip/server",
     "client": "yarn workspace @pip-pip/client-vue",
     "game": "yarn workspace @pip-pip/game",
-    "core": "yarn workspace @pip-pip/core"
+    "core": "yarn workspace @pip-pip/core",
+    "build": "yarn clear && yarn core build && yarn game build && yarn server build && yarn client build && node build",
+    "build:prod": "yarn uninstall && yarn && yarn build"
   }
 }

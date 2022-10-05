@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "NODE_ENV=development nodemon --watch ./src --watch ../core/src --watch ../game/src ./src/index.ts",
     "dev:latency": "HRZN_FORCE_LATENCY=60 HRZN_FORCE_JITTER=20 yarn dev",
-    "prod": "NODE_ENV=production ts-node ./src/index.ts"
-
+    "prod": "NODE_ENV=production node ./dist/index.js",
+    "build": "tsc"
   },
   "peerDependencies": {
     "@pip-pip/core": "*",
@@ -20,7 +20,7 @@
     "nodemon": "^2.0.19",
     "ts-node": "^10.9.1",
     "tsc": "^2.0.4",
-    "typescript": "^4.8.3"
+    "typescript": "^4.8.4"
   },
   "dependencies": {
     "axios": "^0.27.2"
