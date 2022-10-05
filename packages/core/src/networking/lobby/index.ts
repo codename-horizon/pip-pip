@@ -62,7 +62,7 @@ export class Lobby<
     constructor(server: Server<T, R, P>, type: string){
         this.type = type
         this.server = server
-        this.id = generateId(this.server.options.lobbyIdLength)
+        this.id = generateId(this.server.options.lobbyIdLength, Object.keys(this.server.lobbies))
         this.packets = {
             events: new EventEmitter("LobbyPackets")
         }

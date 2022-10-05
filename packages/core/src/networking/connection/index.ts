@@ -62,7 +62,7 @@ export class Connection<
 
     constructor(server: Server<T, R, P>){
         this.server = server
-        this.id = generateId(this.server.options.connectionIdLength)
+        this.id = generateId(this.server.options.connectionIdLength, Object.keys(this.server.connections))
         this.packets = {
             events: new EventEmitter("ConnectionPackets")
         }
