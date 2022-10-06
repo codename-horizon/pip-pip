@@ -5,6 +5,7 @@ import { ServerSerializerMap } from "../packets/server"
 import { getForceLatency } from "../../lib/server-env"
 import { EventEmitter } from "../../common/events"
 import { Connection } from "."
+import { compress } from "../../lib/compression"
 
 export function initializeWebSockets<
     T extends PacketManagerSerializerMap,
@@ -40,10 +41,11 @@ export function initializeWebSockets<
     }
 
     connection.send = (data: string | ArrayBuffer) => {
-        const send = () => {
+        const send = async () => {
             if(typeof connection.ws !== "undefined"){
                 if(connection.ws.readyState === connection.ws.OPEN){
-                    connection.ws.send(data)
+                    const toSend = data instanceof ArrayBuffer ? new Uint8Array(await compress(data)) : data
+                    connection.ws.send(toSend)
                 }
             }
         }

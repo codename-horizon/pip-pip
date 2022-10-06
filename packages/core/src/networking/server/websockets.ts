@@ -4,6 +4,7 @@ import { PacketManagerSerializerMap } from "../packets/manager"
 import { getForceLatency } from "../../lib/server-env"
 import { Connection } from "../connection"
 import { Server } from "."
+import { decompress } from "../../lib/compression"
 
 export function initializeWebSockets<
     T extends PacketManagerSerializerMap,
@@ -31,12 +32,12 @@ export function initializeWebSockets<
         ws.binaryType = "arraybuffer"
 
         ws.on("message", (data: RawData) => {
-            const receive = () => {
+            const receive = async () => {
                 server.events.emit("socketMessage", { ws, data, connection })
                 if(verified === true){
                     if(data instanceof ArrayBuffer){
                         try{
-                            const packets = server.packets.manager.decode(data)
+                            const packets = server.packets.manager.decode(await decompress(data))
                             for(const key in packets){
                                 const values = packets[key] || []
                                 for(const value of values){
