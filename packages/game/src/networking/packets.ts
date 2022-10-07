@@ -7,6 +7,7 @@ import { Player } from "../logic/player"
 import { PipPipGame } from "../logic"
 
 export const CONNECTION_ID_LENGTH = 2
+export const LOBBY_ID_LENGTH = 4
 
 export const packetManager = new PacketManager({
     tick: new Packet({

@@ -8,10 +8,48 @@ body, html
     display: block
     background-color: $color-background
     color: $color-text
-    font-family: $font-family-game
+    font-size: $font-size-default
+    background-image: url(/bg.png)
+    background-position: center
+    
 
 *
+    font-family: $font-family-game
     user-select: none
     font-smooth: never
     position: relative
     box-sizing: border-box
+    
+    -webkit-user-drag: none
+    -khtml-user-drag: none
+    -moz-user-drag: none
+    -o-user-drag: none
+    user-drag: none
+
+    image-rendering: -moz-crisp-edges
+    image-rendering: -webkit-crisp-edges
+    image-rendering: pixelated
+    image-rendering: crisp-edges
+
+#app
+    width: 100%
+    height: 100%
+
+.center-container
+    width: 100%
+    height: 100%
+    
+    display: grid
+    align-items: center
+    justify-items: center
+
+    .content-container
+        width: fit-content
+        height: fit-content
+
+@keyframes wobble
+    $deg: 3deg
+    from
+        transform: rotate(-$deg)
+    to
+        transform: rotate($deg)

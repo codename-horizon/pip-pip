@@ -13,21 +13,16 @@
 <style scoped lang="sass">
 @import "../styles/_variables.sass"
 
-$lift: 0.1em
-$shadow-drop: 0.3em
-$total-drop: $shadow-drop + $lift
-
 .button
     cursor: pointer
     font-size: $font-size-input
-    padding-bottom: $total-drop
+    padding-bottom: $button-total-drop
     width: fit-content
-    margin: 0.5em 1em
     *
         white-space: nowrap
     .top
         position: relative
-        top: $lift
+        top: $button-hover-lift
         z-index: 1
         transition: top 100ms
         .text
@@ -38,7 +33,7 @@ $total-drop: $shadow-drop + $lift
         position: absolute
         bottom: 0
         width: 100%
-        height: calc(100% - #{$total-drop})
+        height: calc(100% - #{$button-total-drop})
     .top, .bottom
         border-radius: $border-radius
         border: $border-size solid
@@ -48,7 +43,7 @@ $total-drop: $shadow-drop + $lift
             top: 0
     &:active
         .top
-            top: $total-drop
+            top: $button-total-drop
             transition: top 30ms
 
 
