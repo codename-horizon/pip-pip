@@ -1,4 +1,4 @@
-<script src="./Game" lang="ts"></script>
+<script src="./GameView" lang="ts"></script>
 
 <template>
   <pre id="debug">{{debugJson}}</pre>

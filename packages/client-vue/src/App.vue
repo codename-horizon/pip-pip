@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import GameLoading from './components/GameLoading.vue';
 
 </script>
 
 <template>
-  <RouterView></RouterView>
+  <RouterView/>
+  <GameLoading/>
 </template>
 
 <style scoped>

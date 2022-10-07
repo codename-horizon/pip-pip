@@ -53,3 +53,10 @@ body, html
         transform: rotate(-$deg)
     to
         transform: rotate($deg)
+
+@keyframes zoom
+    $amount: 0.1
+    from
+        transform: scale(1 - $amount)
+    to
+        transform: rotate(1 + $amount)

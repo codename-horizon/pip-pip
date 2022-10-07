@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import GameButton from "../components/GameButton.vue"
 
-import { defineComponent, onMounted } from "vue"
+import { onMounted } from "vue"
 import { useGameStore } from "../game/store"
-const gameStore = useGameStore()
+import { useUiStore } from "../store/ui";
+import { client } from "../game/client";
+import { hostGame } from "../game"
 
-const test = () => {
-    console.log("clicked")
+const gameStore = useGameStore()
+const uiStore = useUiStore()
+
+const notYetImplemented = () => {
+    alert("That doesn't do anything yet.")
 }
+
+onMounted(() => {
+    
+})
 
 </script>
 <template lang="pug">
@@ -18,10 +27,10 @@ const test = () => {
             .caption ALPHA by Meg&amp;Mike
 
         .buttons
-            GameButton(@click="test") Host Game 
-            GameButton(@click="test") Join Game 
-            GameButton.accent(@click="test") Settings
-            GameButton.accent(@click="test") Credits
+            GameButton(@click="hostGame") Host Game 
+            GameButton(@click="notYetImplemented") Join Game 
+            GameButton.accent(@click="notYetImplemented") Settings
+            GameButton.accent(@click="notYetImplemented") Credits
 </template>
 
 <style lang="sass" scoped>
