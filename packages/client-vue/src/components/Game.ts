@@ -1,18 +1,18 @@
-import { defineComponent, onMounted, ref } from "vue";
+import { defineComponent, onMounted, ref } from "vue"
 
 import { KeyboardListener } from "@pip-pip/core/src/client/keyboard"
-import { EventCollector } from "@pip-pip/core/src/common/events";
+import { EventCollector } from "@pip-pip/core/src/common/events"
 import { MouseListener } from "@pip-pip/core/src/client/mouse"
-import { Client } from "@pip-pip/core/src/networking/client";
+import { Client } from "@pip-pip/core/src/networking/client"
 import { Ticker } from "@pip-pip/core/src/common/ticker"
 
-import { encode, packetManager } from '@pip-pip/game/src/networking/packets'
-import { Player } from "@pip-pip/game/src/logic/player";
-import { Bullet } from "@pip-pip/game/src/logic/bullet";
-import { Ship } from "@pip-pip/game/src/logic/ship";
-import { PipPipGame } from "@pip-pip/game/src/logic";
+import { encode, packetManager } from "@pip-pip/game/src/networking/packets"
+import { Player } from "@pip-pip/game/src/logic/player"
+import { Bullet } from "@pip-pip/game/src/logic/bullet"
+import { Ship } from "@pip-pip/game/src/logic/ship"
+import { PipPipGame } from "@pip-pip/game/src/logic"
 
-import { PipPipGameRenderer } from "../game/render";
+import { PipPipGameRenderer } from "../game/render"
 
 const client = new Client(packetManager, {
     host: window.location.hostname,

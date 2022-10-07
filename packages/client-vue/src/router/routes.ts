@@ -1,6 +1,6 @@
 import { RouterOptions } from "vue-router"
 
-import Index from "../components/Game"
+import Index from "../views/Index.vue"
 
 export const routes: RouterOptions["routes"] = [
     {

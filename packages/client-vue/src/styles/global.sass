@@ -1,11 +1,17 @@
-body, html, canvas
+@import variables
+    
+body, html
     margin: 0
     padding: 0
     width: 100%
     height: 100%
     display: block
-    position: fixed
-    inset: 0
-    background-color: black
-    color: white
+    background-color: $color-background
+    color: $color-text
+    font-family: $font-family-game
+
+*
     user-select: none
+    font-smooth: never
+    position: relative
+    box-sizing: border-box
