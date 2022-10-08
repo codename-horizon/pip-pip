@@ -10,9 +10,11 @@ export async function hostGame(){
     uiStore.body = "Loading..."
     try{
         uiStore.body = "Requesting connection..."
-        await client.requestConnection()
+        await client.connect()
         uiStore.body = "Creating lobby..."
         const lobby = await client.createLobby("default")
+        uiStore.body = "Cleaning up..."
+        await client.disconnect()
         router.push({
             name: "game",
             params: {

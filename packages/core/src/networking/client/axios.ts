@@ -47,14 +47,14 @@ export function initializeAxios<T extends PacketManagerSerializerMap>(client: Cl
         return data
     }
 
-    client.getConnectedLobby = async () => {
-        const { data } = await client.api.get<ConnectionLobbyJSON>("/lobbies/connected")
+    client.getClientLobby = async () => {
+        const { data } = await client.api.get<ConnectionLobbyJSON>("/connection/lobby")
         return data
     }
 
     client.joinLobby = async (id: string) => {
         try{
-            const connectedLobby = await client.getConnectedLobby()
+            const connectedLobby = await client.getClientLobby()
             return connectedLobby
         } catch(e){
             // Probably not connected in lobby

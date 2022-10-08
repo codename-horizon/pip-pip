@@ -22,16 +22,16 @@ type GameLobbyLocals = {
 }
 
 const server = new Server<GamePacketManagerSerializerMap, GameConnectionLocals, GameLobbyLocals>(packetManager, {
-    connectionIdleLifespan: 8000,
-    lobbyIdleLifespan: 8000,
+    connectionIdleLifespan: 1000 * 60 * 10, // 10 minutes
+    lobbyIdleLifespan: 1000 * 3, // 3 seconds
     verifyTimeLimit: 5000,
     connectionIdLength: CONNECTION_ID_LENGTH,
     lobbyIdLength: LOBBY_ID_LENGTH,
 })
 
 const defaultLobbyOptions: LobbyTypeOptions = {
-    maxConnections: 32,
-    maxInstances: 32,
+    maxConnections: 16,
+    maxInstances: 128,
     userCreatable: true,
 }
 

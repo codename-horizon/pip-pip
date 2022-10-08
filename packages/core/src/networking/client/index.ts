@@ -106,7 +106,7 @@ export interface Client<T extends PacketManagerSerializerMap>{
 
     createLobby: (type: string) => Promise<LobbyJSON>
     joinLobby: (id: string) => Promise<ConnectionLobbyJSON>
-    getConnectedLobby: () => Promise<ConnectionLobbyJSON>
+    getClientLobby: () => Promise<ConnectionLobbyJSON>
     leaveLobby: () => Promise<ConnectionLobbyJSON>
 
     // websockets.ts
