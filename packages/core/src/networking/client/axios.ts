@@ -42,6 +42,24 @@ export function initializeAxios<T extends PacketManagerSerializerMap>(client: Cl
         return data
     }
 
+    client.requestConnectionIfNeeded = async () => {
+        let output: ConnectionJSON | undefined
+
+        try{
+            if(client.hasIdAndTokens){
+                output = await client.verifyConnection()
+            }
+        } catch(e){
+            console.warn(e)
+        }
+
+        if(typeof output === "undefined"){   
+            output = await client.requestConnection()
+        }
+
+        return output
+    }
+
     client.createLobby = async (type: string) => {
         const { data } = await client.api.post<LobbyJSON>("/lobbies", { type })
         return data

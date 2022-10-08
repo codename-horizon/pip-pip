@@ -102,6 +102,7 @@ export interface Client<T extends PacketManagerSerializerMap>{
     api: AxiosInstance
     initializeApi: () => void
     requestConnection: () => Promise<ConnectionJSON>
+    requestConnectionIfNeeded: () => Promise<ConnectionJSON>
     verifyConnection: () => Promise<ConnectionJSON>
 
     createLobby: (type: string) => Promise<LobbyJSON>

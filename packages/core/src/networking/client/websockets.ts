@@ -87,15 +87,7 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
 
     client.connect = async () => {
         if(client.isReady) return
-        try{
-            if(client.hasIdAndTokens){
-                await client.verifyConnection()
-            } else{
-                await client.requestConnection()
-            }
-        } catch(e){
-            await client.requestConnection()
-        }
+        await client.requestConnectionIfNeeded()
         await client.connectWebSocket()
     }
 
