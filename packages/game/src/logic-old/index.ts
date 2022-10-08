@@ -3,16 +3,16 @@ import { PointPhysicsWorld } from "@pip-pip/core/src/physics"
 import { radianDifference } from "@pip-pip/core/src/math"
 
 import { Bullet } from "./bullet"
-import { PipPlayer } from "./player"
+import { Player } from "./player"
 
 
 export type PipPipGameEventMap = {
-    addPlayer: { player: PipPlayer },
-    removePlayer: { player: PipPlayer },
+    addPlayer: { player: Player },
+    removePlayer: { player: Player },
     addBullet: { bullet: Bullet },
     removeBullet: { bullet: Bullet },
-    playerReloadStart: { player: PipPlayer },
-    playerReloadEnd: { player: PipPlayer },
+    playerReloadStart: { player: Player },
+    playerReloadEnd: { player: Player },
 }
 
 export type PipPipGameOptions = {
@@ -28,7 +28,7 @@ export class PipPipGame{
 
     events: EventEmitter<PipPipGameEventMap> = new EventEmitter()
 
-    players: Record<string, PipPlayer> = {}
+    players: Record<string, Player> = {}
     bullets: Record<string, Bullet> = {}
 
     physics: PointPhysicsWorld = new PointPhysicsWorld()
@@ -57,13 +57,13 @@ export class PipPipGame{
         }
     }
 
-    addPlayer(player: PipPlayer){
+    addPlayer(player: Player){
         this.players[player.id] = player
         this.physics.addObject(player.physics)
         this.events.emit("addPlayer", { player })
     }
 
-    removePlayer(player: PipPlayer){
+    removePlayer(player: Player){
         delete this.players[player.id]
         player.physics.destroy()
         this.events.emit("removePlayer", { player })
@@ -81,17 +81,17 @@ export class PipPipGame{
         this.events.emit("removeBullet", { bullet })
     }
 
-    triggerPlayerReload(player: PipPlayer){
+    triggerPlayerReload(player: Player){
         if(player.canReload){
             player.reload()
             this.events.emit("playerReloadStart", { player })
         }
     }
 
-    getNearestPlayerTo(player: PipPlayer, ai?: boolean){
+    getNearestPlayerTo(player: Player, ai?: boolean){
         const output: {
             dx: number, dy: number,
-            distance: number, player: PipPlayer,
+            distance: number, player: Player,
         } = {
             dx: 0, dy: 0,
             distance: Infinity,

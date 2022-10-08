@@ -9,9 +9,11 @@ export type EventNameParmeter<T extends EventMap> = {
     [K in keyof T]?: T[K] extends undefined ? EmptyEventParams : T[K]
 }
 
-export class EmptyEventParams{
+export class EmptyEventParams{}
 
-}
+export type EventMapOf<T> = T extends EventEmitter<infer R> ? R : never
+
+export type EventCallbackOf<T extends EventMap, K extends keyof T> = EventCallback<T[K]>
 
 export type EventEmitterSubscriptionCallback<T extends EventMap> = (event: EventNameParmeter<T>) => void
 
@@ -111,7 +113,7 @@ export class EventCollector<T extends EventMap> extends EventEmitter<EventCollec
 
 export interface EventCollector<T extends EventMap> extends EventEmitter<EventCollectorEventMap<T>>{
     collect: (event: EventNameParmeter<T>) => void
-    off: () => void
+    destroy: () => void
 }
 
 function buildEventCollector<T extends EventMap>(collector: EventCollector<T>){
@@ -132,7 +134,7 @@ function buildEventCollector<T extends EventMap>(collector: EventCollector<T>){
 
     collector.emitter.subscribe(collector.collect)
 
-    collector.off = () => {
+    collector.destroy = () => {
         collector.emitter.unsubscribe(collector.collect)
     }
 }

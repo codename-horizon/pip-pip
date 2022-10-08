@@ -3,7 +3,7 @@ import { PacketManager } from "@pip-pip/core/src/networking/packets/manager"
 import { Packet } from "@pip-pip/core/src/networking/packets/packet"
 
 import { Bullet } from "../logic/bullet"
-import { Player } from "../logic/player"
+import { PipPlayer } from "../logic/player"
 import { PipPipGame } from "../logic"
 
 export const CONNECTION_ID_LENGTH = 2
@@ -78,13 +78,13 @@ export const encode = {
     syncTick: (game: PipPipGame) => packetManager.serializers.syncTick.encode({
         number: game.tickNumber,
     }),
-    newPlayer: (player: Player) => packetManager.serializers.newPlayer.encode({
+    newPlayer: (player: PipPlayer) => packetManager.serializers.newPlayer.encode({
         id: player.id,
         x: player.physics.position.x,
         y: player.physics.position.y,
         ai: player.ai,
     }),
-    movePlayer: (player: Player) => packetManager.serializers.movePlayer.encode({
+    movePlayer: (player: PipPlayer) => packetManager.serializers.movePlayer.encode({
         id: player.id,
         x: player.physics.position.x,
         y: player.physics.position.y,
@@ -94,7 +94,7 @@ export const encode = {
         accelerationAngle: player.acceleration.angle,
         targetRotation: player.targetRotation,
     }),
-    playerInput: (player: Player) => packetManager.serializers.playerInput.encode({
+    playerInput: (player: PipPlayer) => packetManager.serializers.playerInput.encode({
         x: player.physics.position.x,
         y: player.physics.position.y,
         vx: player.physics.velocity.x,
@@ -105,7 +105,7 @@ export const encode = {
         shooting: player.inputShooting,
         reloading: player.inputReloading,
     }),
-    playerGun: (player: Player) => packetManager.serializers.playerGun.encode({
+    playerGun: (player: PipPlayer) => packetManager.serializers.playerGun.encode({
         ammo: player.ammo,
         reloadTimeLeft: player.reloadTimeLeft,
     }),
@@ -116,7 +116,7 @@ export const encode = {
         vx: bullet.physics.velocity.x,
         vy: bullet.physics.velocity.y,
     }),
-    playerPing: (player: Player) => packetManager.serializers.playerPing.encode({
+    playerPing: (player: PipPlayer) => packetManager.serializers.playerPing.encode({
         id: player.id,
         ping: player.ping,
     }),
