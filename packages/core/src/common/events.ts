@@ -75,7 +75,7 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
         this.subscribers = this.subscribers.filter(sub => sub !== callback)
     }
 
-    reset(){
+    destroy(){
         this.listeners = {}
     }
 }
@@ -111,7 +111,7 @@ export class EventCollector<T extends EventMap> extends EventEmitter<EventCollec
 
 export interface EventCollector<T extends EventMap> extends EventEmitter<EventCollectorEventMap<T>>{
     collect: (event: EventNameParmeter<T>) => void
-    destroy: () => void
+    off: () => void
 }
 
 function buildEventCollector<T extends EventMap>(collector: EventCollector<T>){
@@ -132,7 +132,7 @@ function buildEventCollector<T extends EventMap>(collector: EventCollector<T>){
 
     collector.emitter.subscribe(collector.collect)
 
-    collector.destroy = () => {
+    collector.off = () => {
         collector.emitter.unsubscribe(collector.collect)
     }
 }

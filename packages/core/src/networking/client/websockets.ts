@@ -8,11 +8,6 @@ import { compress, decompress } from "../../lib/compression"
 
 export function initializeWebSockets<T extends PacketManagerSerializerMap>(client: Client<T>){
     const isBrowser = typeof window !== "undefined"
-    const getWsUrl = () => [
-        client.options.wss ? "wss" : "ws",
-        "://", client.options.host, ":",
-        client.options.port,
-    ].join("")
 
     client.send = async (data: string | ArrayBuffer) => {
         if(typeof client.ws === "undefined") return
@@ -70,7 +65,7 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
         }
 
         if(isBrowser){
-            const ws = new WebSocket(getWsUrl())
+            const ws = new WebSocket(client.wsUrl)
             ws.binaryType = "arraybuffer"
             ws.addEventListener("open", openHandler)
             ws.addEventListener("close", closeHandler)
@@ -79,7 +74,7 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
             })
             client.ws = ws
         } else{
-            const ws = new NodeWebSocket(getWsUrl())
+            const ws = new NodeWebSocket(client.wsUrl)
             ws.binaryType = "arraybuffer"
             ws.on("open", openHandler)
             ws.on("close", closeHandler)
@@ -91,6 +86,7 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
     })
 
     client.connect = async () => {
+        if(client.isReady) return
         try{
             if(client.hasIdAndTokens){
                 await client.verifyConnection()
@@ -101,6 +97,13 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
             await client.requestConnection()
         }
         await client.connectWebSocket()
+    }
+
+    client.disconnect = async () => {
+        if(!client.isReady) return
+        if(typeof client.ws !== "undefined"){
+            client.ws.close()
+        }
     }
 
     const pe = client.packets.events as EventEmitter<ClientPacketManagerEventMap<ServerSerializerMap>>

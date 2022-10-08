@@ -72,14 +72,15 @@ export class MouseListener extends EventEmitter<MouseListenerEventMap>{
     }
 
     setTarget(element: HTMLElement){
-        this.off()
+        this.destroy()
         this.element = element
         this.element.addEventListener("mousedown", this.mouseHandler.bind(this))
         this.element.addEventListener("mousemove", this.mouseHandler.bind(this))
         window.addEventListener("mouseup", this.mouseHandler.bind(this))
     }
 
-    off(){
+    destroy(){
+        super.destroy()
         if(typeof this.element !== "undefined"){
             this.element.removeEventListener("mousedown", this.mouseHandler.bind(this))
             this.element.removeEventListener("mousemove", this.mouseHandler.bind(this))

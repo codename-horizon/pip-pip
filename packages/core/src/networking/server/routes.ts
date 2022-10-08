@@ -69,6 +69,22 @@ export function initializeRoutes<
         throw createHttpError(400, "Not yet implemented.")
     }))
 
+    // Get connection lobby
+    router.get("/lobbies/connected", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+        const connection = server.getConnectionFromRequest(req) as Connection<T, R, P>
+        if(typeof connection.lobby === "undefined") throw createHttpError(400, "Connection not in lobby.")
+
+        const lobby = connection.lobby
+        if(typeof lobby === "undefined") throw createHttpError(400, "Connection is not connected to any lobby.")
+
+        const output: ConnectionLobbyJSON = {
+            connection: connection.toJson(),
+            lobby: lobby.toJson()
+        }
+
+        res.json(output)
+    }))
+
     // Create lobby
     router.post("/lobbies", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
         if(typeof req.body.type !== "string") throw createHttpError(422, "Lobby type not specified.")

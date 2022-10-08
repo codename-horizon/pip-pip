@@ -41,13 +41,14 @@ export class KeyboardListener extends EventEmitter<KeyboardListenerEventMap>{
     }
 
     setTarget(element: HTMLElement){
-        this.off()
+        this.destroy()
         this.element = element
         this.element.addEventListener("keydown", this.downHandler.bind(this))
         window.addEventListener("keyup", this.upHandler.bind(this))
     }
 
-    off(){
+    destroy(){
+        super.destroy()
         if(typeof this.element !== "undefined"){
             this.element.removeEventListener("keydown", this.downHandler.bind(this))
             window.removeEventListener("keyup", this.upHandler.bind(this))

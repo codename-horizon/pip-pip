@@ -106,4 +106,9 @@ export class Ticker extends EventEmitter<TickerEventMap>{
             this.emit("stop")
         }
     }
+
+    destroy() {
+        super.destroy()
+        this.stopTick()
+    }
 }

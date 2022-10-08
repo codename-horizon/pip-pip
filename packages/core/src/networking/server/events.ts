@@ -20,8 +20,10 @@ export type ServerEventMap<
     removeLobby: { lobby: Lobby<T, R, P> },
 
     socketOpen: { ws: WebSocket },
-
     socketReady: { ws: WebSocket, connection: Connection<T, R, P> },
+
+    connectionStatusChange: { connection: Connection<T, R, P> },
+    lobbyStatusChange: { lobby: Lobby<T, R, P> },
 
     socketMessage: { ws: WebSocket, data: RawData, connection?: Connection<T, R, P> },
     packetMessage: { 
@@ -55,6 +57,8 @@ export type ConnectionEventMap<
 
     lobbyJoin: { lobby: Lobby<T, R, P> },
     lobbyLeave: { lobby: Lobby<T, R, P> },
+    
+    lobbyStatusChange: { lobby: Lobby<T, R, P> },
 
     destroy: undefined,
 }
@@ -76,6 +80,7 @@ export type LobbyEventMap<
     }
 
     addConnection: { connection: Connection<T, R, P> },
+    connectionStatusChange: { connection: Connection<T, R, P> },
     removeConnection: { connection: Connection<T, R, P> },
 
     destroy: undefined,

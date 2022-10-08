@@ -75,6 +75,20 @@ export class Lobby<
         return LobbyStatus.ACTIVE
     }
 
+    statusChangeTimeout?: NodeJS.Timeout
+    emitStatusChange(){
+        if(typeof this.statusChangeTimeout !== "undefined"){
+            clearTimeout(this.statusChangeTimeout)
+        }
+        this.statusChangeTimeout = setTimeout(() => {
+            this.events.emit("statusChange", { status: this.status })
+            this.server.events.emit("lobbyStatusChange", { lobby: this })
+            for(const connectionId in this.connections){
+                this.connections[connectionId].events.emit("lobbyStatusChange", { lobby: this })
+            }
+        }, 0)
+    }
+
     addConnection(connection: Connection<T, R, P>){
         if(connection.id in this.connections) throw new Error(`Connection "${connection.id}" already in lobby ${this.id}.`)
 
@@ -106,7 +120,7 @@ export class Lobby<
             this.destroy()
         }, this.server.options.lobbyIdleLifespan)
         this.events.emit("idleStart")
-        this.events.emit("statusChange", { status: this.status })
+        this.emitStatusChange()
     }
 
     stopIdle(){
@@ -114,7 +128,7 @@ export class Lobby<
         clearTimeout(this.idleTimeout)
         this.idleTimeout = undefined
         this.events.emit("idleEnd")
-        this.events.emit("statusChange", { status: this.status })
+        this.emitStatusChange()
     }
 
     destroy(){
@@ -126,8 +140,7 @@ export class Lobby<
             }
             this.server.removeLobby(this)
             this.events.emit("destroy")
-            // TODO: Imrpove status change calls
-            this.events.emit("statusChange", { status: this.status })
+            this.emitStatusChange()
         }
     }
 

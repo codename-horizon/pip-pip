@@ -1,5 +1,5 @@
 import { ExtractSerializerMap } from "@pip-pip/core/src/networking/packets/manager"
-import { LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
+import { Lobby, LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
 import { EventCollector } from "@pip-pip/core/src/common/events"
 import { Server } from "@pip-pip/core/src/networking/server"
 import { Ticker } from "@pip-pip/core/src/common/ticker"
@@ -9,6 +9,7 @@ import { CONNECTION_ID_LENGTH, encode, LOBBY_ID_LENGTH, packetManager } from "@p
 import { Player } from "@pip-pip/game/src/logic/player"
 import { PipPipGame } from "@pip-pip/game/src/logic"
 import { Ship } from "@pip-pip/game/src/logic/ship"
+import { Connection } from "@pip-pip/core/src/networking/connection"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 
@@ -237,13 +238,28 @@ async function run(){
 
     console.log(artLines.join("\n"))
 
-    const conLobWatch = new EventCollector(server.events, ["addConnection", "createConnection", "createLobby", "removeConnection", "removeLobby"])
+    let logTimeout: NodeJS.Timeout
+    const conLobWatch = new EventCollector(server.events, [
+        "addConnection", 
+        "createConnection", 
+        "createLobby", 
+        "removeConnection", 
+        "removeLobby", 
+        "connectionStatusChange",
+        "lobbyStatusChange",
+    ])
     conLobWatch.on("collect", ({ event }) => {
-        console.log({
-            connections: Object.keys(server.connections),
-            lobbies: Object.keys(server.lobbies),
-        })
-        conLobWatch.flush()
+        clearTimeout(logTimeout)
+        logTimeout = setTimeout(() => {
+            const map = (a: Lobby<any, any, any> | Connection<any, any, any>) => {
+                return [a.id, a.status].join(":")
+            }
+            console.log({
+                connections: Object.values(server.connections).map(map),
+                lobbies: Object.values(server.lobbies).map(map),
+            })
+            conLobWatch.flush()
+        }, 100)
     })
 }
 
