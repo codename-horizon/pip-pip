@@ -1,65 +1,36 @@
-import { PointPhysicsObject } from "@pip-pip/core/src/physics"
+import { PointPhysicsObject, Vector2 } from "@pip-pip/core/src/physics"
+import { PipPipGame } from "."
 
 import { Ship } from "./ship"
 
-export class Player{
+export class PipPlayer{
     id: string
-
-    ai = false
-
-    physics: PointPhysicsObject = new PointPhysicsObject()
+    ping = 0
 
     ship?: Ship
-
-    debugMagModifier = 0
-
-    targetRotation = 0
-    aimRotation = 0
-
-    reloadTimeLeft = 0
-    ammo = 0
-
-    lastShotTick = -100
-
-    inputShooting = false
-    inputReloading = false
-
-    acceleration = {
-        angle: 0,
-        magnitude: 0,
-    }
-
-    ping = 0
+    game?: PipPipGame
+    spectating?: PipPlayer | Ship | PointPhysicsObject | Vector2
 
     constructor(id: string){
         this.id = id
-        this.physics.mass = 500
-        this.physics.airResistance = 0.1
-        this.physics.collision.enabled = true
-        this.physics.collision.channels = []
     }
 
-    reload(){
-        if(this.canReload === true && typeof this.ship !== "undefined"){
-            this.reloadTimeLeft = this.ship.reloadDuration
+    setShip(ship: Ship){
+        if(typeof this.ship !== "undefined"){
+            this.ship.removePlayer()
         }
+        this.ship = ship
+        this.ship.setPlayer(this)
     }
 
-    get canReload(){
-        if(typeof this.ship === "undefined") return false
-        if(this.ammo >= this.ship.bullet.count) return false
-        if(this.isReloading) return false
-        return true
+    removeShip(){
+        if(typeof this.ship !== "undefined"){
+            this.ship.removePlayer()
+        }
+        this.ship = undefined
     }
 
-    get isReadyToShoot(){
-        if(this.isReloading) return false
-        if(this.ammo === 0) return false
-        return true
-    }
-
-    get isReloading(){
-        if(this.reloadTimeLeft === 0) return false
-        return true
+    setGame(game: PipPipGame){
+        this.game = game
     }
 }

@@ -1,14 +1,14 @@
 import { PointPhysicsObject } from "@pip-pip/core/src/physics"
 import { generateId } from "@pip-pip/core/src/lib/utils"
 
-import { PipPlayer } from "./player"
+import { Player } from "./player"
 
 export class Bullet{
     id: string
     physics: PointPhysicsObject = new PointPhysicsObject()
     lifespan = 5000
 
-    owner?: PipPlayer
+    owner?: Player
 
     speed = 40
     radius = 20
@@ -24,7 +24,7 @@ export class Bullet{
         this.physics.collision.excludeChannels = [1]
     }
 
-    setOwner(player: PipPlayer){
+    setOwner(player: Player){
         this.owner = player
         this.physics.collision.excludeObjects = [player.physics]
     }
