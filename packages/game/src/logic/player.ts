@@ -5,14 +5,23 @@ import { Ship } from "./ship"
 
 export class PipPlayer{
     id: string
-    ping = 0
-
+    
     ship?: Ship
-    game?: PipPipGame
+    game: PipPipGame
     spectating?: PipPlayer | Ship | PointPhysicsObject | Vector2
-
-    constructor(id: string){
+    
+    name = "Pilot" + Math.floor(Math.random() * 1000)
+    idle = false
+    ping = 0
+    
+    constructor(game: PipPipGame, id: string){
+        this.game = game
         this.id = id
+    }
+
+    setIdle(idle: boolean){
+        this.idle = idle
+        this.game.events.emit("playerIdleChange", { player: this })
     }
 
     setShip(ship: Ship){
@@ -21,16 +30,20 @@ export class PipPlayer{
         }
         this.ship = ship
         this.ship.setPlayer(this)
+        this.game.events.emit("playerSetShip", {
+            player: this,
+            ship,
+        })
     }
 
     removeShip(){
         if(typeof this.ship !== "undefined"){
             this.ship.removePlayer()
+            this.game.events.emit("playerRemoveShip", {
+                player: this,
+                ship: this.ship,
+            })
         }
         this.ship = undefined
-    }
-
-    setGame(game: PipPipGame){
-        this.game = game
     }
 }

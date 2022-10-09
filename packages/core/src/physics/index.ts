@@ -177,6 +177,12 @@ export class PointPhysicsWorld{
         }
     }
 
+    destroy(){
+        for(const id in this.objects){
+            delete this.objects[id]
+        }
+    }
+
     addObject(object: PointPhysicsObject){
         if(object.id in this.objects){
             const conflict = this.objects[object.id]

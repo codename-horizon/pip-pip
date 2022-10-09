@@ -9,9 +9,9 @@ import { Server } from "../server"
 
 export type LobbyInitializer<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
-> = (arg: {
+    R extends Record<string, any>,
+    P extends Record<string, any>,
+> = (args: {
     lobby: Lobby<T, R, P>,
     server: Server<T, R, P>,
 }) => void
@@ -24,8 +24,8 @@ export type LobbyTypeOptions = {
 
 export type LobbyType<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 > = {
     options: LobbyTypeOptions,
     initializer: LobbyInitializer<T, R, P>,
@@ -39,8 +39,8 @@ export enum LobbyStatus {
 
 export class Lobby<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >{
     id: string
     type: string
@@ -53,7 +53,7 @@ export class Lobby<
     locals = {} as P
 
     packets: {
-        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap>>
+        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap, R, P>>
     }
 
     idleTimeout?: NodeJS.Timeout

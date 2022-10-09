@@ -1,7 +1,7 @@
 import { ExtractSerializerMap } from "@pip-pip/core/src/networking/packets/manager"
 import { Lobby, LobbyTypeOptions } from "@pip-pip/core/src/networking/lobby"
-import { EventCollector } from "@pip-pip/core/src/common/events"
-import { Server } from "@pip-pip/core/src/networking/server"
+import { EventCollector, EventMapOf } from "@pip-pip/core/src/common/events"
+import { ConnectionOf, LobbyOf, Server } from "@pip-pip/core/src/networking/server"
 import { Ticker } from "@pip-pip/core/src/common/ticker"
 import { generateId } from "@pip-pip/core/src/lib/utils"
 
@@ -10,6 +10,8 @@ import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import { PipPipGame } from "@pip-pip/game/src/logic"
 import { Ship } from "@pip-pip/game/src/logic/ship"
 import { Connection } from "@pip-pip/core/src/networking/connection"
+import { sendPacketToConnection } from "./connection-out"
+import { processLobbyPackets } from "./connection-in"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 
@@ -21,9 +23,13 @@ type GameLobbyLocals = {
     players: string[],
 }
 
-const server = new Server<GamePacketManagerSerializerMap, GameConnectionLocals, GameLobbyLocals>(packetManager, {
-    connectionIdleLifespan: 1000 * 60 * 10, // 10 minutes
-    lobbyIdleLifespan: 1000 * 3, // 3 seconds
+export type PipPipServer = Server<GamePacketManagerSerializerMap, GameConnectionLocals, GameLobbyLocals>
+export type PipPipConnection = ConnectionOf<PipPipServer>
+export type PipPipLobby = LobbyOf<PipPipServer>
+
+const server: PipPipServer = new Server(packetManager, {
+    connectionIdleLifespan: 1000 * 5, //1000 * 60 * 10, // 10 minutes
+    lobbyIdleLifespan: 1000 * 5, // 5 second
     verifyTimeLimit: 5000,
     connectionIdLength: CONNECTION_ID_LENGTH,
     lobbyIdLength: LOBBY_ID_LENGTH,
@@ -35,191 +41,65 @@ const defaultLobbyOptions: LobbyTypeOptions = {
     userCreatable: true,
 }
 
-// server.events.on("createConnection", ({ connection }) => {
-//     connection.events.on("statusChange", ({ status }) => {
-//         console.log(connection.id, status)
-//     })
-// })
+export type GameTickContext = {
+    lobby: PipPipLobby,
+    game: PipPipGame, 
+    lobbyEvents: EventCollector<EventMapOf<PipPipLobby["events"]>>,
+    gameEvents: EventCollector<EventMapOf<PipPipGame["events"]>>,
+}
+
+export type ConnectionContext = {
+    connection: PipPipConnection,
+} & GameTickContext
 
 server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     const game = new PipPipGame({
-        shootAiBullets: true,
         calculateAi: true,
+        shootAiBullets: true,
+        assignHost: true,
     })
-
-    // create fake players
-    for(let i = 0; i < 16; i++){
-        const player = new PipPlayer(generateId())
-        player.ship = new Ship()
-        player.ai = true
-        player.physics.position.x = Math.random() * 500
-        player.physics.position.y = Math.random() * 500
-        game.addPlayer(player)
-    }
 
     const lobbyEvents = new EventCollector(lobby.events)
     const gameEvents = new EventCollector(game.events)
 
-    const updateTick = new Ticker(game.tps, false, "Game")
-    const debugTick = new Ticker(1, false, "Debug")
+    const debugTick = new Ticker(2, false, "Debug")
+    const updateTick = new Ticker(20, false, "Game")
 
-    const sendPingInterval = Math.floor(game.tps / 4)
+    const gameContext: GameTickContext = { lobby, game, lobbyEvents, gameEvents }
 
-    const updatePlayerPing = (id: string) => {
-        if(id in lobby.connections && id in game.players){
-            if(game.players[id].ai === true){
-                game.players[id].ping = 0
-            } else{
-                lobby.connections[id].getPing().then(ping => {
-                    if(id in game.players){
-                        game.players[id].ping = ping
-                    }
-                })
-            }
-        }
-    }
+    const getConnectionContext = (connection: PipPipConnection): ConnectionContext => ({ connection, ...gameContext, })
 
-    updateTick.on("tick", ({ deltaMs, deltaTime }) => {
-        if(game.tickNumber % sendPingInterval === 0){
-            const players = Object.values(game.players)
-            for(const player of players){
-                updatePlayerPing(player.id)
-            }
-        }
-        for(const event of lobbyEvents.filter("addConnection")){
-            const { connection } = event.addConnection
-            const player = new PipPlayer(connection.id)
-            player.ship = new Ship()
-            player.physics.position.x = Math.random() * 100
-            player.physics.position.y = Math.random() * 100
-            updatePlayerPing(player.id)
-            game.addPlayer(player)
-            game.triggerPlayerReload(player)
-        }
-        for(const event of lobbyEvents.filter("removeConnection")){
-            const { connection } = event.removeConnection
-            const player = game.players[connection.id]
-            if(typeof player !== "undefined"){
-                game.removePlayer(player)
-            }
-        }
-        for(const event of lobbyEvents.filter("packetMessage")){
-            const { packets, connection } = event.packetMessage
-            for(const p of packets.playerInput || []){
-                const player = game.players[connection.id]
-                if(typeof player !== "undefined"){
-                    player.physics.position.x = p.x
-                    player.physics.position.y = p.y
-                    player.physics.velocity.x = p.vx
-                    player.physics.velocity.y = p.vy
-                    player.acceleration.angle = p.accelerationAngle
-                    player.acceleration.magnitude = p.accelerationMagnitude
-                    player.targetRotation = p.targetRotation
-                    player.inputShooting = p.shooting
-                    player.inputReloading = p.reloading
-                }
-            }
+    updateTick.on("tick", () => {
+        // process lobby packets
+        processLobbyPackets(gameContext)
+
+        // update game
+
+        // send messages to connections
+        const readyConnections = Object.values(lobby.connections).filter(connection => connection.isReady)
+        for(const connection of readyConnections){
+            sendPacketToConnection(getConnectionContext(connection))
         }
 
-        game.update()
-
-        const commonMessages: number[][] = [
-            encode.tick(game),
-        ]
-
-        for(const event of gameEvents.filter("addPlayer")){
-            const { player } = event.addPlayer
-            commonMessages.push(encode.newPlayer(player))
-        }
-
-        for(const event of gameEvents.filter("removePlayer")){
-            const { player } = event.removePlayer
-            commonMessages.push(packetManager.serializers.removePlayer.encode({
-                id: player.id,
-            }))
-        }
-
-        const connections = Object.values(lobby.connections)
-        const players = Object.values(game.players)
-
-        for(const connection of connections){
-            let code: number[] = []
-            const connectionMessages = [
-                ...commonMessages
-            ]
-
-            const updatePlayerReload = (player: PipPlayer) => {
-                if(player.id === connection.id){
-                    connectionMessages.push(encode.playerGun(player))
-                }
-            }
-
-            // if the player is new, send every other player
-            for(const event of gameEvents.filter("addPlayer")){
-                const newPlayer = event.addPlayer.player
-                if(newPlayer.id === connection.id){
-                    // if player is new
-                    connectionMessages.push(encode.syncTick(game))
-                    updatePlayerReload(newPlayer)
-                    for(const player of players){
-                        if(newPlayer.id === player.id) continue
-                        connectionMessages.push(encode.newPlayer(player))
-                    }
-                }
-            }
-
-            // log player motion
-            for(const player of players){
-                connectionMessages.push(encode.movePlayer(player))
-                if(game.tickNumber % sendPingInterval === 0){
-                    connectionMessages.push(encode.playerPing(player))
-                }
-            }
-            
-            // update player gun
-            for(const event of gameEvents.filter("playerReloadStart")){
-                const { player } = event.playerReloadStart
-                updatePlayerReload(player)
-            }
-            for(const event of gameEvents.filter("playerReloadEnd")){
-                const { player } = event.playerReloadEnd
-                updatePlayerReload(player)
-            }
-
-            // log bullets
-            for(const event of gameEvents.filter("addBullet")){
-                const { bullet } = event.addBullet
-                if(bullet.owner?.id === connection.id) continue
-                connectionMessages.push(encode.shootBullet(bullet))
-            }
-
-            for(const message of connectionMessages){
-                code = code.concat(message)
-            }
-
-            if(code.length === 0) continue
-
-            const buffer = new Uint8Array(code).buffer
-            connection.send(buffer)
-        }
-
-        gameEvents.flush()
         lobbyEvents.flush()
+        gameEvents.flush()
     })
 
     debugTick.on("tick", () => {
-        console.log(
-            updateTick.getPerformance().averageExecutionTime.toFixed(2) + "ms", 
-            Object.values(game.players).map(player => `${player.id}:${player.ping}ms`).join(" "))
+        const players = Object.keys(game.players)
+        if(players.length) console.log(players)
     })
-
-    // debugTick.startTick()
-    updateTick.startTick()
-
+    
     lobby.events.on("destroy", () => {
-        debugTick.stopTick()
-        updateTick.stopTick()
+        debugTick.destroy()
+        updateTick.destroy()
+        lobbyEvents.destroy()
+        gameEvents.destroy()
+        game.destroy()
     })
+
+    debugTick.startTick()
+    updateTick.startTick()
 })
 
 async function run(){

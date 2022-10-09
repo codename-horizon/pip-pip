@@ -2,6 +2,7 @@ import { PointPhysicsObject } from "@pip-pip/core/src/physics"
 import { generateId } from "@pip-pip/core/src/lib/utils"
 
 import { PipPlayer } from "./player"
+import { PipPipGame } from "."
 
 export class Bullet{
     id: string
@@ -14,8 +15,11 @@ export class Bullet{
     radius = 20
     rotation = 0
 
-    constructor(id: string = generateId()){
+    game: PipPipGame
+
+    constructor(game: PipPipGame, id: string = generateId()){
         this.id = id
+        this.game = game
         this.physics.setId(id)
         this.physics.mass = 1
         this.physics.radius = this.radius

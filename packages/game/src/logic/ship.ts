@@ -4,39 +4,60 @@ import { PointPhysicsObject } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
 import { PipPlayer } from "./player"
 
+export type StatRange = {
+    low: number,
+    normal: number,
+    high: number,
+}
+
 export type ShipStats = {
     aim: {
         speed: number,
         accuracy: number,
     },
     movement: {
-        acceleration: number,
+        acceleration: StatRange,
         agility: number,
     },
     weapon: {
         capacity: number,
         rate: number,
-        reloadDuration: number,
+        reload: {
+            ticks: StatRange,
+        },
     },
     tactical: {
         capcity: number,
         rate: number,
-        reloadDuration: number,
-    },
-    bullet: {
-        speed: number,
-        size: number,
-        damage: {
-            low: number,
-            normal: number,
-            high: number,
+        damage: StatRange,
+        reload: {
+            ticks: StatRange,
         },
     },
-    defense: {
-        low: number,
-        normal: number,
-        high: number
+    bullet: {
+        velocity: number,
+        radius: number,
+        damage: StatRange,
     },
+    defense: StatRange,
+    health: {
+        capacity: StatRange,
+        regeneration: {
+            amount: StatRange,
+            ticks: {
+                rest: number,
+                heal: number,
+            },
+        },
+    },
+}
+
+export function createRange(normal: number, effect = 0.2): StatRange{
+    return {
+        low: normal * (1 - effect),
+        normal,
+        high: normal * (1 + effect),
+    }
 }
 
 export const DEFAULT_SHIP_STATS: ShipStats = {
@@ -45,32 +66,47 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
         accuracy: 0.95,
     },
     movement: {
-        acceleration: 3,
+        acceleration: {
+            low: 2,
+            normal: 3,
+            high: 5,
+        },
         agility: 0.6,
     },
     weapon: {
         capacity: 20,
         rate: 3,
-        reloadDuration: 1000,
+        reload: {
+            ticks: createRange(20),
+        },
     },
     tactical: {
         capcity: 3,
         rate: 20,
-        reloadDuration: 5000,
+        damage: createRange(40),
+        reload: {
+            ticks: createRange(20 * 5),
+        },
     },
     bullet: {
-        speed: 20,
-        size:  20,
-        damage: {
-            low: 8,
-            normal: 10,
-            high: 12,
-        },
+        velocity: 20,
+        radius:  20,
+        damage: createRange(10),
     },
     defense: {
         low: 0.8,
         normal: 1,
         high: 1.2,
+    },
+    health: {
+        capacity: createRange(100),
+        regeneration: {
+            amount: createRange(10),
+            ticks: {
+                rest: 20 * 5,
+                heal: 5,
+            },
+        },
     },
 }
 
@@ -104,17 +140,60 @@ export const createShipStats = (stats: RecursivePartial<ShipStats> = {}): ShipSt
     return output
 }
 
+export type ShipTimings = {
+    weaponReload: number,
+    weaponRate: number,
+    tacticalReload: number,
+    tacticalRate: number,
+    healthRegenerationRest: number,
+    healthRegenerationHeal: number,
+    invincibility: number,
+}
+
+export type ShipCapacities = {
+    weapon: number,
+    tactical: number,
+    health: number,
+}
+
 export class Ship{
-    id = generateId()
+    id: string
 
     physics = new PointPhysicsObject()
 
     player?: PipPlayer
-    game?: PipPipGame
+    game: PipPipGame
 
     stats = DEFAULT_SHIP_STATS
 
-    constructor(){
+    timings: ShipTimings = {
+        invincibility: 0,
+
+        healthRegenerationHeal: 0,
+        healthRegenerationRest: 0,
+
+        weaponReload: 0,
+        weaponRate: 0,
+
+        tacticalReload: 0,
+        tacticalRate: 0,
+    }
+
+    capacities: ShipCapacities = {
+        health: 0,
+        tactical: 0,
+        weapon: 0,
+    }
+
+    constructor(game: PipPipGame, id: string){
+        this.id = id
+        this.game = game
+
+        // Reload and heal
+        this.capacities.health = this.stats.health.capacity.normal
+        this.capacities.tactical = this.stats.tactical.capcity
+        this.capacities.weapon = this.stats.weapon.capacity
+
         this.setupPhysics()
     }
 
@@ -135,17 +214,19 @@ export class Ship{
 
     removePlayer(){
         if(typeof this.player !== "undefined"){
-            this.player.removeShip()
+            this.player.removeShip() 
         }
         this.player = undefined
     }
+}
 
-    setGame(game: PipPipGame){
-        this.game = game
-    }
-    
-    setId(id: string){
-        this.id = id
-        // update game ID if already added
+export class BluShip extends Ship{
+    stats = createShipStats({
+        health: {
+            capacity: createRange(120)
+        },
+    })
+    constructor(game: PipPipGame, id: string){
+        super(game, id)
     }
 }

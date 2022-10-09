@@ -9,8 +9,8 @@ import { compress } from "../../lib/compression"
 
 export function initializeWebSockets<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >(connection: Connection<T, R, P>){
 
     const handleSocketMessage = (data: RawData) => {
@@ -55,7 +55,7 @@ export function initializeWebSockets<
     }
 
     
-    const pe = connection.packets.events as EventEmitter<ServerPacketManagerEventMap<ServerSerializerMap>>
+    const pe = connection.packets.events as EventEmitter<ServerPacketManagerEventMap<ServerSerializerMap, R, P>>
 
     pe.on("ping", ({ data }) => {
         const { pong } = connection.server.packets.manager.serializers

@@ -30,8 +30,6 @@ onMounted(async () => {
 
     ready.value = true
 })
-
-console.log(route.params.id)
 </script>
 <template lang="pug">
 GameView(v-if="ready" :lobbyId="lobbyId")

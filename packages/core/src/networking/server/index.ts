@@ -31,10 +31,13 @@ export type ServerOptions = {
     maxPing: number,
 }
 
+export type ConnectionOf<T> = T extends Server<infer A, infer B, infer C> ? Connection<A, B, C> : never
+export type LobbyOf<T> = T extends Server<infer A, infer B, infer C> ? Lobby<A, B, C> : never
+
 export class Server<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >{
     options: ServerOptions = {
         authHeader: SERVER_DEFAULT_HEADER_KEY,
@@ -90,8 +93,8 @@ export class Server<
 
 export interface Server<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >{
     // routes.ts
     routerAuthMiddleware: (req: Request, res: Response, next: NextFunction) => void
@@ -108,7 +111,7 @@ export interface Server<
     broadcast: (data: string | ArrayBuffer) => void
 
     // lobby.ts
-    registerLobby: (type: string, options: LobbyTypeOptions, initializer: LobbyInitializer<T>) => void
+    registerLobby: (type: string, options: LobbyTypeOptions, initializer: LobbyInitializer<T, R, P>) => void
     createLobby: <K extends keyof Server<T, R, P>["lobbyType"]>(type: K, id?: string) => Lobby<T, R, P>
     removeLobby: (lobby: Lobby<T, R, P>) => void
 }

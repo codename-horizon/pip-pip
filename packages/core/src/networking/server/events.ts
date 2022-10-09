@@ -7,8 +7,8 @@ import { Lobby, LobbyStatus } from "../lobby"
 
 export type ServerEventMap<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 > = {
     start: undefined,
 
@@ -40,8 +40,8 @@ export type ServerEventMap<
 
 export type ConnectionEventMap<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 > = {
     idleStart: undefined,
     idleEnd: undefined,
@@ -65,8 +65,8 @@ export type ConnectionEventMap<
 
 export type LobbyEventMap<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 > = {
     idleStart: undefined,
     idleEnd: undefined,

@@ -32,8 +32,8 @@ export enum ConnectionStatus {
 
 export class Connection<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >{
     id: string
     token = {
@@ -49,7 +49,7 @@ export class Connection<
     locals = {} as R
 
     packets: {
-        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap>>
+        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap, R, P>>
     }
 
     latencyHistory: ConnectionLatencyRecord[] = []
@@ -169,8 +169,8 @@ export class Connection<
 
 export interface Connection<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >{
     // websockets.ts
     setWebSocket: (ws: WebSocket) => void

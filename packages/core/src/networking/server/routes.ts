@@ -11,8 +11,8 @@ import { Server } from "."
 
 export function initializeRoutes<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >(server: Server<T, R, P>){
     server.app.use(cors())
     server.app.use(bodyParser.json())
