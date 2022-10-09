@@ -14,6 +14,7 @@
     "client": "yarn workspace @pip-pip/client-vue",
     "game": "yarn workspace @pip-pip/game",
     "core": "yarn workspace @pip-pip/core",
+    "map": "yarn workspace @pip-pip/map-maker",
     "build": "bash ./scripts/build.sh",
     "deploy": "bash ./scripts/deploy.sh"
   }

@@ -18,6 +18,8 @@ export type PipPipGameEventMap = {
     setHost: { player: PipPlayer },
     removeHost: undefined,
 
+    phaseChange: undefined,
+
     addBullet: { bullet: Bullet },
     removeBullet: { bullet: Bullet },
     addShip: { ship: Ship },
@@ -32,9 +34,28 @@ export type PipPipGameOptions = {
     assignHost: boolean,
 }
 
+export enum PipPipGameMode {
+    PVP,
+    RACING,
+}
+
+export enum PipPipGamePhase {
+    SETUP,
+    MATCH,
+    RESULTS,
+}
+
+export type PipPipGameSettings = {
+    useTeams: boolean,
+    maxDeaths: 0 | number, // 0 for infinite respawn
+    maxKills: 0 | number, // 0 for infinite kills
+    friendlyFire: boolean,
+}
+
 export class PipPipGame{
     readonly tps = 20
     readonly deltaMs = 1000 / this.tps
+    readonly maxTeams = 4
 
     options: PipPipGameOptions = {
         shootAiBullets: false,
@@ -43,6 +64,7 @@ export class PipPipGame{
     }
 
     events: EventEmitter<PipPipGameEventMap> = new EventEmitter()
+    physics: PointPhysicsWorld = new PointPhysicsWorld()
 
     players: Record<string, PipPlayer> = {}
     bullets: Record<string, Bullet> = {}
@@ -50,9 +72,16 @@ export class PipPipGame{
 
     host?: PipPlayer
 
-    physics: PointPhysicsWorld = new PointPhysicsWorld()
-
     tickNumber = 0
+
+    mode: PipPipGameMode = PipPipGameMode.PVP
+    phase: PipPipGamePhase = PipPipGamePhase.SETUP
+    settings: PipPipGameSettings = {
+        useTeams: false,
+        maxDeaths: 0,
+        maxKills: 25,
+        friendlyFire: false,
+    }
 
     constructor(options: Partial<PipPipGameOptions> = {}){
         this.options = {
@@ -63,8 +92,16 @@ export class PipPipGame{
     }
 
     destroy(){
+        this.players = {}
+        this.bullets = {}
+        this.ships = {}
         this.events.destroy()
         this.physics.destroy()
+    }
+
+    setPhase(phase: PipPipGamePhase){
+        this.phase = phase
+        this.events.emit("phaseChange")
     }
 
     get playerCount(){ return Object.keys(this.players).length }
@@ -73,7 +110,7 @@ export class PipPipGame{
         if(player.id in this.players) throw new Error("Player already in game.")
         this.players[player.id] = player
         this.events.emit("addPlayer", { player })
-        
+
         if(this.options.assignHost === true && this.playerCount === 1){
             this.setHost(player)
         }
@@ -102,5 +139,9 @@ export class PipPipGame{
     removeHost(){
         this.host = undefined
         this.events.emit("removeHost")
+    }
+
+    startMode(){
+        //
     }
 }

@@ -3,7 +3,6 @@ import { ConnectionContext } from "."
 
 export function sendPacketToConnection(context: ConnectionContext){
     const { connection, gameEvents } = context
-    let messages: number[][] = []
 
     // check if the player is new or just reconnecting
     let sendFullGameState = false
@@ -23,12 +22,8 @@ export function sendPacketToConnection(context: ConnectionContext){
             sendFullGameState = true
         }
     }
-
-    if(sendFullGameState){
-        messages = getFullGameState(context)
-    } else{
-        messages = getPartialGameState(context)
-    }
+    
+    const messages = sendFullGameState ? getFullGameState(context) : getPartialGameState(context)
 
     if(messages.length){
         let code: number[] = []
