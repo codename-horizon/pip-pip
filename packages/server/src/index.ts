@@ -7,7 +7,7 @@ import { generateId } from "@pip-pip/core/src/lib/utils"
 
 import { CONNECTION_ID_LENGTH, encode, LOBBY_ID_LENGTH, packetManager } from "@pip-pip/game/src/networking/packets"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
-import { PipPipGame } from "@pip-pip/game/src/logic"
+import { PipPipGame, PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { Ship } from "@pip-pip/game/src/logic/ship"
 import { Connection } from "@pip-pip/core/src/networking/connection"
 import { sendPacketToConnection } from "./connection-out"
@@ -59,6 +59,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
         calculateAi: true,
         shootAiBullets: true,
         assignHost: true,
+        triggerPhases: true,
     })
 
     const lobbyEvents = new EventCollector(lobby.events)
@@ -71,11 +72,21 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
 
     const getConnectionContext = (connection: PipPipConnection): ConnectionContext => ({ connection, ...gameContext, })
 
+    setTimeout(() => {
+        game.countdown = 20 * 5
+        game.setPhase(PipPipGamePhase.COUNTDOWN)
+    
+        setTimeout(() => {
+            game.setPhase(PipPipGamePhase.SETUP)
+        }, 10000)
+    }, 5000)
+
     updateTick.on("tick", () => {
         // process lobby packets
         processLobbyPackets(gameContext)
 
         // update game
+        game.update()
 
         // send messages to connections
         const readyConnections = Object.values(lobby.connections).filter(connection => connection.isReady)
@@ -144,7 +155,5 @@ async function run(){
         }, 100)
     })
 }
-
-console.log(BASE_MAPS.test())
 
 run()

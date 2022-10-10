@@ -3,6 +3,15 @@ import { client, clientEvents } from "./client"
 import { useUiStore } from "../store/ui"
 import { router } from "../router"
 import { LobbyJSON } from "@pip-pip/core/src/networking/api/types"
+import { PipPipGame } from "@pip-pip/game/src/logic"
+import { KeyboardListener } from "@pip-pip/core/src/client/keyboard"
+import { MouseListener } from "@pip-pip/core/src/client/mouse"
+
+export type GameContext = {
+    game: PipPipGame,
+    keyboard: KeyboardListener,
+    mouse: MouseListener,
+}
 
 export async function hostGame(){
     const uiStore = useUiStore()

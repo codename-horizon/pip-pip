@@ -3,6 +3,7 @@ import { generateId } from "@pip-pip/core/src/lib/utils"
 import { PointPhysicsObject } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
 import { PipPlayer } from "./player"
+import { decrease } from "./utils"
 
 export type StatRange = {
     low: number,
@@ -157,12 +158,18 @@ export type ShipCapacities = {
 }
 
 export class Ship{
+    static shipType = "ship"
+    static shipName = "Ship"
+    static shipTextureId = "ship"
+
     id: string
 
     physics = new PointPhysicsObject()
 
-    player?: PipPlayer
+    player?: PipPlayer // allow for AI to control
     game: PipPipGame
+
+    aimAngle = 0
 
     stats = DEFAULT_SHIP_STATS
 
@@ -197,6 +204,10 @@ export class Ship{
         this.setupPhysics()
     }
 
+    setPlayer(player: PipPlayer){
+        this.player = player
+    }
+
     setupPhysics(){
         this.physics.mass = 500
         this.physics.airResistance = 0.1
@@ -204,29 +215,47 @@ export class Ship{
         this.physics.collision.channels = []
     }
 
-    setPlayer(player: PipPlayer){
-        if(typeof this.player !== "undefined"){
-            this.player.removeShip()
-        }
-        this.player = player
-        this.player.setShip(this)
-    }
+    update(){
+        this.timings.invincibility = decrease(this.timings.invincibility)
+        this.timings.healthRegenerationHeal = decrease(this.timings.healthRegenerationHeal)
+        this.timings.healthRegenerationRest = decrease(this.timings.healthRegenerationRest)
+        this.timings.weaponReload = decrease(this.timings.weaponReload)
+        this.timings.weaponRate = decrease(this.timings.weaponRate)
+        this.timings.tacticalReload = decrease(this.timings.tacticalReload)
+        this.timings.tacticalRate = decrease(this.timings.tacticalRate)
 
-    removePlayer(){
+        // take input from player
         if(typeof this.player !== "undefined"){
-            this.player.removeShip() 
+            // set angle
         }
-        this.player = undefined
     }
 }
 
 export class BluShip extends Ship{
+    static shipType = "blu"
+    static shipName = "Blu"
+    static shipTextureId = "ship-blu"
+
     stats = createShipStats({
         health: {
             capacity: createRange(120)
         },
     })
-    constructor(game: PipPipGame, id: string){
-        super(game, id)
-    }
 }
+
+export class RedShip extends Ship{
+    static shipType = "red"
+    static shipName = "Red"
+    static shipTextureId = "ship-red"
+
+    stats = createShipStats({
+        movement: {
+            acceleration: createRange(5),
+        },
+    })
+}
+
+export const PIP_SHIPS: (typeof Ship)[] = [
+    BluShip,
+    RedShip,
+]

@@ -11,4 +11,10 @@
     bottom: 0
     left: 0
     z-index: 100
+
+  #game-container
+    position: fixed
+    inset: 0
+    width: 100%
+    height: 100%
 </style>

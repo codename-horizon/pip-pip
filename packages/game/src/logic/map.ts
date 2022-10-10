@@ -14,9 +14,14 @@ export class PointRadius{
 }
 
 export class GameMap{
+    id: string
     rectWalls: PointPhysicsRectWall[] = []
     checkpoints: PointRadius[] = []
     spawns: PointRadius[] = []
+
+    constructor(id: string){
+        this.id = id
+    }
 }
 
 export type JSONMapSource = {
@@ -27,8 +32,8 @@ export type JSONMapSource = {
 
 export class JSONGameMap extends GameMap{
     source: JSONMapSource
-    constructor(source: JSONMapSource){
-        super()
+    constructor(id: string, source: JSONMapSource){
+        super(id)
         this.source = source
 
         for(const [x, y] of this.source.spawnTiles){

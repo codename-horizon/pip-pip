@@ -1,17 +1,25 @@
 import { PointPhysicsObject, Vector2 } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
 
-import { Ship } from "./ship"
+import { PIP_SHIPS, Ship } from "./ship"
 
+export type PlayerInputs = {
+    movementAngle: number,
+    movementAmount: number,
+    aimAngle: number,
+    useWeapon: boolean,
+    useTactical: boolean,
+}
 
 export class PipPlayer{
     id: string
     
-    ship?: Ship
+    ship!: Ship
+    shipIndex = 0
+
     game: PipPipGame
     spectating?: PipPlayer | Ship | PointPhysicsObject | Vector2
 
-    
     name = "Pilot" + Math.floor(Math.random() * 1000)
     idle = false
     ping = 0
@@ -26,6 +34,20 @@ export class PipPlayer{
     constructor(game: PipPipGame, id: string){
         this.game = game
         this.id = id
+
+        if(id in this.game.players) throw new Error("Player already in game.")
+        this.game.players[id] = this
+        this.game.events.emit("addPlayer", { player: this })
+        this.game.setHostIfNeeded()
+        this.setShip(0)
+    }
+
+    remove(){
+        if(!(this.id in this.game.players)) return
+        this.game.physics.removeObject(this.ship.physics)
+        delete this.game.players[this.id]
+        this.game.events.emit("removePlayer", { player: this })
+        this.game.setHostIfNeeded()
     }
 
     resetScores(){
@@ -40,26 +62,23 @@ export class PipPlayer{
         this.game.events.emit("playerIdleChange", { player: this })
     }
 
-    setShip(ship: Ship){
+    setShip(index: number){
+        index = Math.max(0, Math.min(PIP_SHIPS.length, index))
+        const PlayerShip = PIP_SHIPS[index]
+        const ship = new PlayerShip(this.game, this.id)
+        ship.setPlayer(this)
+
+        this.shipIndex = index
+
         if(typeof this.ship !== "undefined"){
-            this.ship.removePlayer()
+            this.game.physics.removeObject(this.ship.physics)
         }
+
         this.ship = ship
-        this.ship.setPlayer(this)
+        this.game.physics.addObject(this.ship.physics)
         this.game.events.emit("playerSetShip", {
             player: this,
             ship,
         })
-    }
-
-    removeShip(){
-        if(typeof this.ship !== "undefined"){
-            this.ship.removePlayer()
-            this.game.events.emit("playerRemoveShip", {
-                player: this,
-                ship: this.ship,
-            })
-        }
-        this.ship = undefined
     }
 }

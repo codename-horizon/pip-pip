@@ -1,59 +1,58 @@
 import { KeyboardListener } from "@pip-pip/core/src/client/keyboard"
 import { MouseListener } from "@pip-pip/core/src/client/mouse"
-import { EventCallbackOf, EventCollector, EventMapOf } from "@pip-pip/core/src/common/events"
+import { EventCollector } from "@pip-pip/core/src/common/events"
 import { Ticker } from "@pip-pip/core/src/common/ticker"
 import { PipPipGame } from "@pip-pip/game/src/logic"
 import { defineComponent, onMounted, onUnmounted, ref } from "vue"
-import { client, clientEvents } from "../game/client"
+import { processPackets, clientEvents } from "../game/client"
+import { PipPipRenderer } from "../game/renderer"
 
 export default defineComponent({
     inheritAttrs: false,
     setup(props, ctx) {
         const debugJson = ref({})
-
-        const clientEventsListener: EventCallbackOf<EventMapOf<typeof clientEvents>, "collect"> = ({ event }) => {
-            if(typeof event.packetMessage !== "undefined"){
-                for(const id in event.packetMessage.packets){
-                    const packets = event.packetMessage.packets[id as keyof typeof event.packetMessage.packets]
-                    if(typeof packets !== "undefined"){
-                        for(const packet of packets){
-                            console.log(id, packet)
-                        }
-                    }
-                }
-            }
-        }
+        const container = ref<HTMLDivElement>()
         
-        const game = new PipPipGame({
-            shootAiBullets: false,
-            calculateAi: true,
-            assignHost: false,
-        })
+        const game = new PipPipGame()
+        const renderer = new PipPipRenderer(game)
         
         const gameEvents = new EventCollector(game.events)
         const keyboard = new KeyboardListener()
         const mouse = new MouseListener()
         
-        const renderTick = new Ticker(20, true, "Render")
+        const renderTick = new Ticker(60, true, "Render")
         const updateTick = new Ticker(game.tps, false, "Update")
 
         onMounted(() => {
-            clientEvents.on("collect", clientEventsListener)
+            if(typeof container.value === "undefined") throw new Error("Container not available.")
+            renderer.mount(container.value)
+            
+            const context = {
+                game,
+                mouse,
+                keyboard,
+            }
+
+            renderTick.on("tick", ({deltaMs, deltaTime}) => {
+                renderer.render(context, deltaMs, deltaTime)
+            })
 
             updateTick.on("tick", () => {
                 // Apply messages
+                processPackets(context)
 
                 // Update local simulation
+                game.update()
 
                 // Send updates
                 gameEvents.flush()
                 clientEvents.flush()
             })
 
+            renderTick.startTick()
             updateTick.startTick()
         })
         onUnmounted(() => {
-            clientEvents.off("collect", clientEventsListener)
             gameEvents.destroy()
             keyboard.destroy()
             mouse.destroy()
@@ -61,6 +60,6 @@ export default defineComponent({
             updateTick.destroy()
         })
 
-        return { debugJson }
+        return { container, debugJson }
     },
 })

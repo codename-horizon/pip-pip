@@ -6,15 +6,14 @@ export function processLobbyPackets(context: GameTickContext){
     // Add players
     for(const events of lobbyEvents.filter("addConnection")){
         const { connection } = events.addConnection
-        const player = new PipPlayer(game, connection.id)
-        game.addPlayer(player)
+        game.createPlayer(connection.id)
     }
     // Remove players
     for(const events of lobbyEvents.filter("removeConnection")){
         const { connection } = events.removeConnection
         const player = game.players[connection.id]
         if(typeof player !== undefined){
-            game.removePlayer(player)
+            player.remove()
         }
     }
     // Update player status

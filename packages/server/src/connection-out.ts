@@ -1,3 +1,4 @@
+import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { encode } from "@pip-pip/game/src/networking/packets"
 import { ConnectionContext } from "."
 
@@ -43,11 +44,16 @@ export function getFullGameState(context: ConnectionContext): number[][] {
         messages.push(encode.addPlayer(player))
         messages.push(encode.playerName(player))
         messages.push(encode.playerIdle(player))
+        messages.push(encode.playerSetShip(player))
     }
     
     if(typeof game.host !== "undefined"){
         messages.push(encode.setHost(game.host))
     }
+
+    messages.push(encode.gamePhase(game))
+    messages.push(encode.gameCountdown(game))
+    messages.push(encode.gameState(game))
 
     return messages
 }
@@ -76,9 +82,29 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         messages.push(encode.removePlayer(player))
     }
 
+    // Send remove set ship
+    for(const event of gameEvents.filter("playerSetShip")){
+        const { player } = event.playerSetShip
+        messages.push(encode.playerSetShip(player))
+    }
+
     // Send host
     if(gameEvents.filter("setHost").length > 0 && typeof game.host !== "undefined"){
         messages.push(encode.setHost(game.host))
+    }
+
+    // Send phase change
+    if(gameEvents.filter("phaseChange").length > 0){
+        messages.push(encode.gamePhase(game))
+    }
+
+    if(game.phase === PipPipGamePhase.COUNTDOWN){
+        messages.push(encode.gameCountdown(game))
+    }
+    
+    // Send game settings
+    if(gameEvents.filter("settingsChange").length > 0){
+        messages.push(encode.gameState(game))
     }
 
     return messages

@@ -5,6 +5,7 @@ import { radianDifference } from "@pip-pip/core/src/math"
 import { Bullet } from "./bullet"
 import { PipPlayer } from "./player"
 import { Ship } from "./ship"
+import { GameMap } from "./map"
 
 
 export type PipPipGameEventMap = {
@@ -18,6 +19,7 @@ export type PipPipGameEventMap = {
     setHost: { player: PipPlayer },
     removeHost: undefined,
 
+    settingsChange: undefined,
     phaseChange: undefined,
 
     addBullet: { bullet: Bullet },
@@ -32,20 +34,23 @@ export type PipPipGameOptions = {
     shootAiBullets: boolean,
     calculateAi: boolean,
     assignHost: boolean,
+    triggerPhases: boolean
 }
 
 export enum PipPipGameMode {
-    PVP,
+    DEATHMATCH,
     RACING,
 }
 
 export enum PipPipGamePhase {
     SETUP,
+    COUNTDOWN,
     MATCH,
     RESULTS,
 }
 
 export type PipPipGameSettings = {
+    mode: PipPipGameMode,
     useTeams: boolean,
     maxDeaths: 0 | number, // 0 for infinite respawn
     maxKills: 0 | number, // 0 for infinite kills
@@ -61,6 +66,7 @@ export class PipPipGame{
         shootAiBullets: false,
         calculateAi: true,
         assignHost: false,
+        triggerPhases: false,
     }
 
     events: EventEmitter<PipPipGameEventMap> = new EventEmitter()
@@ -74,9 +80,13 @@ export class PipPipGame{
 
     tickNumber = 0
 
-    mode: PipPipGameMode = PipPipGameMode.PVP
     phase: PipPipGamePhase = PipPipGamePhase.SETUP
+    countdown = 0
+
+    map?: GameMap
+
     settings: PipPipGameSettings = {
+        mode: PipPipGameMode.DEATHMATCH,
         useTeams: false,
         maxDeaths: 0,
         maxKills: 25,
@@ -89,6 +99,26 @@ export class PipPipGame{
             ...options,
         }
         this.physics.options.baseTps = this.tps
+    }
+
+    setSettings(settings: Partial<PipPipGameSettings> = {}){
+        if(this.phase !== PipPipGamePhase.SETUP) return
+        let changed = false
+        for(const _key in settings){
+            const key = _key as keyof PipPipGameSettings
+            if(this.settings[key] !== settings[key]){
+                changed = true
+                const s = this.settings as any // TODO: Fix type
+                if(key in s) s[key] = settings[key]
+            }
+        }
+        if(changed){
+            this.events.emit("settingsChange")
+        }
+    }
+
+    createPlayer(id: string){
+        return new PipPlayer(this, id)
     }
 
     destroy(){
@@ -105,43 +135,50 @@ export class PipPipGame{
     }
 
     get playerCount(){ return Object.keys(this.players).length }
-
-    addPlayer(player: PipPlayer){
-        if(player.id in this.players) throw new Error("Player already in game.")
-        this.players[player.id] = player
-        this.events.emit("addPlayer", { player })
-
-        if(this.options.assignHost === true && this.playerCount === 1){
-            this.setHost(player)
-        }
-    }
-
-    removePlayer(player: PipPlayer){
-        if(!(player.id in this.players)) return
-        delete this.players[player.id]
-        this.events.emit("removePlayer", { player })
-        
-        if(this.options.assignHost === true && this.host === player){
-            if(this.playerCount > 0){
-                const newHost = Object.values(this.players)[0]
-                this.setHost(newHost)
-            } else{
-                this.removeHost()
-            }
-        }
-    }
     
     setHost(player: PipPlayer){
         this.host = player
         this.events.emit("setHost", { player })
     }
 
-    removeHost(){
-        this.host = undefined
-        this.events.emit("removeHost")
+    setHostIfNeeded(){
+        if(this.options.assignHost === true){
+            if(this.playerCount === 0){
+                this.removeHost()
+            } else{
+                const players = Object.values(this.players)
+                this.setHost(players[0])
+            }
+        }
     }
 
-    startMode(){
-        //
+    removeHost(){
+        if(typeof this.host !== "undefined"){
+            this.host = undefined
+            this.events.emit("removeHost")
+        }
+    }
+
+    update(){
+        switch(this.phase){
+        case PipPipGamePhase.SETUP:
+            // do nothing
+            break
+        case PipPipGamePhase.COUNTDOWN:
+            this.countdown--
+            if(this.countdown <= 0){
+                this.countdown = 0
+                if(this.options.triggerPhases){
+                    this.setPhase(PipPipGamePhase.MATCH)
+                }
+            }
+            break
+        case PipPipGamePhase.MATCH:
+
+            break
+        case PipPipGamePhase.RESULTS:
+
+            break
+        }
     }
 }
