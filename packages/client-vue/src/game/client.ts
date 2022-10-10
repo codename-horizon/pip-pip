@@ -76,16 +76,22 @@ export const processPackets = (context: GameContext) => {
             const player = game.players[pos.playerId]
             if(typeof player === "undefined") continue
 
+            let xOffset = 0
+            let yOffset = 0
+
             if(pos.playerId === client.connectionId){
-                const lookbackRaw = (player.ping) / game.deltaMs
+                const lookbackRaw = player.ping / game.deltaMs
                 const state = player.getLastPositionState(lookbackRaw)
                 const x = forgivingEqual((state.positionX + state.velocityX), (pos.positionX), PLAYER_POSITION_TOLERANCE)
                 const y = forgivingEqual((state.positionY + state.velocityY), (pos.positionY), PLAYER_POSITION_TOLERANCE)
                 if(x && y) continue
+                console.log("Moving player back...")
+                xOffset = -state.velocityX
+                yOffset = -state.velocityY
             }
             
-            player.ship.physics.position.x = pos.positionX
-            player.ship.physics.position.y = pos.positionY
+            player.ship.physics.position.x = pos.positionX + xOffset
+            player.ship.physics.position.y = pos.positionY + yOffset
             player.ship.physics.velocity.x = pos.velocityX
             player.ship.physics.velocity.y = pos.velocityY
             player.inputs.aimRotation = pos.aimRotation

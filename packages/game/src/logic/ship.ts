@@ -69,9 +69,9 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
     },
     movement: {
         acceleration: {
-            low: 2,
-            normal: 8,
-            high: 5,
+            low: 3,
+            normal: 4,
+            high: 6,
         },
         agility: 0.6,
     },
