@@ -1,6 +1,5 @@
 import { PointPhysicsObject, Vector2 } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
-import { PointRadius } from "./mode"
 
 import { Ship } from "./ship"
 

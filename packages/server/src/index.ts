@@ -13,6 +13,8 @@ import { Connection } from "@pip-pip/core/src/networking/connection"
 import { sendPacketToConnection } from "./connection-out"
 import { processLobbyPackets } from "./connection-in"
 
+import { BASE_MAPS } from "@pip-pip/game/src/maps"
+
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 
 type GameConnectionLocals = {
@@ -142,5 +144,7 @@ async function run(){
         }, 100)
     })
 }
+
+console.log(BASE_MAPS.test())
 
 run()

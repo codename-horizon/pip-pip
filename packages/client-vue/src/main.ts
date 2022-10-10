@@ -5,7 +5,7 @@ import App from "./App.vue"
 import { router } from "./router"
 
 import "./styles/global.sass"
-import { BluShip } from "@pip-pip/game/src/logic/ship"
+import { BASE_MAPS } from "@pip-pip/game/src/maps"
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -15,6 +15,4 @@ app.use(router)
 
 app.mount("#app")
 
-
-
-console.log(new BluShip(null as any, "baby-blu"))
+console.log(BASE_MAPS.test())

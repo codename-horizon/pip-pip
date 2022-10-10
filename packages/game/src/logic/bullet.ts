@@ -30,7 +30,7 @@ export class Bullet{
 
     setOwner(player: PipPlayer){
         this.owner = player
-        this.physics.collision.excludeObjects = [player.physics]
+        // this.physics.collision.excludeObjects = [player.physics]
     }
     
     setPosition(x: number, y: number){

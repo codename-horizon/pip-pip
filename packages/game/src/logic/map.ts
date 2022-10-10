@@ -1,4 +1,5 @@
 import { PipPipGame } from "."
+import { TILE_SIZE, SPAWN_DIAMETER } from "./constants"
 
 export class PointRadius{
     x: number
@@ -12,24 +13,27 @@ export class PointRadius{
 }
 
 export class GameMap{
-    game: PipPipGame
-    
     checkpoints: PointRadius[] = []
     spawns: PointRadius[] = []
-
-    constructor(game: PipPipGame){
-        this.game = game
-    }
-
-    setup(){
-        //
-    }
-
-    update(){
-        //
-    }
 }
 
-export class FFAGameMode{
-    
+export type JSONMapSource = {
+    wallTiles: number[][],
+    spawnTiles: number[][],
+}
+
+export class JSONGameMap extends GameMap{
+    source: JSONMapSource
+    constructor(source: JSONMapSource){
+        super()
+        this.source = source
+
+        for(const [x, y] of this.source.spawnTiles){
+            this.spawns.push(new PointRadius(
+                x * TILE_SIZE,
+                y * TILE_SIZE,
+                SPAWN_DIAMETER / 2,
+            ))
+        }
+    }
 }
