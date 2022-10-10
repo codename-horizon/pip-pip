@@ -2,7 +2,7 @@ import { EventCollector } from "@pip-pip/core/src/common/events"
 import { Client } from "@pip-pip/core/src/networking/client"
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { encode, packetManager } from "@pip-pip/game/src/networking/packets"
-import { GameContext } from "."
+import { GameContext, getClientPlayer } from "."
 
 export const client = new Client(packetManager, {
     host: window.location.hostname,
@@ -65,6 +65,7 @@ export const processPackets = (context: GameContext) => {
 
         //  Set game phase
         for(const pos of packets.playerPosition || []){
+            if(pos.playerId === client.connectionId) continue // TODO: Implement server reconciliations
             const player = game.players[pos.playerId]
             if(typeof player !== "undefined"){
                 player.ship.physics.position.x = pos.positionX
@@ -74,7 +75,7 @@ export const processPackets = (context: GameContext) => {
             }
         }
 
-        console.log(game)
+        console.log(packets)
     }
 }
 
@@ -90,13 +91,11 @@ export const sendPackets = (context: GameContext) => {
     }
     
     // send position
-    {
-        if(typeof client.connectionId !== "undefined"){
-            if(client.connectionId in game.players){
-                const player = game.players[client.connectionId]
-                messages.push(encode.playerPosition(player))
-            }
-        }
+    const clientPlayer = getClientPlayer(game)
+
+    if(typeof clientPlayer !== "undefined"){
+        messages.push(encode.playerPosition(clientPlayer))
+        messages.push(encode.playerInputs(clientPlayer))
     }
 
     if(messages.length){

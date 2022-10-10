@@ -175,6 +175,20 @@ export class PipPipGame{
             }
         }
         
-        this.physics.update(1000 / this.tps)
+        this.updatePhysics()
+    }
+
+    updatePhysics(){
+        // update players
+        const players = Object.values(this.players)
+        for(const player of players){
+            const mag = Math.max(0, Math.min(1, player.inputs.movementAmount))
+            if(mag > 0){
+                player.ship.physics.velocity.x += Math.cos(player.inputs.movementAngle) * player.ship.stats.movement.acceleration.normal
+                player.ship.physics.velocity.y += Math.sin(player.inputs.movementAngle) * player.ship.stats.movement.acceleration.normal
+            }
+        }
+        
+        this.physics.update(this.deltaMs)
     }
 }

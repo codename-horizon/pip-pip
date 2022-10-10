@@ -10,7 +10,7 @@ import { PipPipGame, PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { processPackets, clientEvents, sendGamePhase, sendPackets } from "../game/client"
 import { PipPipRenderer } from "../game/renderer"
 import GameButton from './GameButton.vue'
-import { getUIContext, UIContext } from "../game/overlay"
+import { getUIContext, processInputs, UIContext } from "../game/ui"
 
 export default defineComponent({
     inheritAttrs: false,
@@ -41,6 +41,9 @@ export default defineComponent({
         const uiContext = ref<UIContext>(getUIContext(context))
 
         onMounted(() => {
+            keyboard.setTarget(document.body)
+            mouse.setTarget(document.body)
+
             if(typeof container.value === "undefined") throw new Error("Container not available.")
             renderer.mount(container.value)
 
@@ -51,6 +54,9 @@ export default defineComponent({
             updateTick.on("tick", () => {
                 // Apply messages
                 processPackets(context)
+
+                // Apply inputs
+                processInputs(context)
 
                 // Update local simulation
                 game.update()

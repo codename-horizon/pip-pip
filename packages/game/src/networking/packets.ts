@@ -46,6 +46,15 @@ export const packetManager = new PacketManager({
         velocityX: $float16,
         velocityY: $float16,
     }),
+    playerInputs: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        movementAngle: $float16,
+        movementAmount: $float16,
+        aimAngle: $float16,
+        useWeapon: $bool,
+        useTactical: $bool,
+        doReload: $bool,
+    }),
     gameState: new Packet({
         mode: $uint8,
         useTeams: $bool,
@@ -102,6 +111,15 @@ export const encode = {
         positionY: player.ship.physics.position.y,
         velocityX: player.ship.physics.velocity.x,
         velocityY: player.ship.physics.velocity.y,
+    }),
+    playerInputs: (player: PipPlayer) => packetManager.serializers.playerInputs.encode({
+        playerId: player.id,
+        movementAngle: player.inputs.movementAngle,
+        movementAmount: player.inputs.movementAmount,
+        aimAngle: player.inputs.aimAngle,
+        useWeapon: player.inputs.useWeapon,
+        useTactical: player.inputs.useTactical,
+        doReload: player.inputs.doReload,
     }),
     
 }

@@ -18,6 +18,13 @@ export type GameContext = {
     renderer: PipPipRenderer,
 } & RendererContext
 
+export const getClientPlayer = (game: PipPipGame) => {
+    if(typeof client.connectionId !== "undefined"){
+        if(client.connectionId in game.players){
+            return game.players[client.connectionId]
+        }
+    }
+}
 
 export async function hostGame(){
     const uiStore = useUiStore()

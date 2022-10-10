@@ -44,12 +44,25 @@ export function processLobbyPackets(context: GameTickContext){
 
         //  Set player position
         for(const pos of packets.playerPosition || []){
-            const player = game.players[pos.playerId]
+            const player = game.players[connection.id]
             if(typeof player !== "undefined"){
                 player.ship.physics.position.x = pos.positionX
                 player.ship.physics.position.y = pos.positionY
                 player.ship.physics.velocity.x = pos.velocityX
                 player.ship.physics.velocity.y = pos.velocityY
+            }
+        }
+
+        // set player inputs
+        for(const inputs of packets.playerInputs || []){
+            const player = game.players[connection.id]
+            if(typeof player !== "undefined"){
+                player.inputs.movementAngle = inputs.movementAngle
+                player.inputs.movementAmount = inputs.movementAmount
+                player.inputs.aimAngle = inputs.aimAngle
+                player.inputs.useWeapon = inputs.useWeapon
+                player.inputs.useTactical = inputs.useTactical
+                player.inputs.doReload = inputs.doReload
             }
         }
     }

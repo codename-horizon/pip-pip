@@ -6,9 +6,12 @@ import { PIP_SHIPS, Ship } from "./ship"
 export type PlayerInputs = {
     movementAngle: number,
     movementAmount: number,
+
     aimAngle: number,
+
     useWeapon: boolean,
     useTactical: boolean,
+    doReload: boolean,
 }
 
 export class PipPlayer{
@@ -30,6 +33,17 @@ export class PipPlayer{
     deaths = 0
 
     checkpoint = 0
+
+    inputs: PlayerInputs = {
+        movementAngle: 0,
+        movementAmount: 0,
+
+        aimAngle: 0,
+
+        useWeapon: false,
+        useTactical: false,
+        doReload: false,
+    }
 
     constructor(game: PipPipGame, id: string){
         this.game = game
