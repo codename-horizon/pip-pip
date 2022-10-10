@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"strings"
 )
@@ -34,11 +35,63 @@ func main() {
 
 }
 
-type TilePos = []int
+type TilePos []int
+type TilePosArr []TilePos
 
 type GameMap struct {
-	Walls  []TilePos `json:"walls"`
-	Spawns []TilePos `json:"spawns"`
+	Walls  TilePosArr `json:"walls"`
+	Spawns TilePosArr `json:"spawns"`
+}
+
+func transpose(t TilePosArr, x int, y int) TilePosArr {
+	output := TilePosArr{}
+
+	for i := 0; i < len(t); i++ {
+		transposed := TilePos{t[i][0] + x, t[i][1] + y}
+		output = append(output, transposed)
+	}
+
+	return output
+}
+
+func (gm *GameMap) Transpose(x int, y int) {
+	gm.Walls = transpose(gm.Walls, x, y)
+	gm.Spawns = transpose(gm.Spawns, x, y)
+}
+
+func (gm *GameMap) Center() {
+	pool := TilePosArr{}
+	pool = append(pool, gm.Walls...)
+	pool = append(pool, gm.Spawns...)
+
+	minX := math.MaxInt64
+	maxX := -math.MaxInt64
+	minY := math.MaxInt64
+	maxY := -math.MaxInt64
+
+	for i := 0; i < len(pool); i++ {
+		x := pool[i][0]
+		y := pool[i][1]
+
+		switch true {
+		case x < minX:
+			minX = x
+		case x > maxX:
+			maxX = x
+		}
+
+		switch true {
+		case y < minY:
+			minY = y
+		case y > maxY:
+			maxY = y
+		}
+	}
+
+	centerX := (maxX + minX) / 2
+	centerY := (maxY + minY) / 2
+
+	gm.Transpose(-centerX, -centerY)
 }
 
 func processFile(filename string) {
@@ -74,6 +127,8 @@ func processFile(filename string) {
 			}
 		}
 	}
+
+	gameMap.Center()
 
 	jsonMarshal, jsonErr := json.Marshal(gameMap)
 
