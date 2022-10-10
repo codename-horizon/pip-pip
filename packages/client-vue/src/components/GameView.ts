@@ -9,7 +9,7 @@ import { PipPipGame, PipPipGamePhase } from "@pip-pip/game/src/logic"
 
 import { processPackets, clientEvents, sendGamePhase, sendPackets } from "../game/client"
 import { PipPipRenderer } from "../game/renderer"
-import GameButton from './GameButton.vue'
+import GameButton from "./GameButton.vue"
 import { getUIContext, processInputs, UIContext } from "../game/ui"
 
 export default defineComponent({

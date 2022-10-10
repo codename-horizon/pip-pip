@@ -15,3 +15,7 @@ export function degreeDifference(degreeA: number, degreeB: number){
     const diff = (degreeB - degreeA + 180) % 360 - 180
     return diff < -180 ? diff + 360 : diff
 }
+
+export function forgivingEqual(a: number, b: number, amount = 5){
+    return Math.abs(b - a) < amount 
+}

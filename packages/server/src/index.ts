@@ -14,6 +14,7 @@ import { sendPacketToConnection } from "./connection-out"
 import { processLobbyPackets } from "./connection-in"
 
 import { BASE_MAPS } from "@pip-pip/game/src/maps"
+import { PING_REFRESH } from "@pip-pip/game/src/logic/constants"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
 
@@ -66,6 +67,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     const gameEvents = new EventCollector(game.events)
 
     const debugTick = new Ticker(2, false, "Debug")
+    const pingTick = new Ticker(PING_REFRESH, false, "Ping")
     const updateTick = new Ticker(20, false, "Game")
 
     const gameContext: GameTickContext = { lobby, game, lobbyEvents, gameEvents }
@@ -89,6 +91,17 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
         gameEvents.flush()
     })
 
+    pingTick.on("tick", () => {
+        for(const connection of Object.values(lobby.connections)){
+            connection.getPing().then((ping) => {
+                const player = game.players[connection.id]
+                if(typeof player !== "undefined"){
+                    player.ping = ping
+                }
+            })
+        }
+    })
+
     debugTick.on("tick", () => {
         const players = Object.keys(game.players)
         if(players.length) console.log(players)
@@ -96,12 +109,14 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     
     lobby.events.on("destroy", () => {
         debugTick.destroy()
+        pingTick.destroy()
         updateTick.destroy()
         lobbyEvents.destroy()
         gameEvents.destroy()
         game.destroy()
     })
 
+    pingTick.startTick()
     debugTick.startTick()
     updateTick.startTick()
 })

@@ -1,4 +1,5 @@
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
+import { PING_REFRESH } from "@pip-pip/game/src/logic/constants"
 import { encode } from "@pip-pip/game/src/networking/packets"
 import { ConnectionContext } from "."
 
@@ -45,6 +46,8 @@ export function getFullGameState(context: ConnectionContext): number[][] {
         messages.push(encode.playerName(player))
         messages.push(encode.playerIdle(player))
         messages.push(encode.playerSetShip(player))
+        messages.push(encode.playerPosition(player))
+        messages.push(encode.playerPing(player))
     }
     
     if(typeof game.host !== "undefined"){
@@ -70,6 +73,7 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         messages.push(encode.playerName(player))
         messages.push(encode.playerIdle(player))
     }
+
     // Send player details
     for(const event of gameEvents.filter("playerIdleChange")){
         const { player } = event.playerIdleChange
@@ -113,6 +117,14 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         for(const playerId in game.players){
             const player = game.players[playerId]
             messages.push(encode.playerPosition(player))
+        }
+    }
+
+    // send player ping
+    if(game.tickNumber % PING_REFRESH === 0){
+        for(const playerId in game.players){
+            const player = game.players[playerId]
+            messages.push(encode.playerPing(player))
         }
     }
 

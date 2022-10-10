@@ -160,6 +160,7 @@ export class PipPipGame{
     }
 
     update(){
+        this.tickNumber++
         if(this.phase === PipPipGamePhase.SETUP){
             // do nothing
             return
@@ -180,8 +181,12 @@ export class PipPipGame{
 
     updatePhysics(){
         // update players
-        const players = Object.values(this.players)
-        for(const player of players){
+        for(const player of Object.values(this.players)){
+            player.ship.update()
+        }
+
+        for(const player of Object.values(this.players)){
+
             const mag = Math.max(0, Math.min(1, player.inputs.movementAmount))
             if(mag > 0){
                 player.ship.physics.velocity.x += Math.cos(player.inputs.movementAngle) * player.ship.stats.movement.acceleration.normal
@@ -190,5 +195,9 @@ export class PipPipGame{
         }
         
         this.physics.update(this.deltaMs)
+
+        for(const player of Object.values(this.players)){
+            player.trackPositionState()
+        }
     }
 }

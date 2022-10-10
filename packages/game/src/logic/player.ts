@@ -7,12 +7,21 @@ export type PlayerInputs = {
     movementAngle: number,
     movementAmount: number,
 
-    aimAngle: number,
+    aimRotation: number,
 
     useWeapon: boolean,
     useTactical: boolean,
     doReload: boolean,
 }
+
+export type PlayerPositionState = {
+    positionX: number,
+    positionY: number,
+    velocityX: number,
+    velocityY: number,
+}
+
+export const MAX_PLAYER_POSITION_STATES = 8
 
 export class PipPlayer{
     id: string
@@ -38,12 +47,14 @@ export class PipPlayer{
         movementAngle: 0,
         movementAmount: 0,
 
-        aimAngle: 0,
+        aimRotation: 0,
 
         useWeapon: false,
         useTactical: false,
         doReload: false,
     }
+
+    positionStates: PlayerPositionState[] = []
 
     constructor(game: PipPipGame, id: string){
         this.game = game
@@ -94,5 +105,42 @@ export class PipPlayer{
             player: this,
             ship,
         })
+    }
+
+    getPositionState(): PlayerPositionState{
+        return {
+            positionX: this.ship.physics.position.x,
+            positionY: this.ship.physics.position.y,
+            velocityX: this.ship.physics.velocity.x,
+            velocityY: this.ship.physics.velocity.y,
+        }
+    }
+
+    trackPositionState(){
+        const state = this.getPositionState()
+
+        if(this.positionStates.length >= MAX_PLAYER_POSITION_STATES){
+            this.positionStates.pop()
+        }
+        this.positionStates.unshift(state)
+    }
+
+    getLastPositionState(index: number){
+        if(this.positionStates.length === 0){
+            return this.getPositionState()
+        }
+        index = Math.max(0, Math.min(index, this.positionStates.length - 1))
+        const fromIndex = Math.floor(index)
+        const toIndex = Math.ceil(index)
+        const from = this.positionStates[fromIndex]
+        const to = this.positionStates[toIndex]
+        if(fromIndex === toIndex) return this.positionStates[fromIndex]
+        const dist = index - fromIndex
+        return {
+            positionX: from.positionX + (to.positionX - from.positionX) * dist,
+            positionY: from.positionY + (to.positionY - from.positionY) * dist,
+            velocityX: from.velocityX + (to.velocityX - from.velocityX) * dist,
+            velocityY: from.velocityY + (to.velocityY - from.velocityY) * dist,
+        }
     }
 }

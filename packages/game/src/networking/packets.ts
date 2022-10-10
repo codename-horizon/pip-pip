@@ -35,6 +35,10 @@ export const packetManager = new PacketManager({
         playerId: $string(CONNECTION_ID_LENGTH),
         idle: $bool
     }),
+    playerPing: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        ping: $uint16,
+    }),
     playerSetShip: new Packet({
         playerId: $string(CONNECTION_ID_LENGTH),
         shipIndex: $uint8,
@@ -45,12 +49,13 @@ export const packetManager = new PacketManager({
         positionY: $float16,
         velocityX: $float16,
         velocityY: $float16,
+        aimRotation: $float16,
     }),
     playerInputs: new Packet({
         playerId: $string(CONNECTION_ID_LENGTH),
         movementAngle: $float16,
         movementAmount: $float16,
-        aimAngle: $float16,
+        aimRotation: $float16,
         useWeapon: $bool,
         useTactical: $bool,
         doReload: $bool,
@@ -101,6 +106,10 @@ export const encode = {
         playerId: player.id,
         idle: player.idle,
     }),
+    playerPing: (player: PipPlayer) => packetManager.serializers.playerPing.encode({
+        playerId: player.id,
+        ping: player.ping,
+    }),
     playerSetShip: (player: PipPlayer) => packetManager.serializers.playerSetShip.encode({
         playerId: player.id,
         shipIndex: player.shipIndex,
@@ -111,12 +120,13 @@ export const encode = {
         positionY: player.ship.physics.position.y,
         velocityX: player.ship.physics.velocity.x,
         velocityY: player.ship.physics.velocity.y,
+        aimRotation: player.inputs.aimRotation,
     }),
     playerInputs: (player: PipPlayer) => packetManager.serializers.playerInputs.encode({
         playerId: player.id,
         movementAngle: player.inputs.movementAngle,
         movementAmount: player.inputs.movementAmount,
-        aimAngle: player.inputs.aimAngle,
+        aimRotation: player.inputs.aimRotation,
         useWeapon: player.inputs.useWeapon,
         useTactical: player.inputs.useTactical,
         doReload: player.inputs.doReload,

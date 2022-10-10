@@ -1,26 +1,17 @@
 import { generateId } from "../lib/utils"
 
-export type Vector2State = {
-    x: number,
-    y: number,
-}
-
-const MAX_STATES = 4
-
 export class Vector2{
     _x = 0
     _y = 0
     // previous
-    px = 0
-    py = 0
+    // px = 0
+    // py = 0
     // delta
-    dx = 0
-    dy = 0
+    // dx = 0
+    // dy = 0
     // queue
     _qx = 0
     _qy = 0
-
-    history: Vector2State[] = []
 
     constructor(x?: number, y?: number){
         if(typeof x === "number" && typeof y === "number"){
@@ -30,16 +21,16 @@ export class Vector2{
 
     get x(){ return this._x }
     set x(value: number){
-        this.px = this._x
+        // this.px = this._x
         this._x = this._qx = value
-        this.dx = this._x - this.px
+        // this.dx = this._x - this.px
     }
 
     get y(){ return this._y }
     set y(value: number){
-        this.py = this._y
+        // this.py = this._y
         this._y = this._qy = value
-        this.dy = this._y - this.py
+        // this.dy = this._y - this.py
     }
 
     get qx(){ return this._qx }
@@ -64,25 +55,8 @@ export class Vector2{
 
     reset(){
         this._x = this._y = 0
-        this.px = this.py = 0
-        this.dx = this.dy = 0
-    }
-
-    capture(){
-        if(this.history.length >= MAX_STATES){
-            this.history.pop()
-        }
-        this.history.unshift({
-            x: this.x,
-            y: this.y,
-        })
-    }
-
-    last(n: number){
-        if(n in this.history){
-            return this.history[n]
-        }
-        return { x: this.x, y: this.y }
+        // this.px = this.py = 0
+        // this.dx = this.dy = 0
     }
 }
 
@@ -112,11 +86,6 @@ export class PointPhysicsObject{
     
     position: Vector2 = new Vector2()
     velocity: Vector2 = new Vector2()
-    
-    smoothing = {
-        position: new Vector2(),
-        coefficient: 20,
-    }
     
     collision: CollisionOptions = {
         enabled: true,
@@ -278,18 +247,11 @@ export class PointPhysicsWorld{
 
             object.position.qx += object.velocity.x * deltaTime
             object.position.qy += object.velocity.y * deltaTime
-
-            object.smoothing.position.qx += (object.position.x - object.smoothing.position.x) / (object.smoothing.coefficient * deltaTime)
-            object.smoothing.position.qy += (object.position.y - object.smoothing.position.y) / (object.smoothing.coefficient * deltaTime)
         }
 
         for(const object of objects){
             object.velocity.flush()
             object.position.flush()
-            object.smoothing.position.flush()
-            object.velocity.capture()
-            object.position.capture()
-            object.smoothing.position.capture()
         }
 
         if(Date.now() - this.lastLog > this.options.logFrequency){

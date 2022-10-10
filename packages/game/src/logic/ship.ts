@@ -1,5 +1,6 @@
 import { RecursivePartial } from "@pip-pip/core/src/lib/types"
 import { generateId } from "@pip-pip/core/src/lib/utils"
+import { radianDifference } from "@pip-pip/core/src/math"
 import { PointPhysicsObject } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
 import { PipPlayer } from "./player"
@@ -69,7 +70,7 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
     movement: {
         acceleration: {
             low: 2,
-            normal: 3,
+            normal: 8,
             high: 5,
         },
         agility: 0.6,
@@ -169,7 +170,8 @@ export class Ship{
     player?: PipPlayer // allow for AI to control
     game: PipPipGame
 
-    aimAngle = 0
+    rotation = 0
+    targetRotation = 0
 
     stats = DEFAULT_SHIP_STATS
 
@@ -227,7 +229,10 @@ export class Ship{
         // take input from player
         if(typeof this.player !== "undefined"){
             // set angle
+            this.targetRotation = this.player.inputs.aimRotation
         }
+
+        this.rotation += radianDifference(this.rotation, this.targetRotation) / (3 + 9 * (1 - this.stats.aim.accuracy))
     }
 }
 

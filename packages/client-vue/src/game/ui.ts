@@ -46,7 +46,7 @@ export function processInputs(context: GameContext){
         mouse.state.position.x - window.innerWidth / 2,
     )
                 
-    clientPlayer.inputs.aimAngle = mouseAngle
+    clientPlayer.inputs.aimRotation = mouseAngle
     
     // shooting
     clientPlayer.inputs.useWeapon = (mouse.state.left.down || keyboard.state.Space) === true

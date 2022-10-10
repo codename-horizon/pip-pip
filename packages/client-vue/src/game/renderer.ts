@@ -31,6 +31,7 @@ export class PlayerGraphic {
         this.shipSprite = new PIXI.Sprite(texture)
         this.shipSprite.anchor.set(0.5)
         this.shipSprite.position.set(0)
+        this.shipSprite.rotation = Math.PI / 2
         this.shipSprite.scale.set(2)
         this.shipContainer.addChild(this.shipSprite)
     }
@@ -110,6 +111,7 @@ export class PipPipRenderer{
         for(const graphic of players){
             graphic.container.position.x = graphic.player.ship.physics.position.x
             graphic.container.position.y = graphic.player.ship.physics.position.y
+            graphic.container.rotation = graphic.player.ship.rotation
         }
 
         this.app.render()

@@ -1,6 +1,8 @@
 import { EventCollector } from "@pip-pip/core/src/common/events"
+import { forgivingEqual } from "@pip-pip/core/src/math"
 import { Client } from "@pip-pip/core/src/networking/client"
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
+import { PLAYER_POSITION_TOLERANCE } from "@pip-pip/game/src/logic/constants"
 import { encode, packetManager } from "@pip-pip/game/src/networking/packets"
 import { GameContext, getClientPlayer } from "."
 
@@ -43,6 +45,12 @@ export const processPackets = (context: GameContext) => {
             game.players[playerId]?.setIdle(idle)
         }
 
+        // Set player ping
+        for(const { playerId, ping } of packets.playerPing || []){
+            const player = game.players[playerId]
+            if(typeof player !== "undefined") player.ping = ping
+        }
+
         // Set player ship
         for(const { playerId, shipIndex } of packets.playerSetShip || []){
             game.players[playerId]?.setShip(shipIndex)
@@ -65,17 +73,23 @@ export const processPackets = (context: GameContext) => {
 
         //  Set game phase
         for(const pos of packets.playerPosition || []){
-            if(pos.playerId === client.connectionId) continue // TODO: Implement server reconciliations
             const player = game.players[pos.playerId]
-            if(typeof player !== "undefined"){
-                player.ship.physics.position.x = pos.positionX
-                player.ship.physics.position.y = pos.positionY
-                player.ship.physics.velocity.x = pos.velocityX
-                player.ship.physics.velocity.y = pos.velocityY
-            }
-        }
+            if(typeof player === "undefined") continue
 
-        console.log(packets)
+            if(pos.playerId === client.connectionId){
+                const lookbackRaw = (player.ping) / game.deltaMs
+                const state = player.getLastPositionState(lookbackRaw)
+                const x = forgivingEqual((state.positionX + state.velocityX), (pos.positionX), PLAYER_POSITION_TOLERANCE)
+                const y = forgivingEqual((state.positionY + state.velocityY), (pos.positionY), PLAYER_POSITION_TOLERANCE)
+                if(x && y) continue
+            }
+            
+            player.ship.physics.position.x = pos.positionX
+            player.ship.physics.position.y = pos.positionY
+            player.ship.physics.velocity.x = pos.velocityX
+            player.ship.physics.velocity.y = pos.velocityY
+            player.inputs.aimRotation = pos.aimRotation
+        }
     }
 }
 
