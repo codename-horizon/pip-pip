@@ -1,18 +1,11 @@
 import { generateId } from "../lib/utils"
 
-const MAX_DECIMALS = 2
-const MD_Z = Math.pow(10, MAX_DECIMALS)
-
-function trim(n: number){
-    return Math.round(n * MD_Z) / MD_Z
-}
-
 export type Vector2State = {
     x: number,
     y: number,
 }
 
-const MAX_STATES = 32
+const MAX_STATES = 4
 
 export class Vector2{
     _x = 0
@@ -102,8 +95,20 @@ export type CollisionOptions = {
     excludeObjects: PointPhysicsObject[],
 }
 
+export class PointPhysicsRectWall {
+    id = generateId()
+    center: Vector2 = new Vector2()
+    width = 50
+    height = 50
+    constructor(id?: string){
+        if(typeof id === "string"){
+            this.id = id
+        }
+    }
+}
+
 export class PointPhysicsObject{
-    id!: string
+    id = generateId()
     
     position: Vector2 = new Vector2()
     velocity: Vector2 = new Vector2()
@@ -131,8 +136,8 @@ export class PointPhysicsObject{
     dead = false
 
     constructor(id?: string){
-        if(typeof id !== "string"){
-            this.id = generateId()
+        if(typeof id === "string"){
+            this.id = id
         }
     }
 
@@ -162,6 +167,7 @@ export class PointPhysicsWorld{
     options: PointPhysicsWorldOptions
 
     objects: Record<string, PointPhysicsObject> = {}
+    rectWalls: Record<string, PointPhysicsRectWall> = {}
 
     lastLog = Date.now()
 
@@ -179,7 +185,11 @@ export class PointPhysicsWorld{
 
     destroy(){
         for(const id in this.objects){
+            this.objects[id].destroy()
             delete this.objects[id]
+        }
+        for(const id in this.rectWalls){
+            delete this.rectWalls[id]
         }
     }
 
@@ -198,6 +208,16 @@ export class PointPhysicsWorld{
         if(object.id in this.objects){
             delete this.objects[object.id]
             object.destroy()
+        }
+    }
+
+    addRectWall(rectWall: PointPhysicsRectWall){
+        this.rectWalls[rectWall.id] = rectWall
+    }
+
+    removeRectWall(rectWall: PointPhysicsRectWall){
+        if(rectWall.id in this.rectWalls){
+            delete this.rectWalls[rectWall.id]
         }
     }
 

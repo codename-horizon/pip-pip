@@ -1,3 +1,4 @@
+import { PointPhysicsRectWall } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
 import { TILE_SIZE, SPAWN_DIAMETER } from "./constants"
 
@@ -13,6 +14,7 @@ export class PointRadius{
 }
 
 export class GameMap{
+    rectWalls: PointPhysicsRectWall[] = []
     checkpoints: PointRadius[] = []
     spawns: PointRadius[] = []
 }
@@ -20,6 +22,7 @@ export class GameMap{
 export type JSONMapSource = {
     wallTiles: number[][],
     spawnTiles: number[][],
+    wallSegments: number[][],
 }
 
 export class JSONGameMap extends GameMap{
@@ -34,6 +37,15 @@ export class JSONGameMap extends GameMap{
                 y * TILE_SIZE,
                 SPAWN_DIAMETER / 2,
             ))
+        }
+
+        for(const [x, y] of this.source.wallTiles){
+            const rectWall = new PointPhysicsRectWall()
+            rectWall.center.x = x * TILE_SIZE
+            rectWall.center.y = y * TILE_SIZE
+            rectWall.width = TILE_SIZE
+            rectWall.height = TILE_SIZE
+            this.rectWalls.push(rectWall)
         }
     }
 }

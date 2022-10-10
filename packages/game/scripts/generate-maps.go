@@ -145,9 +145,9 @@ func (gm *GameMap) GenerateWalls() {
 		start := TilePoint{0, 0}
 		for x := minX; x <= maxX; x++ {
 			if tracking && tilePatternExists(pool, x, y, TileMatrix{
-				n, 0, n,
-				1, 1, 0,
-				n, 0, n,
+				n, n, n,
+				n, 1, 0,
+				n, n, n,
 			}) {
 				tracking = false
 				walls = append(walls, TileSegment{start[0], start[1], x, y})
@@ -168,8 +168,8 @@ func (gm *GameMap) GenerateWalls() {
 		start := TilePoint{0, 0}
 		for y := minY; y <= maxY; y++ {
 			if tracking && tilePatternExists(pool, x, y, TileMatrix{
+				n, n, n,
 				n, 1, n,
-				0, 1, 0,
 				n, 0, n,
 			}) {
 				tracking = false
