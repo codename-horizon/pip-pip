@@ -4,7 +4,7 @@ import { Packet } from "@pip-pip/core/src/networking/packets/packet"
 
 import { Bullet } from "../logic/bullet"
 import { PipPlayer } from "../logic/player"
-import { PipPipGame } from "../logic"
+import { PipPipGame, PipPipGamePhase } from "../logic"
 
 export const CONNECTION_ID_LENGTH = 2
 export const LOBBY_ID_LENGTH = 4
@@ -69,8 +69,8 @@ export const encode = {
         maxKills: game.settings.maxKills,
         friendlyFire: game.settings.friendlyFire,
     }),
-    gamePhase: (game: PipPipGame) => packetManager.serializers.gamePhase.encode({
-        phase: game.phase,
+    gamePhase: (gameOrPhase: PipPipGame | PipPipGamePhase) => packetManager.serializers.gamePhase.encode({
+        phase: gameOrPhase instanceof PipPipGame ? gameOrPhase.phase : gameOrPhase,
     }),
     gameCountdown: (game: PipPipGame) => packetManager.serializers.gameCountdown.encode({
         countdown: game.countdown,
@@ -99,8 +99,8 @@ export const encode = {
     playerPosition: (player: PipPlayer) => packetManager.serializers.playerPosition.encode({
         playerId: player.id,
         positionX: player.ship.physics.position.x,
-        positionY: player.ship.physics.velocity.y,
-        velocityX: player.ship.physics.position.x,
+        positionY: player.ship.physics.position.y,
+        velocityX: player.ship.physics.velocity.x,
         velocityY: player.ship.physics.velocity.y,
     }),
     

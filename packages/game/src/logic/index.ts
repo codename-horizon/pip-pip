@@ -160,11 +160,12 @@ export class PipPipGame{
     }
 
     update(){
-        switch(this.phase){
-        case PipPipGamePhase.SETUP:
+        if(this.phase === PipPipGamePhase.SETUP){
             // do nothing
-            break
-        case PipPipGamePhase.COUNTDOWN:
+            return
+        }
+
+        if(this.phase === PipPipGamePhase.COUNTDOWN){
             this.countdown--
             if(this.countdown <= 0){
                 this.countdown = 0
@@ -172,13 +173,8 @@ export class PipPipGame{
                     this.setPhase(PipPipGamePhase.MATCH)
                 }
             }
-            break
-        case PipPipGamePhase.MATCH:
-
-            break
-        case PipPipGamePhase.RESULTS:
-
-            break
         }
+        
+        this.physics.update(1000 / this.tps)
     }
 }

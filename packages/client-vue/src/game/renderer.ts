@@ -4,6 +4,7 @@ import { PIP_SHIPS } from "@pip-pip/game/src/logic/ship"
 import * as PIXI from "pixi.js"
 import { GameContext } from "."
 import { assetLoader } from "./assets"
+import { client } from "./client"
 
 export class PlayerGraphic {
     id: string
@@ -46,6 +47,16 @@ export class PipPipRenderer{
 
     container?: HTMLDivElement
 
+    camera = {
+        position: {
+            x: 0, y: 0,
+        },
+        target: {
+            x: 0, y: 0,
+        },
+        scale: 1,
+    }
+
     constructor(game: PipPipGame){
         this.app = new PIXI.Application({ resizeTo: window })
         this.app.ticker.stop()
@@ -80,6 +91,21 @@ export class PipPipRenderer{
     }
 
     render(context: GameContext, deltaMs: number, deltaTime: number){
+        // camera
+        if(typeof client.connectionId !== "undefined"){
+            if(client.connectionId in this.players){
+                const graphic = this.players[client.connectionId]
+                this.camera.target.x = graphic.container.position.x
+                this.camera.target.y = graphic.container.position.y
+            }
+        }
+        this.camera.position.x += (this.camera.target.x - this.camera.position.x) / 10
+        this.camera.position.y += (this.camera.target.y - this.camera.position.y) / 10
+
+        this.viewportContainer.position.x = this.app.view.width / 2 - this.camera.position.x
+        this.viewportContainer.position.y = this.app.view.height / 2 - this.camera.position.y
+
+        // update players
         const players = Object.values(this.players)
         for(const graphic of players){
             graphic.container.position.x = graphic.player.ship.physics.position.x

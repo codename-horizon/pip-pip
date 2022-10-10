@@ -1,3 +1,4 @@
+import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import { GameTickContext } from "."
 
@@ -6,7 +7,10 @@ export function processLobbyPackets(context: GameTickContext){
     // Add players
     for(const events of lobbyEvents.filter("addConnection")){
         const { connection } = events.addConnection
-        game.createPlayer(connection.id)
+        const player = game.createPlayer(connection.id)
+
+        player.ship.physics.position.x = Math.random() * 100
+        player.ship.physics.position.y = Math.random() * 100
     }
     // Remove players
     for(const events of lobbyEvents.filter("removeConnection")){
@@ -20,5 +24,33 @@ export function processLobbyPackets(context: GameTickContext){
     for(const events of lobbyEvents.filter("connectionStatusChange")){
         const { connection } = events.connectionStatusChange
         game.players[connection.id]?.setIdle(connection.isIdle)
+    }
+
+    // Process packets
+    for(const events of lobbyEvents.filter("packetMessage")){
+        const { packets, connection } = events.packetMessage
+
+        //  Set game phase if host
+        for(const { phase } of packets.gamePhase || []){
+            if(game.host?.id === connection.id){
+                if(phase === PipPipGamePhase.COUNTDOWN){
+                    game.countdown = 20 * 5
+                    game.setPhase(phase)
+                } else{
+                    game.setPhase(phase)
+                }
+            }
+        }
+
+        //  Set player position
+        for(const pos of packets.playerPosition || []){
+            const player = game.players[pos.playerId]
+            if(typeof player !== "undefined"){
+                player.ship.physics.position.x = pos.positionX
+                player.ship.physics.position.y = pos.positionY
+                player.ship.physics.velocity.x = pos.velocityX
+                player.ship.physics.velocity.y = pos.velocityY
+            }
+        }
     }
 }

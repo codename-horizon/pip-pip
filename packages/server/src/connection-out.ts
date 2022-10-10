@@ -97,14 +97,23 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
     if(gameEvents.filter("phaseChange").length > 0){
         messages.push(encode.gamePhase(game))
     }
-
-    if(game.phase === PipPipGamePhase.COUNTDOWN){
-        messages.push(encode.gameCountdown(game))
-    }
     
     // Send game settings
     if(gameEvents.filter("settingsChange").length > 0){
         messages.push(encode.gameState(game))
+    }
+
+    
+    if(game.phase !== PipPipGamePhase.SETUP){
+        if(game.phase === PipPipGamePhase.COUNTDOWN){
+            messages.push(encode.gameCountdown(game))
+        }
+        
+        // Send player locations
+        for(const playerId in game.players){
+            const player = game.players[playerId]
+            messages.push(encode.playerPosition(player))
+        }
     }
 
     return messages

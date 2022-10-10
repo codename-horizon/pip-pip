@@ -1,14 +1,22 @@
+import { defineComponent, onMounted, onUnmounted, ref } from "vue"
+
 import { KeyboardListener } from "@pip-pip/core/src/client/keyboard"
 import { MouseListener } from "@pip-pip/core/src/client/mouse"
 import { EventCollector } from "@pip-pip/core/src/common/events"
 import { Ticker } from "@pip-pip/core/src/common/ticker"
-import { PipPipGame } from "@pip-pip/game/src/logic"
-import { defineComponent, onMounted, onUnmounted, ref } from "vue"
-import { processPackets, clientEvents } from "../game/client"
+
+import { PipPipGame, PipPipGamePhase } from "@pip-pip/game/src/logic"
+
+import { processPackets, clientEvents, sendGamePhase, sendPackets } from "../game/client"
 import { PipPipRenderer } from "../game/renderer"
+import GameButton from './GameButton.vue'
+import { getUIContext, UIContext } from "../game/overlay"
 
 export default defineComponent({
     inheritAttrs: false,
+    components: {
+        GameButton,
+    },
     setup(props, ctx) {
         const debugJson = ref({})
         const container = ref<HTMLDivElement>()
@@ -23,15 +31,18 @@ export default defineComponent({
         const renderTick = new Ticker(60, true, "Render")
         const updateTick = new Ticker(game.tps, false, "Update")
 
+        const context = {
+            renderer,
+            game,
+            mouse,
+            keyboard,
+        }
+
+        const uiContext = ref<UIContext>(getUIContext(context))
+
         onMounted(() => {
             if(typeof container.value === "undefined") throw new Error("Container not available.")
             renderer.mount(container.value)
-            
-            const context = {
-                game,
-                mouse,
-                keyboard,
-            }
 
             renderTick.on("tick", ({deltaMs, deltaTime}) => {
                 renderer.render(context, deltaMs, deltaTime)
@@ -44,14 +55,21 @@ export default defineComponent({
                 // Update local simulation
                 game.update()
 
+                // Send packets
+                sendPackets(context)
+
                 // Send updates
                 gameEvents.flush()
                 clientEvents.flush()
+
+                // Update UI
+                uiContext.value = getUIContext(context)
             })
 
             renderTick.startTick()
             updateTick.startTick()
         })
+
         onUnmounted(() => {
             gameEvents.destroy()
             keyboard.destroy()
@@ -60,6 +78,17 @@ export default defineComponent({
             updateTick.destroy()
         })
 
-        return { container, debugJson }
+        // User interface interactions
+        function startGame(){
+            sendGamePhase(PipPipGamePhase.COUNTDOWN)
+        }
+
+        return { 
+            uiContext, 
+            container, 
+            debugJson,
+            
+            startGame,
+        }
     },
 })

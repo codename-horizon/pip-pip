@@ -72,15 +72,6 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
 
     const getConnectionContext = (connection: PipPipConnection): ConnectionContext => ({ connection, ...gameContext, })
 
-    setTimeout(() => {
-        game.countdown = 20 * 5
-        game.setPhase(PipPipGamePhase.COUNTDOWN)
-    
-        setTimeout(() => {
-            game.setPhase(PipPipGamePhase.SETUP)
-        }, 10000)
-    }, 5000)
-
     updateTick.on("tick", () => {
         // process lobby packets
         processLobbyPackets(gameContext)

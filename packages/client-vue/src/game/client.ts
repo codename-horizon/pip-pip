@@ -1,6 +1,7 @@
 import { EventCollector } from "@pip-pip/core/src/common/events"
 import { Client } from "@pip-pip/core/src/networking/client"
-import { packetManager } from "@pip-pip/game/src/networking/packets"
+import { PipPipGamePhase } from "@pip-pip/game/src/logic"
+import { encode, packetManager } from "@pip-pip/game/src/networking/packets"
 import { GameContext } from "."
 
 export const client = new Client(packetManager, {
@@ -62,6 +63,52 @@ export const processPackets = (context: GameContext) => {
             game.countdown = countdown
         }
 
+        //  Set game phase
+        for(const pos of packets.playerPosition || []){
+            const player = game.players[pos.playerId]
+            if(typeof player !== "undefined"){
+                player.ship.physics.position.x = pos.positionX
+                player.ship.physics.position.y = pos.positionY
+                player.ship.physics.velocity.x = pos.velocityX
+                player.ship.physics.velocity.y = pos.velocityY
+            }
+        }
+
         console.log(game)
     }
+}
+
+
+export const sendPackets = (context: GameContext) => {
+    const { game } = context
+
+    const messages: number[][] = []
+
+    if(game.phase === PipPipGamePhase.SETUP){
+        
+        return
+    }
+    
+    // send position
+    {
+        if(typeof client.connectionId !== "undefined"){
+            if(client.connectionId in game.players){
+                const player = game.players[client.connectionId]
+                messages.push(encode.playerPosition(player))
+            }
+        }
+    }
+
+    if(messages.length){
+        let code: number[] = []
+        messages.forEach(mes => code = code.concat(mes))
+        const buffer = new Uint8Array(code).buffer
+        client.send(buffer)
+    }
+}
+
+export function sendGamePhase(phase: PipPipGamePhase){
+    const code = encode.gamePhase(phase)
+    const buffer = new Uint8Array(code).buffer
+    client.send(buffer)
 }
