@@ -66,12 +66,12 @@ export const processPackets = (context: GameContext) => {
             game.setPhase(phase)
         }
 
-        //  Set game phase
+        //  Set game countdown
         for(const { countdown } of packets.gameCountdown || []){
             game.countdown = countdown
         }
 
-        //  Set game phase
+        //  Set player positions
         for(const pos of packets.playerPosition || []){
             const player = game.players[pos.playerId]
             if(typeof player === "undefined") continue
@@ -94,7 +94,16 @@ export const processPackets = (context: GameContext) => {
             player.ship.physics.position.y = pos.positionY + yOffset
             player.ship.physics.velocity.x = pos.velocityX
             player.ship.physics.velocity.y = pos.velocityY
-            player.inputs.aimRotation = pos.aimRotation
+        }
+
+        for(const inputs of packets.playerInputs || []){
+            if(inputs.playerId === client.connectionId) continue
+            
+            const player = game.players[inputs.playerId]
+            if(typeof player === "undefined") continue
+            player.inputs.movementAngle = inputs.movementAngle
+            player.inputs.movementAmount = inputs.movementAmount
+            player.inputs.aimRotation = inputs.aimRotation
         }
     }
 }

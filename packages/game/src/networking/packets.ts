@@ -49,7 +49,6 @@ export const packetManager = new PacketManager({
         positionY: $float16,
         velocityX: $float16,
         velocityY: $float16,
-        aimRotation: $float16,
     }),
     playerInputs: new Packet({
         playerId: $string(CONNECTION_ID_LENGTH),
@@ -120,7 +119,6 @@ export const encode = {
         positionY: player.ship.physics.position.y,
         velocityX: player.ship.physics.velocity.x,
         velocityY: player.ship.physics.velocity.y,
-        aimRotation: player.inputs.aimRotation,
     }),
     playerInputs: (player: PipPlayer) => packetManager.serializers.playerInputs.encode({
         playerId: player.id,

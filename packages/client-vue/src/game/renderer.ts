@@ -1,3 +1,4 @@
+import { radianDifference } from "@pip-pip/core/src/math"
 import { PipPipGame } from "@pip-pip/game/src/logic"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import { PIP_SHIPS } from "@pip-pip/game/src/logic/ship"
@@ -93,26 +94,41 @@ export class PipPipRenderer{
 
     render(context: GameContext, deltaMs: number, deltaTime: number){
         // camera
-        if(typeof client.connectionId !== "undefined"){
-            if(client.connectionId in this.players){
-                const graphic = this.players[client.connectionId]
-                this.camera.target.x = graphic.container.position.x
-                this.camera.target.y = graphic.container.position.y
-            }
-        }
-        this.camera.position.x += (this.camera.target.x - this.camera.position.x) / 10
-        this.camera.position.y += (this.camera.target.y - this.camera.position.y) / 10
+        const cameraSmoothing = Math.pow(1 /  20, deltaTime)
+        // if(typeof client.connectionId !== "undefined"){
+        //     if(client.connectionId in this.players){
+        //         const graphic = this.players[client.connectionId]
+        //         const tx = graphic.player.ship.physics.position.x + graphic.player.ship.physics.velocity.x * deltaTime
+        //         const ty = graphic.player.ship.physics.position.y + graphic.player.ship.physics.velocity.y * deltaTime
+        //     }
+        // }
 
-        this.viewportContainer.position.x = this.app.view.width / 2 - this.camera.position.x
-        this.viewportContainer.position.y = this.app.view.height / 2 - this.camera.position.y
 
         // update players
         const players = Object.values(this.players)
+        const playerRotationSmoothing = Math.pow(1 / 3, deltaTime)
+        const playerSmoothing = Math.pow(1 / 50, deltaTime)
+        const clientPlayerSmoothing = Math.pow(1 / 5, deltaTime)
         for(const graphic of players){
-            graphic.container.position.x = graphic.player.ship.physics.position.x
-            graphic.container.position.y = graphic.player.ship.physics.position.y
-            graphic.container.rotation = graphic.player.ship.rotation
+            const isClient = graphic.player.id === client.connectionId
+            const smoothing = isClient ? clientPlayerSmoothing : playerSmoothing
+            const tx = graphic.player.ship.physics.position.x + graphic.player.ship.physics.velocity.x * deltaTime
+            const ty = graphic.player.ship.physics.position.y + graphic.player.ship.physics.velocity.y * deltaTime
+            
+            graphic.container.position.x += (tx - graphic.container.position.x) * smoothing
+            graphic.container.position.y += (ty - graphic.container.position.y) * smoothing
+            graphic.container.rotation += radianDifference(graphic.container.rotation, graphic.player.ship.rotation) * playerRotationSmoothing
+
+            if(isClient){
+                this.camera.target.x = tx
+                this.camera.target.y = ty
+            }
         }
+
+        this.camera.position.x += (this.camera.target.x - this.camera.position.x) * cameraSmoothing
+        this.camera.position.y += (this.camera.target.y - this.camera.position.y) * cameraSmoothing
+        this.viewportContainer.position.x = this.app.view.width / 2 - this.camera.position.x
+        this.viewportContainer.position.y = this.app.view.height / 2 - this.camera.position.y
 
         this.app.render()
     }

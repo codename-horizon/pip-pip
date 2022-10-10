@@ -62,7 +62,7 @@ export function getFullGameState(context: ConnectionContext): number[][] {
 }
 
 export function getPartialGameState(context: ConnectionContext): number[][] {
-    const { game, gameEvents } = context
+    const { game, gameEvents, connection } = context
 
     const messages = []
     
@@ -117,6 +117,9 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         for(const playerId in game.players){
             const player = game.players[playerId]
             messages.push(encode.playerPosition(player))
+            if(connection.id !== player.id){
+                messages.push(encode.playerInputs(player))
+            } 
         }
     }
 
