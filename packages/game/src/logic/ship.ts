@@ -65,7 +65,7 @@ export function createRange(normal: number, effect = 0.2): StatRange{
 export const DEFAULT_SHIP_STATS: ShipStats = {
     aim: {
         speed: 0.8,
-        accuracy: 0.95,
+        accuracy: 0.75,
     },
     movement: {
         acceleration: {
@@ -232,7 +232,7 @@ export class Ship{
             this.targetRotation = this.player.inputs.aimRotation
         }
 
-        this.rotation += radianDifference(this.rotation, this.targetRotation) / (3 + 9 * (1 - this.stats.aim.accuracy))
+        this.rotation += radianDifference(this.rotation, this.targetRotation) / (1 + 5 * (1 - this.stats.aim.accuracy))
     }
 }
 
@@ -255,7 +255,7 @@ export class RedShip extends Ship{
 
     stats = createShipStats({
         movement: {
-            acceleration: createRange(5),
+            acceleration: createRange(10),
         },
     })
 }

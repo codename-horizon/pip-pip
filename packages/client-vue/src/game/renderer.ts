@@ -8,11 +8,11 @@ import { assetLoader } from "./assets"
 import { client } from "./client"
 
 const SMOOTHING = {
-    CAMERA_MOVEMENT: 2,
+    CAMERA_MOVEMENT: 5,
     CLIENT_PLAYER_MOVEMENT: 2,
     PLAYER_MOVEMENT: 2,
-    PLAYER_ROTATION: 2,
-    MAX_PLAYER_DISTANCE: 100,
+    PLAYER_ROTATION: 1,
+    MAX_PLAYER_DISTANCE: 250,
 }
 
 export class PlayerGraphic {

@@ -53,7 +53,6 @@ export const processPackets = (context: GameContext) => {
 
         // Set player ship
         for(const { playerId, shipIndex } of packets.playerSetShip || []){
-            alert("ship has been set")
             game.players[playerId]?.setShip(shipIndex)
         }
 
@@ -139,7 +138,6 @@ export const sendPackets = (context: GameContext) => {
                 messages.push(encode.playerSetShip(clientPlayer))
             }
         }
-        return
     }
     
     // send position
@@ -149,15 +147,15 @@ export const sendPackets = (context: GameContext) => {
             messages.push(encode.playerPosition(clientPlayer))
             messages.push(encode.playerInputs(clientPlayer))
         }
-
-        if(messages.length){
-            let code: number[] = []
-            messages.forEach(mes => code = code.concat(mes))
-            const buffer = new Uint8Array(code).buffer
-            client.send(buffer)
-        }
     }
     
+
+    if(messages.length){
+        let code: number[] = []
+        messages.forEach(mes => code = code.concat(mes))
+        const buffer = new Uint8Array(code).buffer
+        client.send(buffer)
+    }
 }
 
 export function sendGamePhase(phase: PipPipGamePhase){

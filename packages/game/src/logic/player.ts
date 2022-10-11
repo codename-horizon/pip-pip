@@ -27,7 +27,7 @@ export class PipPlayer{
     id: string
     
     ship!: Ship
-    shipIndex = 0
+    shipIndex!: number
 
     game: PipPipGame
     spectating?: PipPlayer | Ship | PointPhysicsObject | Vector2
@@ -89,6 +89,7 @@ export class PipPlayer{
 
     setShip(index: number){
         index = Math.max(0, Math.min(PIP_SHIPS.length, index))
+        if(this.shipIndex === index) return
         const PlayerShip = PIP_SHIPS[index]
         const ship = new PlayerShip(this.game, this.id)
         ship.setPlayer(this)
