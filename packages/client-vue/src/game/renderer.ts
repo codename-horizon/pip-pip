@@ -7,6 +7,14 @@ import { GameContext } from "."
 import { assetLoader } from "./assets"
 import { client } from "./client"
 
+const SMOOTHING = {
+    CAMERA_MOVEMENT: 200,
+    CLIENT_PLAYER_MOVEMENT: 20,
+    PLAYER_MOVEMENT: 100,
+    PLAYER_ROTATION: 4,
+    MAX_PLAYER_DISTANCE: 100,
+}
+
 export class PlayerGraphic {
     id: string
     player: PipPlayer
@@ -94,32 +102,35 @@ export class PipPipRenderer{
 
     render(context: GameContext, deltaMs: number, deltaTime: number){
         // camera
-        const cameraSmoothing = Math.pow(1 /  20, deltaTime)
-        // if(typeof client.connectionId !== "undefined"){
-        //     if(client.connectionId in this.players){
-        //         const graphic = this.players[client.connectionId]
-        //         const tx = graphic.player.ship.physics.position.x + graphic.player.ship.physics.velocity.x * deltaTime
-        //         const ty = graphic.player.ship.physics.position.y + graphic.player.ship.physics.velocity.y * deltaTime
-        //     }
-        // }
-
+        const cameraSmoothing = Math.pow(1 /  SMOOTHING.CAMERA_MOVEMENT, deltaTime)
 
         // update players
         const players = Object.values(this.players)
-        const playerRotationSmoothing = Math.pow(1 / 3, deltaTime)
-        const playerSmoothing = Math.pow(1 / 50, deltaTime)
-        const clientPlayerSmoothing = Math.pow(1 / 5, deltaTime)
+        const playerRotationSmoothing = Math.pow(1 / SMOOTHING.PLAYER_ROTATION, deltaTime)
+        const playerMovementSmoothing = Math.pow(1 / SMOOTHING.PLAYER_MOVEMENT, deltaTime)
+        const clientPlayerMovementSmoothing = Math.pow(1 / SMOOTHING.CLIENT_PLAYER_MOVEMENT, deltaTime)
         for(const graphic of players){
             const isClient = graphic.player.id === client.connectionId
-            const smoothing = isClient ? clientPlayerSmoothing : playerSmoothing
+            const movementSmoothing = isClient ? clientPlayerMovementSmoothing : playerMovementSmoothing
+
             const tx = graphic.player.ship.physics.position.x + graphic.player.ship.physics.velocity.x * deltaTime
             const ty = graphic.player.ship.physics.position.y + graphic.player.ship.physics.velocity.y * deltaTime
             
-            graphic.container.position.x += (tx - graphic.container.position.x) * smoothing
-            graphic.container.position.y += (ty - graphic.container.position.y) * smoothing
+            const dx = tx - graphic.container.position.x
+            const dy = ty - graphic.container.position.y
+
+            if(dx * dx + dy + dy > SMOOTHING.MAX_PLAYER_DISTANCE * SMOOTHING.MAX_PLAYER_DISTANCE){
+                graphic.container.position.x = tx
+                graphic.container.position.y = ty
+            } else{
+                graphic.container.position.x += dx * movementSmoothing
+                graphic.container.position.y += dy * movementSmoothing
+            }
+
+
             graphic.container.rotation += radianDifference(graphic.container.rotation, graphic.player.ship.rotation) * playerRotationSmoothing
 
-            if(isClient){
+            if(isClient && typeof graphic.player.spectating === "undefined"){
                 this.camera.target.x = tx
                 this.camera.target.y = ty
             }

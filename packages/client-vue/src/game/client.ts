@@ -71,6 +71,20 @@ export const processPackets = (context: GameContext) => {
             game.countdown = countdown
         }
 
+        //  Set force player positions
+        for(const pos of packets.playerPositionSync || []){
+            const player = game.players[pos.playerId]
+            if(typeof player === "undefined") continue
+            
+            if(pos.playerId === client.connectionId){
+                player.ship.physics.position.x = pos.positionX
+                player.ship.physics.position.y = pos.positionY
+                player.ship.physics.velocity.x = pos.velocityX
+                player.ship.physics.velocity.y = pos.velocityY
+            }
+            
+        }
+
         //  Set player positions
         for(const pos of packets.playerPosition || []){
             const player = game.players[pos.playerId]
@@ -80,6 +94,7 @@ export const processPackets = (context: GameContext) => {
             let yOffset = 0
 
             if(pos.playerId === client.connectionId){
+                // TODO: Improve server reconciliation
                 const lookbackRaw = player.ping / game.deltaMs
                 const state = player.getLastPositionState(lookbackRaw)
                 const x = forgivingEqual((state.positionX + state.velocityX), (pos.positionX), PLAYER_POSITION_TOLERANCE)
@@ -105,6 +120,8 @@ export const processPackets = (context: GameContext) => {
             player.inputs.movementAmount = inputs.movementAmount
             player.inputs.aimRotation = inputs.aimRotation
         }
+
+        console.log(packets)
     }
 }
 
@@ -120,19 +137,22 @@ export const sendPackets = (context: GameContext) => {
     }
     
     // send position
-    const clientPlayer = getClientPlayer(game)
+    if(game.phase === PipPipGamePhase.MATCH){
+        const clientPlayer = getClientPlayer(game)
 
-    if(typeof clientPlayer !== "undefined"){
-        messages.push(encode.playerPosition(clientPlayer))
-        messages.push(encode.playerInputs(clientPlayer))
-    }
+        if(typeof clientPlayer !== "undefined"){
+            messages.push(encode.playerPosition(clientPlayer))
+            messages.push(encode.playerInputs(clientPlayer))
+        }
 
-    if(messages.length){
-        let code: number[] = []
-        messages.forEach(mes => code = code.concat(mes))
-        const buffer = new Uint8Array(code).buffer
-        client.send(buffer)
+        if(messages.length){
+            let code: number[] = []
+            messages.forEach(mes => code = code.concat(mes))
+            const buffer = new Uint8Array(code).buffer
+            client.send(buffer)
+        }
     }
+    
 }
 
 export function sendGamePhase(phase: PipPipGamePhase){

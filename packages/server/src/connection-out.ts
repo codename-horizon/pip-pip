@@ -46,6 +46,7 @@ export function getFullGameState(context: ConnectionContext): number[][] {
         messages.push(encode.playerName(player))
         messages.push(encode.playerIdle(player))
         messages.push(encode.playerSetShip(player))
+        messages.push(encode.playerPositionSync(player))
         messages.push(encode.playerPosition(player))
         messages.push(encode.playerPing(player))
     }
@@ -109,8 +110,12 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
 
     
     if(game.phase !== PipPipGamePhase.SETUP){
+        const connectionPlayer = game.players[connection.id]
         if(game.phase === PipPipGamePhase.COUNTDOWN){
             messages.push(encode.gameCountdown(game))
+            if(typeof connectionPlayer !== "undefined"){
+                messages.push(encode.playerPositionSync(connectionPlayer))
+            }
         }
         
         // Send player locations
