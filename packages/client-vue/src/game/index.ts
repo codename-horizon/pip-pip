@@ -3,13 +3,15 @@ import { client, clientEvents } from "./client"
 import { useUiStore } from "../store/ui"
 import { router } from "../router"
 import { LobbyJSON } from "@pip-pip/core/src/networking/api/types"
-import { PipPipGame, PipPipGamePhase } from "@pip-pip/game/src/logic"
+import { PipPipGame, PipPipGameEventMap, PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { KeyboardListener } from "@pip-pip/core/src/client/keyboard"
 import { MouseListener } from "@pip-pip/core/src/client/mouse"
 import { PipPipRenderer } from "./renderer"
+import { EventCollector } from "@pip-pip/core/src/common/events"
 
 export type RendererContext = {
     game: PipPipGame,
+    gameEvents: EventCollector<PipPipGameEventMap>,
     keyboard: KeyboardListener,
     mouse: MouseListener,
 }

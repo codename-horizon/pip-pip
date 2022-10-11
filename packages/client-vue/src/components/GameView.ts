@@ -11,6 +11,7 @@ import { processPackets, clientEvents, sendGamePhase, sendPackets } from "../gam
 import { PipPipRenderer } from "../game/renderer"
 import GameButton from "./GameButton.vue"
 import { getUIContext, processInputs, UIContext } from "../game/ui"
+import { getClientPlayer } from "../game"
 
 export default defineComponent({
     inheritAttrs: false,
@@ -23,6 +24,8 @@ export default defineComponent({
         
         const game = new PipPipGame()
         const renderer = new PipPipRenderer(game)
+
+        console.log(game)
         
         const gameEvents = new EventCollector(game.events)
         const keyboard = new KeyboardListener()
@@ -34,6 +37,7 @@ export default defineComponent({
         const context = {
             renderer,
             game,
+            gameEvents,
             mouse,
             keyboard,
         }
@@ -89,12 +93,17 @@ export default defineComponent({
             sendGamePhase(PipPipGamePhase.COUNTDOWN)
         }
 
+        function setShip(index: number){
+            getClientPlayer(game)?.setShip(index)
+        }
+
         return { 
             uiContext, 
             container, 
             debugJson,
             
             startGame,
+            setShip,
         }
     },
 })

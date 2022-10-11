@@ -4,6 +4,8 @@
   <div id="game-setup" class="overlay" v-if="uiContext.isPhaseSetup">
     hello whats up??
     <GameButton v-if="uiContext.isHost" @click="startGame">Start Game</GameButton>
+    <GameButton @click="() => setShip(0)">Blu</GameButton>
+    <GameButton @click="() => setShip(1)">Red</GameButton>
   </div>
   <div id="game-countdown" class="overlay" v-if="uiContext.isPhaseCountdown">
     Starting in {{ uiContext.gameCountdownMs }}...

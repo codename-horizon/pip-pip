@@ -32,6 +32,14 @@ export function processLobbyPackets(context: GameTickContext){
     for(const events of lobbyEvents.filter("packetMessage")){
         const { packets, connection } = events.packetMessage
 
+        // set player ship
+        for(const { playerId, shipIndex } of packets.playerSetShip || []){
+            const player = game.players[connection.id]
+            if(typeof player !== "undefined" && connection.id === playerId){
+                player.setShip(shipIndex)
+            }
+        }
+
         //  Set game phase if host
         for(const { phase } of packets.gamePhase || []){
             if(game.host?.id === connection.id){
