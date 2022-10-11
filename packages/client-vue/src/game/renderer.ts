@@ -8,9 +8,9 @@ import { assetLoader } from "./assets"
 import { client } from "./client"
 
 const SMOOTHING = {
-    CAMERA_MOVEMENT: 200,
-    CLIENT_PLAYER_MOVEMENT: 20,
-    PLAYER_MOVEMENT: 100,
+    CAMERA_MOVEMENT: 10,
+    CLIENT_PLAYER_MOVEMENT: 5,
+    PLAYER_MOVEMENT: 10,
     PLAYER_ROTATION: 4,
     MAX_PLAYER_DISTANCE: 100,
 }
@@ -102,13 +102,13 @@ export class PipPipRenderer{
 
     render(context: GameContext, deltaMs: number, deltaTime: number){
         // camera
-        const cameraSmoothing = Math.pow(1 /  SMOOTHING.CAMERA_MOVEMENT, deltaTime)
+        const cameraSmoothing = deltaTime / SMOOTHING.CAMERA_MOVEMENT
 
         // update players
         const players = Object.values(this.players)
-        const playerRotationSmoothing = Math.pow(1 / SMOOTHING.PLAYER_ROTATION, deltaTime)
-        const playerMovementSmoothing = Math.pow(1 / SMOOTHING.PLAYER_MOVEMENT, deltaTime)
-        const clientPlayerMovementSmoothing = Math.pow(1 / SMOOTHING.CLIENT_PLAYER_MOVEMENT, deltaTime)
+        const playerRotationSmoothing = deltaTime / SMOOTHING.PLAYER_ROTATION
+        const playerMovementSmoothing = deltaTime / SMOOTHING.PLAYER_MOVEMENT
+        const clientPlayerMovementSmoothing = deltaTime / SMOOTHING.CLIENT_PLAYER_MOVEMENT
         for(const graphic of players){
             const isClient = graphic.player.id === client.connectionId
             const movementSmoothing = isClient ? clientPlayerMovementSmoothing : playerMovementSmoothing
