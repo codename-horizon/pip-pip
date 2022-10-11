@@ -48,7 +48,7 @@ export default defineComponent({
             renderer.mount(container.value)
 
             renderTick.on("tick", ({deltaMs, deltaTime}) => {
-                renderer.render(context, deltaMs, deltaTime)
+                renderer.render(context, deltaMs)
             })
 
             updateTick.on("tick", () => {

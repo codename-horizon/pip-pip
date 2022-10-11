@@ -8,10 +8,10 @@ import { assetLoader } from "./assets"
 import { client } from "./client"
 
 const SMOOTHING = {
-    CAMERA_MOVEMENT: 10,
-    CLIENT_PLAYER_MOVEMENT: 5,
-    PLAYER_MOVEMENT: 10,
-    PLAYER_ROTATION: 4,
+    CAMERA_MOVEMENT: 2,
+    CLIENT_PLAYER_MOVEMENT: 2,
+    PLAYER_MOVEMENT: 2,
+    PLAYER_ROTATION: 2,
     MAX_PLAYER_DISTANCE: 100,
 }
 
@@ -100,7 +100,11 @@ export class PipPipRenderer{
         this.container.appendChild(this.app.view)
     }
 
-    render(context: GameContext, deltaMs: number, deltaTime: number){
+    render(context: GameContext, deltaMs: number){
+        const deltaTime = deltaMs / this.game.deltaMs
+        const timeDiff = Date.now() - this.game.lastTick
+        const lerp = timeDiff / this.game.deltaMs
+
         // camera
         const cameraSmoothing = deltaTime / SMOOTHING.CAMERA_MOVEMENT
 
@@ -113,8 +117,8 @@ export class PipPipRenderer{
             const isClient = graphic.player.id === client.connectionId
             const movementSmoothing = isClient ? clientPlayerMovementSmoothing : playerMovementSmoothing
 
-            const tx = graphic.player.ship.physics.position.x + graphic.player.ship.physics.velocity.x * deltaTime
-            const ty = graphic.player.ship.physics.position.y + graphic.player.ship.physics.velocity.y * deltaTime
+            const tx = graphic.player.ship.physics.position.x + graphic.player.ship.physics.velocity.x * lerp
+            const ty = graphic.player.ship.physics.position.y + graphic.player.ship.physics.velocity.y * lerp
             
             const dx = tx - graphic.container.position.x
             const dy = ty - graphic.container.position.y

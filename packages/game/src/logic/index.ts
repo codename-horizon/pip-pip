@@ -79,6 +79,7 @@ export class PipPipGame{
     host?: PipPlayer
 
     tickNumber = 0
+    lastTick = Date.now()
 
     phase: PipPipGamePhase = PipPipGamePhase.SETUP
     countdown = 0
@@ -161,6 +162,7 @@ export class PipPipGame{
 
     update(){
         this.tickNumber++
+        this.lastTick = Date.now()
         if(this.phase === PipPipGamePhase.SETUP){
             // do nothing
             return
