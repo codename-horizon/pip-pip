@@ -8,7 +8,7 @@ import { generateId } from "@pip-pip/core/src/lib/utils"
 import { CONNECTION_ID_LENGTH, encode, LOBBY_ID_LENGTH, packetManager } from "@pip-pip/game/src/networking/packets"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import { PipPipGame } from "@pip-pip/game/src/logic"
-import { Ship } from "@pip-pip/game/src/logic/ship"
+import { BaseShip } from "@pip-pip/game/src/logic/ship"
 import { Connection } from "@pip-pip/core/src/networking/connection"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>
@@ -50,7 +50,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
     // create fake players
     for(let i = 0; i < 16; i++){
         const player = new PipPlayer(generateId())
-        player.ship = new Ship()
+        player.ship = new BaseShip()
         player.ai = true
         player.physics.position.x = Math.random() * 500
         player.physics.position.y = Math.random() * 500
@@ -89,7 +89,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby, server}) => {
         for(const event of lobbyEvents.filter("addConnection")){
             const { connection } = event.addConnection
             const player = new PipPlayer(connection.id)
-            player.ship = new Ship()
+            player.ship = new BaseShip()
             player.physics.position.x = Math.random() * 100
             player.physics.position.y = Math.random() * 100
             updatePlayerPing(player.id)

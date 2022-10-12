@@ -1,7 +1,7 @@
 import { PointPhysicsObject, Vector2 } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
 
-import { PIP_SHIPS, Ship } from "./ship"
+import { PIP_SHIPS, BaseShip, ShipType } from "./ship"
 
 export type PlayerInputs = {
     movementAngle: number,
@@ -26,11 +26,12 @@ export const MAX_PLAYER_POSITION_STATES = 8
 export class PipPlayer{
     id: string
     
-    ship!: Ship
+    ship!: BaseShip
     shipIndex!: number
+    shipType!: ShipType
 
     game: PipPipGame
-    spectating?: PipPlayer | Ship | PointPhysicsObject | Vector2
+    spectating?: PipPlayer | BaseShip | PointPhysicsObject | Vector2
 
     name = "Pilot" + Math.floor(Math.random() * 1000)
     idle = false
@@ -64,7 +65,7 @@ export class PipPlayer{
         this.game.players[id] = this
         this.game.events.emit("addPlayer", { player: this })
         this.game.setHostIfNeeded()
-        this.setShip(0)
+        this.setShip()
     }
 
     remove(){
@@ -87,20 +88,31 @@ export class PipPlayer{
         this.game.events.emit("playerIdleChange", { player: this })
     }
 
-    setShip(index: number){
-        index = Math.max(0, Math.min(PIP_SHIPS.length, index))
+    setShip(index?: number){
+        if(typeof index === "number"){
+            index = Math.max(0, Math.min(PIP_SHIPS.length, index))
+        } else{
+            index = Math.floor(Math.random() * PIP_SHIPS.length)
+        }
         if(this.shipIndex === index) return
-        const PlayerShip = PIP_SHIPS[index]
-        const ship = new PlayerShip(this.game, this.id)
+        
+        const shipType = PIP_SHIPS[index]
+
+        const ship = new shipType.Ship(this.game, this.id)
         ship.setPlayer(this)
 
-        this.shipIndex = index
-
         if(typeof this.ship !== "undefined"){
+            ship.physics.position.x = this.ship.physics.position.x
+            ship.physics.position.y = this.ship.physics.position.y
+            ship.physics.velocity.x = this.ship.physics.velocity.x
+            ship.physics.velocity.y = this.ship.physics.velocity.y
             this.game.physics.removeObject(this.ship.physics)
         }
 
         this.ship = ship
+        this.shipIndex = index
+        this.shipType = shipType
+
         this.game.physics.addObject(this.ship.physics)
         this.game.events.emit("playerSetShip", {
             player: this,

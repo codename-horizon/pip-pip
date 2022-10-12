@@ -12,6 +12,7 @@ import { PipPipRenderer } from "../game/renderer"
 import GameButton from "./GameButton.vue"
 import { getUIContext, processInputs, UIContext } from "../game/ui"
 import { getClientPlayer } from "../game"
+import { PIP_SHIPS } from "@pip-pip/game/src/logic/ship"
 
 export default defineComponent({
     inheritAttrs: false,
@@ -104,6 +105,7 @@ export default defineComponent({
             
             startGame,
             setShip,
+            PIP_SHIPS,
         }
     },
 })

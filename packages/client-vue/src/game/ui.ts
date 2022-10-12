@@ -12,6 +12,8 @@ export function getUIContext(context: GameContext) {
         gameCountdownMs: (context.game.countdown / context.game.tps) * 1000,
 
         isHost: context.game.host?.id === client.connectionId,
+
+        clientPlayer: getClientPlayer(context.game),
     }
 }
 

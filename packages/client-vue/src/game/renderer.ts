@@ -7,12 +7,50 @@ import { GameContext } from "."
 import { assetLoader } from "./assets"
 import { client } from "./client"
 
+import { CRTFilter, GlitchFilter, PixelateFilter } from 'pixi-filters'
+
 const SMOOTHING = {
     CAMERA_MOVEMENT: 5,
     CLIENT_PLAYER_MOVEMENT: 2,
     PLAYER_MOVEMENT: 2,
     PLAYER_ROTATION: 1,
     MAX_PLAYER_DISTANCE: 250,
+}
+
+export const STAR_BG = {
+    COUNT: 100,
+    MIN_Z: -5,
+    MAX_Z: 5,
+    MAX_SCALE: 1,
+    MIN_SCALE: 0.25,
+    EFFECT: 0.5,
+}
+
+export class StarGraphic {
+    sprite: PIXI.Sprite
+    z = 0
+
+    constructor(sprite: PIXI.Sprite){
+        this.sprite = sprite
+        sprite.anchor.set(0.5)
+        this.setRandomZ()
+    }
+
+    setRandomZ(){
+        const z = STAR_BG.MIN_Z + Math.random() * (STAR_BG.MAX_Z - STAR_BG.MIN_Z)
+        this.setZ(z)
+    }
+
+    get zRatio(){
+        return (this.z - STAR_BG.MIN_Z) / (STAR_BG.MAX_Z - STAR_BG.MIN_Z)
+    }
+
+    setZ(n: number){
+        this.z = n
+        const scale = STAR_BG.MIN_SCALE + (1 - this.zRatio) * (STAR_BG.MAX_SCALE - STAR_BG.MIN_SCALE)
+        this.sprite.scale.set(scale)
+        this.sprite.rotation = Math.random() * Math.PI
+    }
 }
 
 export class PlayerGraphic {
@@ -35,8 +73,7 @@ export class PlayerGraphic {
         if(typeof this.shipSprite !== "undefined"){
             this.shipContainer.removeChild(this.shipSprite)
         }
-        const PlayerShip = PIP_SHIPS[this.player.shipIndex]
-        const texture = assetLoader.get(PlayerShip.shipTextureId)
+        const texture = assetLoader.get(this.player.shipType.texture)
         this.shipSprite = new PIXI.Sprite(texture)
         this.shipSprite.anchor.set(0.5)
         this.shipSprite.position.set(0)
@@ -50,12 +87,22 @@ export class PipPipRenderer{
     app: PIXI.Application
     game: PipPipGame
 
+    stars: StarGraphic[] = []
+    starsContainer = new PIXI.Container()
+
     viewportContainer = new PIXI.Container()
     playersContainer = new PIXI.Container()
+
+    mapBackgroundContainer = new PIXI.Container()
+    mapForegroundContainer = new PIXI.Container()
 
     players: Record<string, PlayerGraphic> = {}
 
     container?: HTMLDivElement
+
+    crtFilter = new CRTFilter()
+    glitchFilter = new GlitchFilter()
+    pixelateFilter = new PixelateFilter()
 
     camera = {
         position: {
@@ -72,7 +119,39 @@ export class PipPipRenderer{
         this.app.ticker.stop()
 
         this.app.stage.addChild(this.viewportContainer)
+        
+        this.viewportContainer.addChild(this.starsContainer)
+        this.viewportContainer.addChild(this.mapBackgroundContainer)
         this.viewportContainer.addChild(this.playersContainer)
+        this.viewportContainer.addChild(this.mapForegroundContainer)
+
+        this.crtFilter.enabled = false
+        this.glitchFilter.enabled = false
+        this.pixelateFilter.enabled = false
+
+        this.app.stage.filters = [
+            this.crtFilter,
+            this.glitchFilter,
+            this.pixelateFilter,
+        ]
+
+        // initialize stars
+        for(let i = 0; i < STAR_BG.COUNT; i++){
+            const starTexture = assetLoader.get("star_1")
+            if(typeof starTexture === "undefined") continue
+            const star = new PIXI.Sprite(starTexture)
+            const graphic = new StarGraphic(star)
+
+            const angle = Math.random() * Math.PI * 2
+            const mag = Math.random() * this.getViewportRadius()
+            star.position.x = Math.cos(angle) * mag
+            star.position.y = Math.sin(angle) * mag
+
+            this.starsContainer.addChild(star)
+            this.stars.push(graphic)
+
+            console.log(star)
+        }
 
         this.game = game
 
@@ -93,6 +172,10 @@ export class PipPipRenderer{
                 this.playersContainer.removeChild(graphic.container)
             }
         })
+    }
+
+    getViewportRadius(){
+        return Math.sqrt(this.app.view.width * this.app.view.width + this.app.view.height * this.app.view.height) / 2
     }
 
     mount(container: HTMLDivElement){
@@ -140,10 +223,32 @@ export class PipPipRenderer{
             }
         }
 
-        this.camera.position.x += (this.camera.target.x - this.camera.position.x) * cameraSmoothing
-        this.camera.position.y += (this.camera.target.y - this.camera.position.y) * cameraSmoothing
+        // Compute camera
+        const cameraDeltaX = (this.camera.target.x - this.camera.position.x) * cameraSmoothing
+        const cameraDeltaY = (this.camera.target.y - this.camera.position.y) * cameraSmoothing
+        this.camera.position.x += cameraDeltaX
+        this.camera.position.y += cameraDeltaY
+
+        // Center viewport
         this.viewportContainer.position.x = this.app.view.width / 2 - this.camera.position.x
         this.viewportContainer.position.y = this.app.view.height / 2 - this.camera.position.y
+
+        // Compute stars
+        const starMaxDist = this.getViewportRadius()
+        for(const star of this.stars){
+            star.sprite.position.x += cameraDeltaX * star.zRatio * STAR_BG.EFFECT
+            star.sprite.position.y += cameraDeltaY * star.zRatio * STAR_BG.EFFECT
+
+            const dx = this.camera.position.x - star.sprite.position.x
+            const dy = this.camera.position.y - star.sprite.position.y
+            const dist2 = dx * dx + dy * dy
+            if(dist2 > starMaxDist * starMaxDist){
+                const angle = Math.random() * Math.PI * 2
+                star.sprite.position.x = this.camera.position.x + Math.cos(angle) * starMaxDist
+                star.sprite.position.y = this.camera.position.y + Math.sin(angle) * starMaxDist
+                star.setRandomZ()
+            }
+        }
 
         this.app.render()
     }

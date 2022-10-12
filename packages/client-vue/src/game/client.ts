@@ -49,6 +49,7 @@ export const processPackets = (context: GameContext) => {
         for(const { playerId, ping } of packets.playerPing || []){
             const player = game.players[playerId]
             if(typeof player !== "undefined") player.ping = ping
+            if(player.id === client.connectionId) window.document.title = player.ping.toFixed(2)
         }
 
         // Set player ship

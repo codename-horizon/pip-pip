@@ -12,6 +12,7 @@
     "@pixi/assets": "^6.5.5",
     "@pixi/basis": "^6.5.5",
     "pinia": "^2.0.22",
+    "pixi-filters": "^4.2.0",
     "pixi.js": "^6.5.4",
     "pug": "^3.0.2",
     "sass": "^1.55.0",

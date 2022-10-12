@@ -6,5 +6,5 @@ export const SHIP_DAIMETER = 60
 export const BULLET_DIAMETER = 10
 
 
-export const PING_REFRESH = 5
+export const PING_REFRESH = 2
 export const PLAYER_POSITION_TOLERANCE = SHIP_DAIMETER * 2

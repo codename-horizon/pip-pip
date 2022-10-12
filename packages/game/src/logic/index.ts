@@ -4,7 +4,7 @@ import { radianDifference } from "@pip-pip/core/src/math"
 
 import { Bullet } from "./bullet"
 import { PipPlayer } from "./player"
-import { Ship } from "./ship"
+import { BaseShip } from "./ship"
 import { GameMap } from "./map"
 
 
@@ -13,8 +13,8 @@ export type PipPipGameEventMap = {
     removePlayer: { player: PipPlayer },
     playerIdleChange: { player: PipPlayer },
 
-    playerSetShip: { player: PipPlayer, ship: Ship },
-    playerRemoveShip: { player: PipPlayer, ship: Ship },
+    playerSetShip: { player: PipPlayer, ship: BaseShip },
+    playerRemoveShip: { player: PipPlayer, ship: BaseShip },
 
     setHost: { player: PipPlayer },
     removeHost: undefined,
@@ -24,8 +24,8 @@ export type PipPipGameEventMap = {
 
     addBullet: { bullet: Bullet },
     removeBullet: { bullet: Bullet },
-    addShip: { ship: Ship },
-    removeShip: { ship: Ship },
+    addShip: { ship: BaseShip },
+    removeShip: { ship: BaseShip },
     playerReloadStart: { player: PipPlayer },
     playerReloadEnd: { player: PipPlayer },
 }
@@ -74,7 +74,7 @@ export class PipPipGame{
 
     players: Record<string, PipPlayer> = {}
     bullets: Record<string, Bullet> = {}
-    ships: Record<string, Ship> = {}
+    ships: Record<string, BaseShip> = {}
 
     host?: PipPlayer
 

@@ -11,18 +11,19 @@ onMounted(async () => {
   uiStore.loading = true
   uiStore.body = "Loading assets..."
   try{
-    assetLoader.loadBundle([
+    await assetLoader.loadBundle([
       "ui",
       "ships",
+      "misc",
     ], progress => {
       uiStore.body = `Downloaded ${Math.floor(progress * 100)}% of assets...`
     })
+    loadedAssets.value = true
   } catch(e){
     alert("Could not load assets :(")
     console.warn(e)
   }
   uiStore.loading = false
-  loadedAssets.value = true
 })
 </script>
 

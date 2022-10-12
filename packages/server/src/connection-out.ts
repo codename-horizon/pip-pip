@@ -129,7 +129,7 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
     }
 
     // send player ping
-    if(game.tickNumber % PING_REFRESH === 0){
+    if(game.tickNumber % (game.tps - PING_REFRESH) === 0){
         for(const playerId in game.players){
             const player = game.players[playerId]
             messages.push(encode.playerPing(player))
