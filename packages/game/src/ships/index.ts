@@ -45,10 +45,13 @@ PIP_SHIPS.push({
             movement: {
                 agility: 0.2,
                 acceleration: {
-                    low: 6,
-                    normal: 8,
-                    high: 10,
+                    low: 7.5,
+                    normal: 10,
+                    high: 15,
                 },
+            },
+            aim: {
+                speed: 0.25,
             },
         })
     },

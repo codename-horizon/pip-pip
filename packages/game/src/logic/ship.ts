@@ -240,7 +240,7 @@ export class PipShip{
             this.targetRotation = this.player.inputs.aimRotation
         }
 
-        this.rotation += radianDifference(this.rotation, this.targetRotation) / (1 + 5 * (1 - this.stats.aim.accuracy))
+        this.rotation += radianDifference(this.rotation, this.targetRotation) / (1 + 8 * (1 - this.stats.aim.accuracy))
     }
 }
 

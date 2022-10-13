@@ -232,10 +232,11 @@ export class PipPipGame{
             
             if(playerCappedAccelerationInput > 0){
                 const angleDiff = radianDifference(player.inputs.movementAngle, player.inputs.aimRotation)
+                const angleEffect = (angleDiff / Math.PI) * (Math.PI / 6) * (1 - player.ship.stats.movement.agility)
                 const agilityModifier = Math.pow(player.ship.stats.movement.agility + (1 - Math.abs(angleDiff) / Math.PI) * (1 - player.ship.stats.movement.agility), 2)
                 const agilityAcceleration = playerCappedAccelerationInput * agilityModifier
-                player.ship.physics.velocity.x += Math.cos(player.inputs.movementAngle) * agilityAcceleration
-                player.ship.physics.velocity.y += Math.sin(player.inputs.movementAngle) * agilityAcceleration
+                player.ship.physics.velocity.x += Math.cos(player.inputs.movementAngle + angleEffect) * agilityAcceleration
+                player.ship.physics.velocity.y += Math.sin(player.inputs.movementAngle + angleEffect) * agilityAcceleration
             }
         }
 
