@@ -164,7 +164,7 @@ export class PipPipRenderer{
         this.glitchFilter.green = new Point(-1, -4)
         this.pixelateFilter.enabled = true
         this.buldgePinchFilter.enabled = true
-        this.buldgePinchFilter.strength = 0.2
+        this.buldgePinchFilter.strength = 0.05
         this.buldgePinchFilter.center = new Point(
             0.5, 
             0.5,
@@ -173,7 +173,7 @@ export class PipPipRenderer{
         const displacementTexture = assetLoader.get("displacement_map")
         this.displacementSprite = new PIXI.Sprite(displacementTexture)
         this.displacementSprite.anchor.set(0.5)
-        this.displacementFilter = new DisplacementFilter(this.displacementSprite, 50)
+        this.displacementFilter = new DisplacementFilter(this.displacementSprite)
         this.displacementFilter.enabled = true
         this.app.stage.addChild(this.displacementSprite)
 
@@ -181,7 +181,7 @@ export class PipPipRenderer{
             // this.crtFilter,
             // this.glitchFilter,
             // this.pixelateFilter,
-            // this.buldgePinchFilter,
+            this.buldgePinchFilter,
             // this.displacementFilter,
         ]
 

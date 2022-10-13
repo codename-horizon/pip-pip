@@ -1,4 +1,4 @@
-import { PipShip, createShipStats } from "../logic/ship"
+import { PipShip, createShipStats, createRange } from "../logic/ship"
 
 export type ShipType = {
     id: string,
@@ -26,11 +26,7 @@ PIP_SHIPS.push({
         stats = createShipStats({
             movement: {
                 agility: 1,
-                acceleration: {
-                    low: 2,
-                    normal: 2,
-                    high: 3,
-                },
+                acceleration: createRange(3, 1/3),
             },
         })
     },
