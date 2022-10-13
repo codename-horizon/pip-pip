@@ -10,6 +10,14 @@ export type PipMapType = {
 
 export const PIP_MAPS: PipMapType[] = []
 
+import PORTAL_MAP from "./portal.map.json"
+PIP_MAPS.push({
+    id: "portal",
+    name: "Portal",
+    texture: "default",
+    createMap: () => new JSONPipGameMap("portal", PORTAL_MAP),
+})
+
 import TEST_MAP from "./test.map.json"
 PIP_MAPS.push({
     id: "test",

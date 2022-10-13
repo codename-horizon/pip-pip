@@ -9,7 +9,7 @@ import { client } from "./client"
 import { CRTFilter, GlitchFilter, PixelateFilter, BulgePinchFilter } from 'pixi-filters'
 import { DisplacementFilter } from "@pixi/filter-displacement"
 import { Point } from "pixi.js"
-import { TILE_SIZE } from "@pip-pip/game/src/logic/constants"
+import { SHIP_DAIMETER, TILE_SIZE } from "@pip-pip/game/src/logic/constants"
 import { PointPhysicsRectWall } from "@pip-pip/core/src/physics"
 
 const SMOOTHING = {
@@ -21,7 +21,7 @@ const SMOOTHING = {
 }
 
 export const STAR_BG = {
-    COUNT: 1000,
+    COUNT: 200,
     MIN_Z: 5,
     MAX_Z: 10,
     MAX_SCALE: 1,
@@ -100,7 +100,8 @@ export class PlayerGraphic {
         this.shipSprite.anchor.set(0.5)
         this.shipSprite.position.set(0)
         this.shipSprite.rotation = Math.PI / 2
-        this.shipSprite.scale.set(2)
+        this.shipSprite.width = SHIP_DAIMETER
+        this.shipSprite.height = SHIP_DAIMETER
         this.shipContainer.addChild(this.shipSprite)
     }
 }

@@ -82,6 +82,8 @@ export class PointPhysicsRectWall {
     }
 }
 
+export const POINT_PHYSICS_MIN_DIST = 0.0001
+
 export class PointPhysicsObject{
     id = generateId()
     
@@ -131,6 +133,7 @@ export class PointPhysicsObject{
 export type PointPhysicsWorldOptions = {
     baseTps: number,
     logFrequency: number,
+    maxVelocity: number,
 }
 
 export class PointPhysicsWorld{
@@ -149,6 +152,7 @@ export class PointPhysicsWorld{
         this.options = {
             baseTps: 20,
             logFrequency: 10000,
+            maxVelocity: 500,
             ...options,
         }
     }
@@ -223,7 +227,7 @@ export class PointPhysicsWorld{
 
                 const dx = (a.position.x - b.position.x)
                 const dy = (a.position.y - b.position.y)
-                const dist = Math.sqrt(dx * dx + dy * dy)
+                const dist = Math.max(POINT_PHYSICS_MIN_DIST, Math.sqrt(dx * dx + dy * dy))
 
                 const diff = ((a.radius + b.radius) - dist) / dist
                 const s1 = (1 / a.mass) / ((1 / a.mass) + (1 / b.mass))
@@ -251,73 +255,73 @@ export class PointPhysicsWorld{
         const collidableRectWalls = Object.values(this.rectWalls)
         for(const object of collidableObjects){
             for(const rectWall of collidableRectWalls){
-                const dx = rectWall.center.x - object.position.x
-                const dy = rectWall.center.y - object.position.y
+                const dx = object.position.x - rectWall.center.x
+                const dy = object.position.y - rectWall.center.y
 
                 const outerCollidingX = Math.abs(dx) < object.radius + rectWall.width / 2
                 const outerCollidingY = Math.abs(dy) < object.radius + rectWall.height / 2
+                const outerColliding = outerCollidingX && outerCollidingY
+
                 const innerCollidingX = Math.abs(dx) < object.radius
                 const innerCollidingY = Math.abs(dy) < object.radius
 
-                const R = 0.5
-                if(outerCollidingX && outerCollidingY){
-                    if(innerCollidingX || innerCollidingY){
-                        // Colliding with flat size
-                        if(innerCollidingY){
-                            object.position.qx = rectWall.center.x - Math.sign(dx) * (rectWall.width / 2 + object.radius)
-                            object.velocity.qx *= -R
+                const objectInsideRect = 
+                    object.position.x > rectWall.center.x - rectWall.width / 2 &&
+                    object.position.x < rectWall.center.x + rectWall.width / 2 &&
+                    object.position.y > rectWall.center.y - rectWall.height / 2 &&
+                    object.position.y < rectWall.center.y + rectWall.height / 2
+
+                let referencePointX = rectWall.center.x
+                let referencePointY = rectWall.center.y
+                let referencePointRadius = Math.sqrt(rectWall.width * rectWall.width + rectWall.height * rectWall.height) / 2
+
+                if(outerColliding && !objectInsideRect){
+                    referencePointRadius = 0
+                    referencePointX = Math.max(rectWall.center.x - rectWall.width / 2, Math.min(rectWall.center.x + rectWall.width / 2, object.position.x))
+                    referencePointY = Math.max(rectWall.center.y - rectWall.height / 2, Math.min(rectWall.center.y + rectWall.height / 2, object.position.y))
+                }
+
+                if(outerColliding){
+                    const rdx = referencePointX - object.position.x
+                    const rdy = referencePointY - object.position.y
+                    const dist = Math.max(POINT_PHYSICS_MIN_DIST, Math.sqrt(rdx * rdx + rdy * rdy))
+                    const diff = ((object.radius + referencePointRadius) - dist) / dist
+                    const vx = rdx * diff * -1
+                    const vy = rdy * diff * -1
+
+                    if(!objectInsideRect){
+                        const px = rectWall.center.x + Math.sign(dx) * (rectWall.width / 2 + object.radius)
+                        const py = rectWall.center.y + Math.sign(dy) * (rectWall.height / 2 + object.radius)
+                        if(innerCollidingX){
+                            object.position.qy = py
+                        } else if (innerCollidingY){
+                            object.position.qx = px
+                        } else if(dist < object.radius){
+                            // Colliding with corner
+                            const angle = Math.atan2(rdy, rdx) + Math.PI
+                            object.position.qx = referencePointX + Math.cos(angle) * object.radius
+                            object.position.qy = referencePointY + Math.sin(angle) * object.radius
                         } else{
-                            object.position.qy = rectWall.center.y - Math.sign(dy) * (rectWall.height / 2 + object.radius)
-                            object.velocity.qy *= -R
-                        }
-                    } else{
-                        // Colliding with corner
-                        const cornerX = rectWall.center.x - Math.sign(dx) * rectWall.width / 2
-                        const cornerY = rectWall.center.y - Math.sign(dy) * rectWall.width / 2
-                        const cdx = cornerX - object.position.x
-                        const cdy = cornerY - object.position.y
-                        const dist = Math.sqrt(cdx * cdx + cdy * cdx)
-
-                        if(dist < object.radius){
-                            const vel = Math.sqrt(
-                                object.velocity.x * 
-                                object.velocity.x +
-                                object.velocity.y * 
-                                object.velocity.y
-                            )
-                            const cornerAngle = normalizeToPositiveRadians(Math.atan2(Math.sign(dy), Math.sign(dx)) + Math.PI)
-                            const minAngle = cornerAngle - Math.PI / 4
-                            const maxAngle = cornerAngle + Math.PI / 4
-                            const angle = Math.max(minAngle, Math.min(maxAngle, 
-                                normalizeToPositiveRadians(Math.atan2(cdy, cdx) + Math.PI)
-                            ))
-
-                            console.log({
-                                cornerAngle: radiansToDegree(cornerAngle).toFixed(2),
-                                minAngle: radiansToDegree(minAngle).toFixed(2),
-                                maxAngle: radiansToDegree(maxAngle).toFixed(2),
-                                angle: radiansToDegree(angle).toFixed(2),
-                            })
-                            const velEntryAngle = Math.atan2(object.velocity.y, object.velocity.y) + Math.PI
-                            const angleDiff = radianDifference(angle, velEntryAngle)
-                            const velExitAngle = angle - radianDifference(angle, velEntryAngle)
-
-                            const diff = (object.radius - dist) / dist
-    
-                            object.position.qx = cornerX + Math.cos(angle) * object.radius
-                            object.position.qy = cornerY + Math.sin(angle) * object.radius
-                            // object.velocity.qx = Math.cos(velExitAngle) * vel
-                            // object.velocity.qy = Math.cos(velExitAngle) * vel
-                            // object.velocity.qx -= cdx * diff * R
-                            // object.velocity.qy -= cdx * diff * R
+                            object.position.qx = px
+                            object.position.qy = py
                         }
                     }
+
+                    object.velocity.qx += vx
+                    object.velocity.qy += vy
                 }
             }
         }
 
         // Apply velocity to position
         for(const object of objects){
+            // Limit velocity
+            const vel = Math.min(this.options.maxVelocity, Math.sqrt(object.velocity.qx * object.velocity.qx + object.velocity.qy * object.velocity.qy))
+            const angle = Math.atan2(object.velocity.qy, object.velocity.qx)
+            object.velocity.qx = Math.cos(angle) * vel
+            object.velocity.qy = Math.sin(angle) * vel
+
+            // Apply velocity
             object.position.qx += object.velocity.qx * deltaTime
             object.position.qy += object.velocity.qy * deltaTime
         }

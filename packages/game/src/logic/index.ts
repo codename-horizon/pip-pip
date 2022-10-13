@@ -220,14 +220,48 @@ export class PipPipGame{
 
         for(const player of Object.values(this.players)){
 
-            const mag = Math.max(0, Math.min(1, player.inputs.movementAmount))
-            if(mag > 0){
-                player.ship.physics.velocity.x += Math.cos(player.inputs.movementAngle) * player.ship.stats.movement.acceleration.normal
-                player.ship.physics.velocity.y += Math.sin(player.inputs.movementAngle) * player.ship.stats.movement.acceleration.normal
+            // accelerate players
+            const vel = Math.sqrt(
+                player.ship.physics.velocity.x * player.ship.physics.velocity.x +
+                player.ship.physics.velocity.y * player.ship.physics.velocity.y
+            )
+            const playerMovementInput = Math.max(0, Math.min(1, player.inputs.movementAmount)) 
+            const playerAccelerationInput = player.ship.stats.movement.acceleration.normal * playerMovementInput
+            const playerSpeedLimitTip = Math.max(0, (vel + playerAccelerationInput) - player.ship.stats.movement.speed.normal / (1 - player.ship.physics.airResistance))
+            const playerCappedAccelerationInput = playerAccelerationInput - playerSpeedLimitTip
+            
+            if(playerCappedAccelerationInput > 0){
+                const angleDiff = radianDifference(player.inputs.movementAngle, player.inputs.aimRotation)
+                const agilityModifier = Math.pow(player.ship.stats.movement.agility + (1 - Math.abs(angleDiff) / Math.PI) * (1 - player.ship.stats.movement.agility), 2)
+                const agilityAcceleration = playerCappedAccelerationInput * agilityModifier
+                player.ship.physics.velocity.x += Math.cos(player.inputs.movementAngle) * agilityAcceleration
+                player.ship.physics.velocity.y += Math.sin(player.inputs.movementAngle) * agilityAcceleration
             }
         }
-        
+
+        // Run physics
         this.physics.update(this.deltaMs)
+        
+        // Enforce map bounds
+        const R = -0.5
+        for(const player of Object.values(this.players)){
+            if(player.ship.physics.position.x < this.map.bounds.min.x){
+                player.ship.physics.position.x = this.map.bounds.min.x
+                player.ship.physics.velocity.x *= R
+            }
+            if(player.ship.physics.position.y < this.map.bounds.min.y){
+                player.ship.physics.position.y = this.map.bounds.min.y
+                player.ship.physics.velocity.y *= R
+            }
+            if(player.ship.physics.position.x > this.map.bounds.max.x){
+                player.ship.physics.position.x = this.map.bounds.max.x
+                player.ship.physics.velocity.x *= R
+            }
+            if(player.ship.physics.position.y > this.map.bounds.max.y){
+                player.ship.physics.position.y = this.map.bounds.max.y
+                player.ship.physics.velocity.y *= R
+            }
+        }
 
         for(const player of Object.values(this.players)){
             player.trackPositionState()

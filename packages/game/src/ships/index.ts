@@ -23,7 +23,16 @@ PIP_SHIPS.push({
     name: "Hugo",
     texture: "ship_2",
     Ship: class extends PipShip{
-        stats = createShipStats()
+        stats = createShipStats({
+            movement: {
+                agility: 1,
+                acceleration: {
+                    low: 2,
+                    normal: 2,
+                    high: 3,
+                },
+            },
+        })
     },
 })
 
@@ -34,10 +43,11 @@ PIP_SHIPS.push({
     Ship: class extends PipShip{
         stats = createShipStats({
             movement: {
+                agility: 0.2,
                 acceleration: {
-                    low: 4,
-                    normal: 6,
-                    high: 8,
+                    low: 6,
+                    normal: 8,
+                    high: 10,
                 },
             },
         })

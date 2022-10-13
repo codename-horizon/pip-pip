@@ -3,6 +3,7 @@ import { generateId } from "@pip-pip/core/src/lib/utils"
 import { radianDifference } from "@pip-pip/core/src/math"
 import { PointPhysicsObject } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
+import { SHIP_DAIMETER } from "./constants"
 import { PipPlayer } from "./player"
 import { decrease } from "./utils"
 
@@ -19,6 +20,7 @@ export type ShipStats = {
     },
     movement: {
         acceleration: StatRange,
+        speed: StatRange,
         agility: number,
     },
     weapon: {
@@ -72,6 +74,11 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
             low: 3,
             normal: 4,
             high: 6,
+        },
+        speed: {
+            low: 25,
+            normal: 30,
+            high: 35,
         },
         agility: 0.6,
     },
@@ -212,7 +219,8 @@ export class PipShip{
 
     setupPhysics(){
         this.physics.mass = 500
-        this.physics.airResistance = 0.1
+        this.physics.radius = SHIP_DAIMETER / 2
+        this.physics.airResistance = 0.05
         this.physics.collision.enabled = true
         this.physics.collision.channels = []
     }
