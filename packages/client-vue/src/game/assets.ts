@@ -36,7 +36,7 @@ import ship_6_2 from "../assets/ships/ship-6-2.png"
 import ship_6_3 from "../assets/ships/ship-6-3.png"
 import ship_6 from "../assets/ships/ship-6.png"
 
-assetLoader.addBundle("ships", {
+export const shipAssets = {
     ship_1_1,
     ship_1_2,
     ship_1_3,
@@ -64,10 +64,17 @@ assetLoader.addBundle("ships", {
     ship_6_2,
     ship_6_3,
     ship_6,
-})
+}
+
+assetLoader.addBundle("ships", shipAssets)
 
 import star_1 from "../assets/stars/star-1.png"
+import displacement_map from "../assets/displacement-map.png"
+import tile_default from "../assets/tiles/default.png"
 
 assetLoader.addBundle("misc", {
     star_1,
+    displacement_map,
+
+    tile_default,
 })

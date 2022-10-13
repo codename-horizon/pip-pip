@@ -58,6 +58,7 @@ export function getFullGameState(context: ConnectionContext): number[][] {
     messages.push(encode.gamePhase(game))
     messages.push(encode.gameCountdown(game))
     messages.push(encode.gameState(game))
+    messages.push(encode.gameMap(game))
 
     return messages
 }
@@ -108,11 +109,20 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         messages.push(encode.gameState(game))
     }
 
+    // Send game map
+    if(gameEvents.filter("setMap").length > 0){
+        messages.push(encode.gameMap(game))
+    }
+
     
     if(game.phase !== PipPipGamePhase.SETUP){
         const connectionPlayer = game.players[connection.id]
         if(game.phase === PipPipGamePhase.COUNTDOWN){
-            messages.push(encode.gameCountdown(game))
+            // Send game countdown 4 times a second
+            if(game.tickNumber % 4 === 0){
+                messages.push(encode.gameCountdown(game))
+            }
+            // Force place player position
             if(typeof connectionPlayer !== "undefined"){
                 messages.push(encode.playerPositionSync(connectionPlayer))
             }

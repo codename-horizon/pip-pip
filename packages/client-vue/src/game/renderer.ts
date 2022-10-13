@@ -1,29 +1,32 @@
 import { radianDifference } from "@pip-pip/core/src/math"
 import { PipPipGame } from "@pip-pip/game/src/logic"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
-import { PIP_SHIPS } from "@pip-pip/game/src/logic/ship"
 import * as PIXI from "pixi.js"
 import { GameContext } from "."
 import { assetLoader } from "./assets"
 import { client } from "./client"
 
-import { CRTFilter, GlitchFilter, PixelateFilter } from 'pixi-filters'
+import { CRTFilter, GlitchFilter, PixelateFilter, BulgePinchFilter } from 'pixi-filters'
+import { DisplacementFilter } from "@pixi/filter-displacement"
+import { Point } from "pixi.js"
+import { TILE_SIZE } from "@pip-pip/game/src/logic/constants"
+import { PointPhysicsRectWall } from "@pip-pip/core/src/physics"
 
 const SMOOTHING = {
     CAMERA_MOVEMENT: 5,
-    CLIENT_PLAYER_MOVEMENT: 2,
+    CLIENT_PLAYER_MOVEMENT: 1,
     PLAYER_MOVEMENT: 2,
     PLAYER_ROTATION: 1,
     MAX_PLAYER_DISTANCE: 250,
 }
 
 export const STAR_BG = {
-    COUNT: 100,
-    MIN_Z: -5,
-    MAX_Z: 5,
+    COUNT: 1000,
+    MIN_Z: 5,
+    MAX_Z: 10,
     MAX_SCALE: 1,
     MIN_SCALE: 0.25,
-    EFFECT: 0.5,
+    EFFECT: 1,
 }
 
 export class StarGraphic {
@@ -50,6 +53,25 @@ export class StarGraphic {
         const scale = STAR_BG.MIN_SCALE + (1 - this.zRatio) * (STAR_BG.MAX_SCALE - STAR_BG.MIN_SCALE)
         this.sprite.scale.set(scale)
         this.sprite.rotation = Math.random() * Math.PI
+    }
+}
+
+export class RectWallGraphic { 
+    id: string
+    rectWall: PointPhysicsRectWall
+    sprite: PIXI.Sprite
+
+    constructor(rectWall: PointPhysicsRectWall, texture = "tile_default"){
+        this.id = rectWall.id
+        this.rectWall = rectWall
+
+        const spriteTexture = assetLoader.get(texture)
+        this.sprite = new PIXI.Sprite(spriteTexture)
+        this.sprite.anchor.set(0.5)
+        this.sprite.width = TILE_SIZE
+        this.sprite.height = TILE_SIZE
+        this.sprite.position.x = rectWall.center.x
+        this.sprite.position.y = rectWall.center.y
     }
 }
 
@@ -97,12 +119,17 @@ export class PipPipRenderer{
     mapForegroundContainer = new PIXI.Container()
 
     players: Record<string, PlayerGraphic> = {}
+    rectWalls: RectWallGraphic[] = []
 
     container?: HTMLDivElement
 
     crtFilter = new CRTFilter()
     glitchFilter = new GlitchFilter()
     pixelateFilter = new PixelateFilter()
+    buldgePinchFilter = new BulgePinchFilter()
+    
+    displacementSprite: PIXI.Sprite
+    displacementFilter: DisplacementFilter
 
     camera = {
         position: {
@@ -115,7 +142,7 @@ export class PipPipRenderer{
     }
 
     constructor(game: PipPipGame){
-        this.app = new PIXI.Application({ resizeTo: window })
+        this.app = new PIXI.Application({ resizeTo: window, backgroundColor: 0x150E12 })
         this.app.ticker.stop()
 
         this.app.stage.addChild(this.viewportContainer)
@@ -125,14 +152,36 @@ export class PipPipRenderer{
         this.viewportContainer.addChild(this.playersContainer)
         this.viewportContainer.addChild(this.mapForegroundContainer)
 
-        this.crtFilter.enabled = false
-        this.glitchFilter.enabled = false
-        this.pixelateFilter.enabled = false
+        this.crtFilter.enabled = true
+        this.crtFilter.curvature = 100
+        this.glitchFilter.enabled = true
+        this.glitchFilter.resolution = 5
+        this.glitchFilter.offset = 25
+        this.glitchFilter.slices = 10
+        this.glitchFilter.red = new Point(5, 5)
+        this.glitchFilter.blue = new Point(2, 1)
+        this.glitchFilter.green = new Point(-1, -4)
+        this.pixelateFilter.enabled = true
+        this.buldgePinchFilter.enabled = true
+        this.buldgePinchFilter.strength = 0.2
+        this.buldgePinchFilter.center = new Point(
+            0.5, 
+            0.5,
+        )
+
+        const displacementTexture = assetLoader.get("displacement_map")
+        this.displacementSprite = new PIXI.Sprite(displacementTexture)
+        this.displacementSprite.anchor.set(0.5)
+        this.displacementFilter = new DisplacementFilter(this.displacementSprite, 50)
+        this.displacementFilter.enabled = true
+        this.app.stage.addChild(this.displacementSprite)
 
         this.app.stage.filters = [
-            this.crtFilter,
-            this.glitchFilter,
-            this.pixelateFilter,
+            // this.crtFilter,
+            // this.glitchFilter,
+            // this.pixelateFilter,
+            // this.buldgePinchFilter,
+            // this.displacementFilter,
         ]
 
         // initialize stars
@@ -149,8 +198,6 @@ export class PipPipRenderer{
 
             this.starsContainer.addChild(star)
             this.stars.push(graphic)
-
-            console.log(star)
         }
 
         this.game = game
@@ -172,6 +219,26 @@ export class PipPipRenderer{
                 this.playersContainer.removeChild(graphic.container)
             }
         })
+
+        this.updateMapGraphics()
+        this.game.events.on("setMap", () => {
+            this.updateMapGraphics()
+        })
+    }
+
+    updateMapGraphics(){
+        for(const graphic of this.rectWalls){
+            this.mapBackgroundContainer.removeChild(graphic.sprite)
+        }
+
+        this.rectWalls = []
+
+        for(const rectWall of this.game.map.rectWalls){
+            const graphic = new RectWallGraphic(rectWall)
+            this.mapBackgroundContainer.addChild(graphic.sprite)
+
+            this.rectWalls.push(graphic)
+        }
     }
 
     getViewportRadius(){
@@ -228,6 +295,12 @@ export class PipPipRenderer{
         const cameraDeltaY = (this.camera.target.y - this.camera.position.y) * cameraSmoothing
         this.camera.position.x += cameraDeltaX
         this.camera.position.y += cameraDeltaY
+        
+        // Compute the filters
+        this.buldgePinchFilter.radius = this.getViewportRadius()
+        this.displacementSprite.position.x = this.app.view.width / 2
+        this.displacementSprite.position.y = this.app.view.height / 2
+        // set displacement scale
 
         // Center viewport
         this.viewportContainer.position.x = this.app.view.width / 2 - this.camera.position.x
@@ -236,8 +309,8 @@ export class PipPipRenderer{
         // Compute stars
         const starMaxDist = this.getViewportRadius()
         for(const star of this.stars){
-            star.sprite.position.x += cameraDeltaX * star.zRatio * STAR_BG.EFFECT
-            star.sprite.position.y += cameraDeltaY * star.zRatio * STAR_BG.EFFECT
+            star.sprite.position.x += cameraDeltaX * star.zRatio * star.zRatio * STAR_BG.EFFECT
+            star.sprite.position.y += cameraDeltaY * star.zRatio * star.zRatio * STAR_BG.EFFECT
 
             const dx = this.camera.position.x - star.sprite.position.x
             const dy = this.camera.position.y - star.sprite.position.y

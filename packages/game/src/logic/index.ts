@@ -4,8 +4,9 @@ import { radianDifference } from "@pip-pip/core/src/math"
 
 import { Bullet } from "./bullet"
 import { PipPlayer } from "./player"
-import { BaseShip } from "./ship"
-import { GameMap } from "./map"
+import { PipShip } from "./ship"
+import { PipGameMap } from "./map"
+import { PipMapType, PIP_MAPS } from "../maps"
 
 
 export type PipPipGameEventMap = {
@@ -13,8 +14,8 @@ export type PipPipGameEventMap = {
     removePlayer: { player: PipPlayer },
     playerIdleChange: { player: PipPlayer },
 
-    playerSetShip: { player: PipPlayer, ship: BaseShip },
-    playerRemoveShip: { player: PipPlayer, ship: BaseShip },
+    playerSetShip: { player: PipPlayer, ship: PipShip },
+    playerRemoveShip: { player: PipPlayer, ship: PipShip },
 
     setHost: { player: PipPlayer },
     removeHost: undefined,
@@ -22,10 +23,12 @@ export type PipPipGameEventMap = {
     settingsChange: undefined,
     phaseChange: undefined,
 
+    setMap: { mapIndex: number, mapType: PipMapType},
+
     addBullet: { bullet: Bullet },
     removeBullet: { bullet: Bullet },
-    addShip: { ship: BaseShip },
-    removeShip: { ship: BaseShip },
+    addShip: { ship: PipShip },
+    removeShip: { ship: PipShip },
     playerReloadStart: { player: PipPlayer },
     playerReloadEnd: { player: PipPlayer },
 }
@@ -74,7 +77,7 @@ export class PipPipGame{
 
     players: Record<string, PipPlayer> = {}
     bullets: Record<string, Bullet> = {}
-    ships: Record<string, BaseShip> = {}
+    ships: Record<string, PipShip> = {}
 
     host?: PipPlayer
 
@@ -84,7 +87,9 @@ export class PipPipGame{
     phase: PipPipGamePhase = PipPipGamePhase.SETUP
     countdown = 0
 
-    map?: GameMap
+    mapIndex!:number
+    mapType!: PipMapType
+    map!: PipGameMap
 
     settings: PipPipGameSettings = {
         mode: PipPipGameMode.DEATHMATCH,
@@ -100,6 +105,32 @@ export class PipPipGame{
             ...options,
         }
         this.physics.options.baseTps = this.tps
+        this.setMap()
+    }
+
+    setMap(index = 0){
+        index = Math.max(0, Math.min(index, PIP_MAPS.length - 1))
+        if(this.mapIndex === index) return
+        if(typeof this.map !== "undefined"){
+            // remove the current map
+            for(const rectWall of this.map.rectWalls){
+                this.physics.removeRectWall(rectWall)
+            }
+        }
+
+        const mapType = PIP_MAPS[index]
+        const map = mapType.createMap()
+
+        // Add walls
+        for(const rectWall of map.rectWalls){
+            this.physics.addRectWall(rectWall)
+        }
+
+        this.map = map
+        this.mapIndex = index
+        this.mapType = mapType
+
+        this.events.emit("setMap", { mapIndex: index, mapType })
     }
 
     setSettings(settings: Partial<PipPipGameSettings> = {}){

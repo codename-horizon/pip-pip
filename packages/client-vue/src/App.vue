@@ -9,7 +9,7 @@ const uiStore = useUiStore()
 
 onMounted(async () => {
   uiStore.loading = true
-  uiStore.body = "Loading assets..."
+  uiStore.body = "Staring download of assets..."
   try{
     await assetLoader.loadBundle([
       "ui",
@@ -21,6 +21,7 @@ onMounted(async () => {
     loadedAssets.value = true
   } catch(e){
     alert("Could not load assets :(")
+    if(prompt("Try again?")) window.location.reload()
     console.warn(e)
   }
   uiStore.loading = false

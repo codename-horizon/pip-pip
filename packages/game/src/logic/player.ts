@@ -1,7 +1,8 @@
 import { PointPhysicsObject, Vector2 } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
+import { PIP_SHIPS, ShipType } from "../ships"
 
-import { PIP_SHIPS, BaseShip, ShipType } from "./ship"
+import { PipShip } from "./ship"
 
 export type PlayerInputs = {
     movementAngle: number,
@@ -26,12 +27,12 @@ export const MAX_PLAYER_POSITION_STATES = 8
 export class PipPlayer{
     id: string
     
-    ship!: BaseShip
+    ship!: PipShip
     shipIndex!: number
     shipType!: ShipType
 
     game: PipPipGame
-    spectating?: PipPlayer | BaseShip | PointPhysicsObject | Vector2
+    spectating?: PipPlayer | PipShip | PointPhysicsObject | Vector2
 
     name = "Pilot" + Math.floor(Math.random() * 1000)
     idle = false
@@ -90,7 +91,7 @@ export class PipPlayer{
 
     setShip(index?: number){
         if(typeof index === "number"){
-            index = Math.max(0, Math.min(PIP_SHIPS.length, index))
+            index = Math.max(0, Math.min(index, PIP_SHIPS.length - 1))
         } else{
             index = Math.floor(Math.random() * PIP_SHIPS.length)
         }

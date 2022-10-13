@@ -19,3 +19,7 @@ export function degreeDifference(degreeA: number, degreeB: number){
 export function forgivingEqual(a: number, b: number, amount = 5){
     return Math.abs(b - a) < amount 
 }
+
+export function normalizeToPositiveRadians(radians: number){
+    return radians % (Math.PI * 2) + Math.PI * 2
+}

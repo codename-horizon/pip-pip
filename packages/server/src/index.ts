@@ -8,12 +8,12 @@ import { generateId } from "@pip-pip/core/src/lib/utils"
 import { CONNECTION_ID_LENGTH, encode, LOBBY_ID_LENGTH, packetManager } from "@pip-pip/game/src/networking/packets"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import { PipPipGame, PipPipGamePhase } from "@pip-pip/game/src/logic"
-import { BaseShip } from "@pip-pip/game/src/logic/ship"
+import { PipShip } from "@pip-pip/game/src/logic/ship"
 import { Connection } from "@pip-pip/core/src/networking/connection"
 import { sendPacketToConnection } from "./connection-out"
 import { processLobbyPackets } from "./connection-in"
 
-import { BASE_MAPS } from "@pip-pip/game/src/maps"
+import { PIP_MAPS } from "@pip-pip/game/src/maps"
 import { PING_REFRESH } from "@pip-pip/game/src/logic/constants"
 
 type GamePacketManagerSerializerMap = ExtractSerializerMap<typeof packetManager>

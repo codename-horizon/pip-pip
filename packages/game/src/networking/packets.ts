@@ -79,6 +79,9 @@ export const packetManager = new PacketManager({
     gameCountdown: new Packet({
         countdown: $uint8,
     }),
+    gameMap: new Packet({
+        mapIndex: $uint8,
+    }),
 })
 
 export const encode = {
@@ -94,6 +97,9 @@ export const encode = {
     }),
     gameCountdown: (game: PipPipGame) => packetManager.serializers.gameCountdown.encode({
         countdown: game.countdown,
+    }),
+    gameMap: (game: PipPipGame) => packetManager.serializers.gameMap.encode({
+        mapIndex: game.mapIndex,
     }),
     addPlayer: (player: PipPlayer) => packetManager.serializers.addPlayer.encode({
         playerId: player.id,

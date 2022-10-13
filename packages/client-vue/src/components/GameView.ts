@@ -1,4 +1,4 @@
-import { defineComponent, onMounted, onUnmounted, ref } from "vue"
+import { defineComponent, onMounted, onUnmounted, ref, render } from "vue"
 
 import { KeyboardListener } from "@pip-pip/core/src/client/keyboard"
 import { MouseListener } from "@pip-pip/core/src/client/mouse"
@@ -12,7 +12,7 @@ import { PipPipRenderer } from "../game/renderer"
 import GameButton from "./GameButton.vue"
 import { getUIContext, processInputs, UIContext } from "../game/ui"
 import { getClientPlayer } from "../game"
-import { PIP_SHIPS } from "@pip-pip/game/src/logic/ship"
+import { PIP_SHIPS } from "@pip-pip/game/src/ships"
 
 export default defineComponent({
     inheritAttrs: false,
@@ -25,8 +25,6 @@ export default defineComponent({
         
         const game = new PipPipGame()
         const renderer = new PipPipRenderer(game)
-
-        console.log(game)
         
         const gameEvents = new EventCollector(game.events)
         const keyboard = new KeyboardListener()
@@ -75,6 +73,16 @@ export default defineComponent({
 
                 // Update UI
                 uiContext.value = getUIContext(context)
+
+                // Update document title
+                const updatePerf = updateTick.getPerformance()
+                const renderPerf = renderTick.getPerformance()
+                const title = [
+                    updatePerf.averageDeltaTime.toFixed(2),
+                    renderPerf.averageDeltaTime.toFixed(2),
+                    uiContext.value.clientPlayer?.ping.toFixed(2),
+                ]
+                window.document.title = title.join(" ")
             })
 
             renderTick.startTick()

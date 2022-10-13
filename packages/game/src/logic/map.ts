@@ -13,7 +13,7 @@ export class PointRadius{
     }
 }
 
-export class GameMap{
+export class PipGameMap{
     id: string
     rectWalls: PointPhysicsRectWall[] = []
     checkpoints: PointRadius[] = []
@@ -30,7 +30,7 @@ export type JSONMapSource = {
     wallSegments: number[][],
 }
 
-export class JSONGameMap extends GameMap{
+export class JSONPipGameMap extends PipGameMap{
     source: JSONMapSource
     constructor(id: string, source: JSONMapSource){
         super(id)

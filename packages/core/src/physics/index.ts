@@ -1,4 +1,5 @@
 import { generateId } from "../lib/utils"
+import { normalizeToPositiveRadians, radianDifference, radiansToDegree } from "../math"
 
 export class Vector2{
     _x = 0
@@ -196,10 +197,18 @@ export class PointPhysicsWorld{
         const baseMs = 1000 / this.options.baseTps
         const deltaTime =  (Math.max(1, deltaMs) / baseMs) * this.timeScale
         const objects = Object.values(this.objects)
-        const collidable = Object.values(this.objects).filter(object => object.collision.enabled === true)
+        const collidableObjects = Object.values(this.objects).filter(object => object.collision.enabled === true)
 
-        for(const a of collidable){
-            for(const b of collidable){
+        // Apply air resistance
+        for(const object of objects){
+            const airResistance = Math.pow(1 - object.airResistance, deltaTime)
+
+            object.velocity.qx *= airResistance
+            object.velocity.qy *= airResistance
+        }
+
+        for(const a of collidableObjects){
+            for(const b of collidableObjects){
                 if(a.id === b.id) continue
                 if(!a.collision.enabled) continue
                 if(!b.collision.enabled) continue
@@ -238,15 +247,79 @@ export class PointPhysicsWorld{
             }
         }
 
-        
+        // Collide with walls
+        const collidableRectWalls = Object.values(this.rectWalls)
+        for(const object of collidableObjects){
+            for(const rectWall of collidableRectWalls){
+                const dx = rectWall.center.x - object.position.x
+                const dy = rectWall.center.y - object.position.y
+
+                const outerCollidingX = Math.abs(dx) < object.radius + rectWall.width / 2
+                const outerCollidingY = Math.abs(dy) < object.radius + rectWall.height / 2
+                const innerCollidingX = Math.abs(dx) < object.radius
+                const innerCollidingY = Math.abs(dy) < object.radius
+
+                const R = 0.5
+                if(outerCollidingX && outerCollidingY){
+                    if(innerCollidingX || innerCollidingY){
+                        // Colliding with flat size
+                        if(innerCollidingY){
+                            object.position.qx = rectWall.center.x - Math.sign(dx) * (rectWall.width / 2 + object.radius)
+                            object.velocity.qx *= -R
+                        } else{
+                            object.position.qy = rectWall.center.y - Math.sign(dy) * (rectWall.height / 2 + object.radius)
+                            object.velocity.qy *= -R
+                        }
+                    } else{
+                        // Colliding with corner
+                        const cornerX = rectWall.center.x - Math.sign(dx) * rectWall.width / 2
+                        const cornerY = rectWall.center.y - Math.sign(dy) * rectWall.width / 2
+                        const cdx = cornerX - object.position.x
+                        const cdy = cornerY - object.position.y
+                        const dist = Math.sqrt(cdx * cdx + cdy * cdx)
+
+                        if(dist < object.radius){
+                            const vel = Math.sqrt(
+                                object.velocity.x * 
+                                object.velocity.x +
+                                object.velocity.y * 
+                                object.velocity.y
+                            )
+                            const cornerAngle = normalizeToPositiveRadians(Math.atan2(Math.sign(dy), Math.sign(dx)) + Math.PI)
+                            const minAngle = cornerAngle - Math.PI / 4
+                            const maxAngle = cornerAngle + Math.PI / 4
+                            const angle = Math.max(minAngle, Math.min(maxAngle, 
+                                normalizeToPositiveRadians(Math.atan2(cdy, cdx) + Math.PI)
+                            ))
+
+                            console.log({
+                                cornerAngle: radiansToDegree(cornerAngle).toFixed(2),
+                                minAngle: radiansToDegree(minAngle).toFixed(2),
+                                maxAngle: radiansToDegree(maxAngle).toFixed(2),
+                                angle: radiansToDegree(angle).toFixed(2),
+                            })
+                            const velEntryAngle = Math.atan2(object.velocity.y, object.velocity.y) + Math.PI
+                            const angleDiff = radianDifference(angle, velEntryAngle)
+                            const velExitAngle = angle - radianDifference(angle, velEntryAngle)
+
+                            const diff = (object.radius - dist) / dist
+    
+                            object.position.qx = cornerX + Math.cos(angle) * object.radius
+                            object.position.qy = cornerY + Math.sin(angle) * object.radius
+                            // object.velocity.qx = Math.cos(velExitAngle) * vel
+                            // object.velocity.qy = Math.cos(velExitAngle) * vel
+                            // object.velocity.qx -= cdx * diff * R
+                            // object.velocity.qy -= cdx * diff * R
+                        }
+                    }
+                }
+            }
+        }
+
+        // Apply velocity to position
         for(const object of objects){
-            const airResistance = Math.pow(1 - object.airResistance, deltaTime)
-
-            object.velocity.qx *= airResistance
-            object.velocity.qy *= airResistance
-
-            object.position.qx += object.velocity.x * deltaTime
-            object.position.qy += object.velocity.y * deltaTime
+            object.position.qx += object.velocity.qx * deltaTime
+            object.position.qy += object.velocity.qy * deltaTime
         }
 
         for(const object of objects){

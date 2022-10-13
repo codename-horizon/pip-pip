@@ -49,7 +49,6 @@ export const processPackets = (context: GameContext) => {
         for(const { playerId, ping } of packets.playerPing || []){
             const player = game.players[playerId]
             if(typeof player !== "undefined") player.ping = ping
-            if(player.id === client.connectionId) window.document.title = player.ping.toFixed(2)
         }
 
         // Set player ship
@@ -70,6 +69,11 @@ export const processPackets = (context: GameContext) => {
         //  Set game countdown
         for(const { countdown } of packets.gameCountdown || []){
             game.countdown = countdown
+        }
+
+        //  Set game map
+        for(const { mapIndex } of packets.gameMap || []){
+            game.setMap(mapIndex)
         }
 
         //  Set force player positions

@@ -1,7 +1,27 @@
-import { JSONGameMap } from "../logic/map"
+import { PipGameMap, JSONPipGameMap } from "../logic/map"
 
-import SOURCE_MAP_TEST from "./test.map.json"
 
-export const BASE_MAPS = {
-    "test": () => new JSONGameMap(SOURCE_MAP_TEST),
+export type PipMapType = {
+    id: string,
+    name: string,
+    texture: string,
+    createMap: () => PipGameMap,
 }
+
+export const PIP_MAPS: PipMapType[] = []
+
+import TEST_MAP from "./test.map.json"
+PIP_MAPS.push({
+    id: "test",
+    name: "Test",
+    texture: "default",
+    createMap: () => new JSONPipGameMap("test", TEST_MAP),
+})
+
+import GALAXY_MAP from "./galaxy.map.json"
+PIP_MAPS.push({
+    id: "galaxy",
+    name: "Galaxy",
+    texture: "default",
+    createMap: () => new JSONPipGameMap("galaxy", GALAXY_MAP),
+})
