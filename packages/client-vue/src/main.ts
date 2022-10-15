@@ -8,6 +8,7 @@ import App from "./App.vue"
 import { router } from "./router"
 
 import "./styles/global.sass"
+import { test } from "./game"
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -16,3 +17,5 @@ app.use(pinia)
 app.use(router)
 
 app.mount("#app")
+
+console.log(test)

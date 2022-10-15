@@ -2,23 +2,6 @@ import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { GameContext, getClientPlayer } from "."
 import { client } from "./client"
 
-export function getUIContext(context: GameContext) {
-    return {
-        isPhaseSetup: context.game.phase === PipPipGamePhase.SETUP,
-        isPhaseCountdown: context.game.phase === PipPipGamePhase.COUNTDOWN,
-        isPhaseMatch: context.game.phase === PipPipGamePhase.MATCH,
-        isPhaseResults: context.game.phase === PipPipGamePhase.RESULTS,
-
-        gameCountdownMs: (context.game.countdown / context.game.tps) * 1000,
-
-        isHost: context.game.host?.id === client.connectionId,
-
-        clientPlayer: getClientPlayer(context.game),
-    }
-}
-
-export type UIContext = ReturnType<typeof getUIContext>
-
 export function processInputs(context: GameContext){
     const { mouse, keyboard, game } = context
     const clientPlayer = getClientPlayer(game)

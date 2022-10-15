@@ -1,5 +1,5 @@
 import { $bool, $float16, $float64, $string, $uint16, $uint32, $uint8, $varstring } from "@pip-pip/core/src/networking/packets/serializer"
-import { PacketManager } from "@pip-pip/core/src/networking/packets/manager"
+import { PacketManager, GetPacketSerializerMap, ExtractSerializerMap } from "@pip-pip/core/src/networking/packets/manager"
 import { Packet } from "@pip-pip/core/src/networking/packets/packet"
 
 import { Bullet } from "../logic/bullet"
@@ -83,6 +83,9 @@ export const packetManager = new PacketManager({
         mapIndex: $uint8,
     }),
 })
+
+export type PipPacketManager = typeof packetManager
+export type PipPacketSerializerMap = ExtractSerializerMap<PipPacketManager>
 
 export const encode = {
     gameState: (game: PipPipGame) => packetManager.serializers.gameState.encode({

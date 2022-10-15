@@ -9,17 +9,23 @@ import { PipPipGame, PipPipGamePhase } from "@pip-pip/game/src/logic"
 
 import { processPackets, clientEvents, sendGamePhase, sendPackets } from "../game/client"
 import { PipPipRenderer } from "../game/renderer"
-import GameButton from "./GameButton.vue"
-import { getUIContext, processInputs, UIContext } from "../game/ui"
+import { processInputs } from "../game/ui"
 import { getClientPlayer } from "../game"
 import { PIP_SHIPS } from "@pip-pip/game/src/ships"
+import { useGameStore } from "../game/store"
+
+import GameOverlaySetup from "./GameOverlaySetup.vue"
+import GameButton from "./GameButton.vue"
 
 export default defineComponent({
     inheritAttrs: false,
     components: {
         GameButton,
+        GameOverlaySetup,
     },
     setup(props, ctx) {
+        const gameStore = useGameStore()
+
         const debugJson = ref({})
         const container = ref<HTMLDivElement>()
         
@@ -40,8 +46,6 @@ export default defineComponent({
             mouse,
             keyboard,
         }
-
-        const uiContext = ref<UIContext>(getUIContext(context))
 
         onMounted(() => {
             keyboard.setTarget(document.body)
@@ -72,7 +76,7 @@ export default defineComponent({
                 clientEvents.flush()
 
                 // Update UI
-                uiContext.value = getUIContext(context)
+                gameStore.sync(context)
 
                 // Update document title
                 const updatePerf = updateTick.getPerformance()
@@ -80,7 +84,7 @@ export default defineComponent({
                 const title = [
                     updatePerf.averageDeltaTime.toFixed(2),
                     renderPerf.averageDeltaTime.toFixed(2),
-                    uiContext.value.clientPlayer?.ping.toFixed(2),
+                    gameStore.ping.toFixed(2),
                 ]
                 window.document.title = title.join(" ")
             })
@@ -107,7 +111,7 @@ export default defineComponent({
         }
 
         return { 
-            uiContext, 
+            gameStore,
             container, 
             debugJson,
             

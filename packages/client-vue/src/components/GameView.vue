@@ -1,17 +1,9 @@
 <script src="./GameView" lang="ts"></script>
 
 <template>
-  <div id="game-setup" class="overlay" v-if="uiContext.isPhaseSetup">
-    hello whats up??
-    <GameButton v-if="uiContext.isHost" @click="startGame">Start Game</GameButton>
-
-    <div v-if="typeof uiContext.clientPlayer !== 'undefined'">
-      <h1>Current ship: {{ uiContext.clientPlayer.shipType.name }}</h1>
-    </div>
-    <GameButton v-for="(shipType, index) of PIP_SHIPS" @click="() => setShip(index)">{{ shipType.name }}</GameButton>
-  </div>
-  <div id="game-countdown" class="overlay" v-if="uiContext.isPhaseCountdown">
-    Starting in {{ Number(uiContext.gameCountdownMs / 1000).toFixed(2) }} seconds
+  <GameOverlaySetup></GameOverlaySetup>
+  <div id="game-countdown" class="overlay" v-if="gameStore.isPhaseCountdown">
+    Starting in {{ Number(gameStore.countdownMs / 1000).toFixed(2) }} seconds
   </div>
   <div id="game-container" ref="container"></div>
 </template>

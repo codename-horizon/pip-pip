@@ -2913,7 +2913,7 @@ vue-router@4:
   dependencies:
     "@vue/devtools-api" "^6.1.4"
 
-vue-tsc@^0.40.4:
+vue-tsc@^0.40.13, vue-tsc@^0.40.4:
   version "0.40.13"
   resolved "https://registry.yarnpkg.com/vue-tsc/-/vue-tsc-0.40.13.tgz#0a193014f7cadb47459cf0809ce3953b74a1348c"
   integrity sha512-xzuN3g5PnKfJcNrLv4+mAjteMd5wLm5fRhW0034OfNJZY4WhB07vhngea/XeGn7wNYt16r7syonzvW/54dcNiA==
@@ -2921,7 +2921,7 @@ vue-tsc@^0.40.4:
     "@volar/vue-language-core" "0.40.13"
     "@volar/vue-typescript" "0.40.13"
 
-vue@^3.2.37:
+vue@^3.2.37, vue@^3.2.41:
   version "3.2.40"
   resolved "https://registry.yarnpkg.com/vue/-/vue-3.2.40.tgz#23f387f6f9b3a0767938db6751e4fb5900f0ee34"
   integrity sha512-1mGHulzUbl2Nk3pfvI5aXYYyJUs1nm4kyvuz38u4xlQkLUn1i2R7nDbI4TufECmY8v1qNBHYy62bCaM+3cHP2A==

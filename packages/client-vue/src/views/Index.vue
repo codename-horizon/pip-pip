@@ -2,12 +2,10 @@
 import GameButton from "../components/GameButton.vue"
 
 import { onMounted } from "vue"
-import { useGameStore } from "../game/store"
 import { useUiStore } from "../store/ui";
 import { client } from "../game/client";
 import { hostGame } from "../game"
 
-const gameStore = useGameStore()
 const uiStore = useUiStore()
 
 const notYetImplemented = () => {
