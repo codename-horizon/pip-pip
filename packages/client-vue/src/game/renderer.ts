@@ -2,7 +2,7 @@ import { radianDifference } from "@pip-pip/core/src/math"
 import { PipPipGame } from "@pip-pip/game/src/logic"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import * as PIXI from "pixi.js"
-import { gameContext, GameContext } from "."
+import { GameContext } from "."
 import { assetLoader } from "./assets"
 
 import { CRTFilter, GlitchFilter, PixelateFilter, BulgePinchFilter } from 'pixi-filters'

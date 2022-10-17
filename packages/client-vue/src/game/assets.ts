@@ -1,6 +1,5 @@
 import * as PIXI_Assets from "@pixi/assets"
 
-
 export const assetLoader = PIXI_Assets.Assets
 
 import logo from "../assets/logo.png"

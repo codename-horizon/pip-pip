@@ -1,15 +1,14 @@
 import { useGameStore } from "./store"
 import { useUiStore } from "../store/ui"
 import { router } from "../router"
-import { LobbyJSON } from "@pip-pip/core/src/networking/api/types"
-import { PipPipGame, PipPipGameEventMap, PipPipGamePhase } from "@pip-pip/game/src/logic"
+import { PipPipGame, PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { KeyboardListener } from "@pip-pip/core/src/client/keyboard"
 import { MouseListener } from "@pip-pip/core/src/client/mouse"
 import { PipPipRenderer } from "./renderer"
-import { EventCollector, EventEmitter, EventMapOf } from "@pip-pip/core/src/common/events"
+import { EventCollector, EventMapOf } from "@pip-pip/core/src/common/events"
 import { Client } from "@pip-pip/core/src/networking/client"
 
-import { packetManager, PipPacketSerializerMap } from "@pip-pip/game/src/networking/packets"
+import { encode, packetManager, PipPacketSerializerMap } from "@pip-pip/game/src/networking/packets"
 import { Ticker } from "@pip-pip/core/src/common/ticker"
 import { processPackets, sendPackets } from "./client"
 import { processInputs } from "./ui"
@@ -32,8 +31,11 @@ export class GameContext{
 
     initialized = false
 
-    constructor(){
+    store!: ReturnType<typeof useGameStore>
+
+    initialize(){
         this.initializeClient()
+        this.store = useGameStore()
     }
 
     initializeClient(){
@@ -87,7 +89,7 @@ export class GameContext{
             this.clientEvents.flush()
 
             // Update UI
-            useGameStore().sync()
+            this.store.sync()
 
             // Update document title
             const updatePerf = this.updateTick.getPerformance()
@@ -122,15 +124,29 @@ export class GameContext{
 
         this.initialized = true
     }
+
+    getClientPlayer(){
+        if(typeof this.client.connectionId !== "undefined"){
+            if(this.client.connectionId in this.game.players){
+                return this.game.players[this.client.connectionId]
+            }
+        }
+    }
     
+    sendGamePhase(phase: PipPipGamePhase){
+        const code = encode.gamePhase(phase)
+        const buffer = new Uint8Array(code).buffer
+        this.client.send(buffer)
+    }
+
 }
 
-export const gameContext = new GameContext()
+export const GAME_CONTEXT = new GameContext()
 
 export const getClientPlayer = (game: PipPipGame) => {
-    if(typeof gameContext.client.connectionId !== "undefined"){
-        if(gameContext.client.connectionId in game.players){
-            return game.players[gameContext.client.connectionId]
+    if(typeof GAME_CONTEXT.client.connectionId !== "undefined"){
+        if(GAME_CONTEXT.client.connectionId in game.players){
+            return game.players[GAME_CONTEXT.client.connectionId]
         }
     }
 }
@@ -141,9 +157,9 @@ export async function hostGame(){
     uiStore.body = "Loading..."
     try{
         uiStore.body = "Requesting connection..."
-        await gameContext.client.requestConnectionIfNeeded()
+        await GAME_CONTEXT.client.requestConnectionIfNeeded()
         uiStore.body = "Creating lobby..."
-        const lobby = await gameContext.client.createLobby("default")
+        const lobby = await GAME_CONTEXT.client.createLobby("default")
         router.push({
             name: "game",
             params: {

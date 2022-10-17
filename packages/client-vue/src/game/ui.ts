@@ -1,6 +1,4 @@
-import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { GameContext, getClientPlayer } from "."
-import { client } from "./client"
 
 export function processInputs(context: GameContext){
     const { mouse, keyboard, game } = context

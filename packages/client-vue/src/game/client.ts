@@ -1,10 +1,8 @@
-import { EventCollector } from "@pip-pip/core/src/common/events"
 import { forgivingEqual } from "@pip-pip/core/src/math"
-import { Client } from "@pip-pip/core/src/networking/client"
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { PLAYER_POSITION_TOLERANCE } from "@pip-pip/game/src/logic/constants"
-import { encode, packetManager } from "@pip-pip/game/src/networking/packets"
-import { gameContext, GameContext, getClientPlayer } from "."
+import { encode } from "@pip-pip/game/src/networking/packets"
+import { GAME_CONTEXT, GameContext, getClientPlayer } from "."
 
 export const processPackets = (gameContext: GameContext) => {
     const { game } = gameContext
@@ -159,5 +157,5 @@ export const sendPackets = (gameContext: GameContext) => {
 export function sendGamePhase(phase: PipPipGamePhase){
     const code = encode.gamePhase(phase)
     const buffer = new Uint8Array(code).buffer
-    gameContext.client.send(buffer)
+    GAME_CONTEXT.client.send(buffer)
 }

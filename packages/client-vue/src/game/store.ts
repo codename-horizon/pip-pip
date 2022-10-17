@@ -1,15 +1,11 @@
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
-import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import { PIP_SHIPS } from "@pip-pip/game/src/ships"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
-import { gameContext, GameContext, getClientPlayer } from "."
-
-
+import { GAME_CONTEXT, GameContext, getClientPlayer } from "."
 
 export const useGameStore = defineStore("game", () => {
     const loading = ref(false)
-    const ready = ref(false)
     
     const phase = ref(0)
     const countdownMs = ref(0)
@@ -24,14 +20,9 @@ export const useGameStore = defineStore("game", () => {
     const isPhaseMatch = computed(() => phase.value === PipPipGamePhase.MATCH)
     const isPhaseResults = computed(() => phase.value === PipPipGamePhase.RESULTS)
 
-    const isReady = computed(() => ready.value && !loading.value)
-
-    const test = () => {
-        ready.value = !ready.value
-    }
 
     function sync(){
-        const { game } = gameContext
+        const { game } = GAME_CONTEXT
         const gameClientPlayer = getClientPlayer(game)
 
         phase.value = game.phase
@@ -48,7 +39,7 @@ export const useGameStore = defineStore("game", () => {
     }
 
     return {
-        loading, ready,
+        loading,
 
         countdownMs,
 
@@ -62,12 +53,6 @@ export const useGameStore = defineStore("game", () => {
         isPhaseCountdown,
         isPhaseMatch,
         isPhaseResults,
-
-        gameContext,
-
-        isReady,
-
-        test,
 
         sync,
     }
