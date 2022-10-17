@@ -3,7 +3,6 @@ import GameButton from "../components/GameButton.vue"
 
 import { onMounted } from "vue"
 import { useUiStore } from "../store/ui";
-import { client } from "../game/client";
 import { hostGame } from "../game"
 
 const uiStore = useUiStore()

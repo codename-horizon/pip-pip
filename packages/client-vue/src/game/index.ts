@@ -1,5 +1,4 @@
 import { useGameStore } from "./store"
-import { client, clientEvents } from "./client"
 import { useUiStore } from "../store/ui"
 import { router } from "../router"
 import { LobbyJSON } from "@pip-pip/core/src/networking/api/types"
@@ -12,45 +11,10 @@ import { Client } from "@pip-pip/core/src/networking/client"
 
 import { packetManager, PipPacketSerializerMap } from "@pip-pip/game/src/networking/packets"
 import { Ticker } from "@pip-pip/core/src/common/ticker"
+import { processPackets, sendPackets } from "./client"
+import { processInputs } from "./ui"
 
-export type RendererContext = {
-    game: PipPipGame,
-    gameEvents: EventCollector<PipPipGameEventMap>,
-    keyboard: KeyboardListener,
-    mouse: MouseListener,
-}
-
-export const getClientPlayer = (game: PipPipGame) => {
-    if(typeof client.connectionId !== "undefined"){
-        if(client.connectionId in game.players){
-            return game.players[client.connectionId]
-        }
-    }
-}
-
-export async function hostGame(){
-    const uiStore = useUiStore()
-    uiStore.loading = true
-    uiStore.body = "Loading..."
-    try{
-        uiStore.body = "Requesting connection..."
-        await client.requestConnectionIfNeeded()
-        uiStore.body = "Creating lobby..."
-        const lobby = await client.createLobby("default")
-        router.push({
-            name: "game",
-            params: {
-                id: lobby.lobbyId,
-            },
-        })
-    } catch(e){
-        console.warn(e)
-        alert("Could not host a game!")
-    }
-    uiStore.loading = false
-}
-
-class GameContext{
+export class GameContext{
     game!: PipPipGame
     renderer!: PipPipRenderer
     gameEvents!: EventCollector<EventMapOf<PipPipGame["events"]>>
@@ -63,6 +27,8 @@ class GameContext{
 
     keyboard!: KeyboardListener
     mouse!: MouseListener
+
+    container!: HTMLDivElement
 
     initialized = false
 
@@ -78,10 +44,10 @@ class GameContext{
         })
 
         this.clientEvents?.destroy()
-        this.clientEvents = new EventCollector(client.events)
+        this.clientEvents = new EventCollector(this.client.events)
     }
 
-    mountGameView(){
+    mountGameView(container: HTMLDivElement){
         this.unmountGameView()
         this.game = new PipPipGame()
 
@@ -94,19 +60,60 @@ class GameContext{
 
         this.keyboard = new KeyboardListener()
         this.mouse = new MouseListener()
+        this.keyboard.setTarget(document.body)
+        this.mouse.setTarget(document.body)
+
+        this.renderer.mount(container)
+
+        this.renderTick.on("tick", ({deltaMs, deltaTime}) => {
+            this.renderer.render(this, deltaMs)
+        })
+
+        this.updateTick.on("tick", () => {
+            // Apply messages
+            processPackets(this)
+
+            // Apply inputs
+            processInputs(this)
+
+            // Update local simulation
+            this.game.update()
+
+            // Send packets
+            sendPackets(this)
+
+            // Send updates
+            this.gameEvents.flush()
+            this.clientEvents.flush()
+
+            // Update UI
+            useGameStore().sync()
+
+            // Update document title
+            const updatePerf = this.updateTick.getPerformance()
+            const renderPerf = this.renderTick.getPerformance()
+            const title = [
+                updatePerf.averageDeltaTime.toFixed(2),
+                renderPerf.averageDeltaTime.toFixed(2),
+                // gameStore.ping.toFixed(2),
+            ]
+            window.document.title = title.join(" ")
+        })
+
+        this.renderTick.startTick()
+        this.updateTick.startTick()
     }
 
     unmountGameView(){
+        console.log("unmounted")
         this.game?.destroy()
-    }
-
-    destory(){
-        if(this.initialized) return
-        this.game?.destroy()
-        // this.renderer?.destroy()
         this.gameEvents?.destroy()
         this.renderTick?.destroy()
         this.updateTick?.destroy()
+    }
+
+    destory(){
+        // this.renderer?.destroy()
         this.client?.disconnect()
         this.clientEvents?.destroy()
     }
@@ -116,4 +123,36 @@ class GameContext{
         this.initialized = true
     }
     
+}
+
+export const gameContext = new GameContext()
+
+export const getClientPlayer = (game: PipPipGame) => {
+    if(typeof gameContext.client.connectionId !== "undefined"){
+        if(gameContext.client.connectionId in game.players){
+            return game.players[gameContext.client.connectionId]
+        }
+    }
+}
+
+export async function hostGame(){
+    const uiStore = useUiStore()
+    uiStore.loading = true
+    uiStore.body = "Loading..."
+    try{
+        uiStore.body = "Requesting connection..."
+        await gameContext.client.requestConnectionIfNeeded()
+        uiStore.body = "Creating lobby..."
+        const lobby = await gameContext.client.createLobby("default")
+        router.push({
+            name: "game",
+            params: {
+                id: lobby.lobbyId,
+            },
+        })
+    } catch(e){
+        console.warn(e)
+        alert("Could not host a game!")
+    }
+    uiStore.loading = false
 }

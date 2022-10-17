@@ -4,18 +4,11 @@ import { Client } from "@pip-pip/core/src/networking/client"
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { PLAYER_POSITION_TOLERANCE } from "@pip-pip/game/src/logic/constants"
 import { encode, packetManager } from "@pip-pip/game/src/networking/packets"
-import { GameContext, getClientPlayer } from "."
+import { gameContext, GameContext, getClientPlayer } from "."
 
-export const client = new Client(packetManager, {
-    host: window.location.hostname,
-    port: 3000,
-})
-
-export const clientEvents = new EventCollector(client.events)
-
-export const processPackets = (context: GameContext) => {
-    const { game } = context
-    for(const events of clientEvents.filter("packetMessage")){
+export const processPackets = (gameContext: GameContext) => {
+    const { game } = gameContext
+    for(const events of gameContext.clientEvents.filter("packetMessage")){
         const { packets } = events.packetMessage
 
         // Add player
@@ -81,7 +74,7 @@ export const processPackets = (context: GameContext) => {
             const player = game.players[pos.playerId]
             if(typeof player === "undefined") continue
             
-            if(pos.playerId === client.connectionId){
+            if(pos.playerId === gameContext.client.connectionId){
                 player.ship.physics.position.x = pos.positionX
                 player.ship.physics.position.y = pos.positionY
                 player.ship.physics.velocity.x = pos.velocityX
@@ -98,7 +91,7 @@ export const processPackets = (context: GameContext) => {
             let xOffset = 0
             let yOffset = 0
 
-            if(pos.playerId === client.connectionId){
+            if(pos.playerId === gameContext.client.connectionId){
                 // TODO: Improve server reconciliation
                 const lookbackRaw = player.ping / game.deltaMs
                 const state = player.getLastPositionState(lookbackRaw)
@@ -117,7 +110,7 @@ export const processPackets = (context: GameContext) => {
         }
 
         for(const inputs of packets.playerInputs || []){
-            if(inputs.playerId === client.connectionId) continue
+            if(inputs.playerId === gameContext.client.connectionId) continue
             
             const player = game.players[inputs.playerId]
             if(typeof player === "undefined") continue
@@ -131,8 +124,8 @@ export const processPackets = (context: GameContext) => {
 }
 
 
-export const sendPackets = (context: GameContext) => {
-    const { game, gameEvents } = context
+export const sendPackets = (gameContext: GameContext) => {
+    const { game, gameEvents } = gameContext
 
     const messages: number[][] = []
     const clientPlayer = getClientPlayer(game)
@@ -159,12 +152,12 @@ export const sendPackets = (context: GameContext) => {
         let code: number[] = []
         messages.forEach(mes => code = code.concat(mes))
         const buffer = new Uint8Array(code).buffer
-        client.send(buffer)
+        gameContext.client.send(buffer)
     }
 }
 
 export function sendGamePhase(phase: PipPipGamePhase){
     const code = encode.gamePhase(phase)
     const buffer = new Uint8Array(code).buffer
-    client.send(buffer)
+    gameContext.client.send(buffer)
 }

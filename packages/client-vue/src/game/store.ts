@@ -3,12 +3,11 @@ import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import { PIP_SHIPS } from "@pip-pip/game/src/ships"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
-import { GameContext, getClientPlayer } from "."
+import { gameContext, GameContext, getClientPlayer } from "."
 
 
 
 export const useGameStore = defineStore("game", () => {
-    const gameContext = ref<GameContext>()
     const loading = ref(false)
     const ready = ref(false)
     
@@ -31,9 +30,8 @@ export const useGameStore = defineStore("game", () => {
         ready.value = !ready.value
     }
 
-    function sync(context: GameContext){
-        gameContext.value = context
-        const { game } = context
+    function sync(){
+        const { game } = gameContext
         const gameClientPlayer = getClientPlayer(game)
 
         phase.value = game.phase

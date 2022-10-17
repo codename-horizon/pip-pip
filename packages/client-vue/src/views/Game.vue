@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { client } from '../game/client';
 import { useUiStore } from '../store/ui';
+import { gameContext } from "../game"
 import GameView from '../components/GameView.vue';
 
 const router = useRouter()
@@ -18,9 +18,9 @@ onMounted(async () => {
     uiStore.loading = true
     try{
         uiStore.body = "Connecting..."
-        await client.connect()
+        await gameContext.client.connect()
         uiStore.body = "Joining lobby..."
-        await client.joinLobby(lobbyId.value)
+        await gameContext.client.joinLobby(lobbyId.value)
     } catch(e){
         console.warn(e)
         alert("Could not join lobby.")

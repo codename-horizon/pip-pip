@@ -2,9 +2,8 @@ import { radianDifference } from "@pip-pip/core/src/math"
 import { PipPipGame } from "@pip-pip/game/src/logic"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import * as PIXI from "pixi.js"
-import { GameContext } from "."
+import { gameContext, GameContext } from "."
 import { assetLoader } from "./assets"
-import { client } from "./client"
 
 import { CRTFilter, GlitchFilter, PixelateFilter, BulgePinchFilter } from 'pixi-filters'
 import { DisplacementFilter } from "@pixi/filter-displacement"
@@ -251,7 +250,7 @@ export class PipPipRenderer{
         this.container.appendChild(this.app.view)
     }
 
-    render(context: GameContext, deltaMs: number){
+    render(gameContext: GameContext, deltaMs: number){
         const deltaTime = deltaMs / this.game.deltaMs
         const timeDiff = Date.now() - this.game.lastTick
         const lerp = timeDiff / this.game.deltaMs
@@ -265,7 +264,7 @@ export class PipPipRenderer{
         const playerMovementSmoothing = deltaTime / SMOOTHING.PLAYER_MOVEMENT
         const clientPlayerMovementSmoothing = deltaTime / SMOOTHING.CLIENT_PLAYER_MOVEMENT
         for(const graphic of players){
-            const isClient = graphic.player.id === client.connectionId
+            const isClient = graphic.player.id === gameContext.client.connectionId
             const movementSmoothing = isClient ? clientPlayerMovementSmoothing : playerMovementSmoothing
 
             const tx = graphic.player.ship.physics.position.x + graphic.player.ship.physics.velocity.x * lerp
