@@ -365,7 +365,8 @@ export class PointPhysicsWorld{
                 const diff = ((segWall.radius + object.radius) - dist) / dist
                 
                 if(dist < segWall.radius + object.radius){
-                    const match = points.find(([x, y]) => forgivingEqual(x, pointX, 1) && forgivingEqual(y, pointY, 1))
+                    const tolerance = segWall.radius / 4
+                    const match = points.find(([x, y]) => forgivingEqual(x, pointX, tolerance) && forgivingEqual(y, pointY, tolerance))
                     if(typeof match === "undefined"){
                         points.push([pointX, pointY, dx * diff, dy * diff])
                     }
