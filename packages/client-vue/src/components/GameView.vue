@@ -25,7 +25,7 @@ export default {
 
 <template>
   <GameOverlaySetup></GameOverlaySetup>
-  <div id="game-countdown" class="overlay" v-if="GAME_CONTEXT.store.isPhaseCountdown">
+  <div id="game-countdown" class="overlay" v-if="GAME_CONTEXT.store?.isPhaseCountdown">
     Starting in {{ Number(GAME_CONTEXT.store.countdownMs / 1000).toFixed(2) }} seconds
   </div>
   <div id="game-container" ref="container"></div>

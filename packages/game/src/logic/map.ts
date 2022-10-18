@@ -1,4 +1,4 @@
-import { PointPhysicsRectWall } from "@pip-pip/core/src/physics"
+import { PointPhysicsRectWall, PointPhysicsSegmentWall } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
 import { TILE_SIZE, SPAWN_DIAMETER } from "./constants"
 
@@ -24,11 +24,18 @@ export type PipGameMapBounds = {
     },
 }
 
+export type PipGameTile = {
+    x: number, y: number,
+    texture: string,
+}
+
 export class PipGameMap{
     id: string
     rectWalls: PointPhysicsRectWall[] = []
+    segWalls: PointPhysicsSegmentWall[] = []
     checkpoints: PointRadius[] = []
     spawns: PointRadius[] = []
+    tiles: PipGameTile[] = []
 
     bounds: PipGameMapBounds = {
         min: {
@@ -50,6 +57,7 @@ export type JSONMapSource = {
     wallTiles: number[][],
     spawnTiles: number[][],
     wallSegments: number[][],
+    wallSegmentTiles: number[][],
 }
 
 export class JSONPipGameMap extends PipGameMap{
@@ -80,13 +88,24 @@ export class JSONPipGameMap extends PipGameMap{
         }
 
         for(const [x, y] of this.source.wallTiles){
-            const rectWall = new PointPhysicsRectWall()
-            rectWall.center.x = x * TILE_SIZE
-            rectWall.center.y = y * TILE_SIZE
-            rectWall.width = TILE_SIZE
-            rectWall.height = TILE_SIZE
-            this.rectWalls.push(rectWall)
+            const inSegmentWalls = this.source.wallSegmentTiles.find(t => t[0] === x && t[1] === y)
+            this.tiles.push({
+                x: x * TILE_SIZE,
+                y: y * TILE_SIZE,
+                texture: inSegmentWalls ? "tile_default" : "tile_hidden",
+            })
             compare(x * TILE_SIZE, y * TILE_SIZE)
+        }
+
+        for(const [sx, sy, ex, ey] of this.source.wallSegments){
+            const segWall = new PointPhysicsSegmentWall(undefined, 
+                sx * TILE_SIZE, 
+                sy * TILE_SIZE, 
+                ex * TILE_SIZE, 
+                ey * TILE_SIZE,
+            )
+            segWall.radius = TILE_SIZE / 2
+            this.segWalls.push(segWall)
         }
 
         this.bounds.min.x = minX - TILE_SIZE / 2

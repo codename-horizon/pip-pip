@@ -1,16 +1,9 @@
 import { generateId } from "../lib/utils"
-import { normalizeToPositiveRadians, radianDifference, radiansToDegree } from "../math"
+import { nearestPointFromSegment } from "../math"
 
 export class Vector2{
     _x = 0
     _y = 0
-    // previous
-    // px = 0
-    // py = 0
-    // delta
-    // dx = 0
-    // dy = 0
-    // queue
     _qx = 0
     _qy = 0
 
@@ -22,16 +15,12 @@ export class Vector2{
 
     get x(){ return this._x }
     set x(value: number){
-        // this.px = this._x
         this._x = this._qx = value
-        // this.dx = this._x - this.px
     }
 
     get y(){ return this._y }
     set y(value: number){
-        // this.py = this._y
         this._y = this._qy = value
-        // this.dy = this._y - this.py
     }
 
     get qx(){ return this._qx }
@@ -56,8 +45,6 @@ export class Vector2{
 
     reset(){
         this._x = this._y = 0
-        // this.px = this.py = 0
-        // this.dx = this.dy = 0
     }
 }
 
@@ -78,6 +65,35 @@ export class PointPhysicsRectWall {
     constructor(id?: string){
         if(typeof id === "string"){
             this.id = id
+        }
+    }
+}
+
+export type PointPhysicsSegment = {
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+}
+
+export class PointPhysicsSegmentWall{
+    id = generateId()
+    start: Vector2
+    end: Vector2
+    radius = 25
+    constructor(id?: string, startX?: number, startY?: number, endX?: number, endY?: number){
+        if(typeof id === "string"){
+            this.id = id
+        }
+
+        if(typeof startX === "number" && typeof startY === "number"){
+            this.start = new Vector2(startX, startY)
+            this.end = typeof endX === "number" && typeof endY === "number" ? 
+                new Vector2(endX, endY) : 
+                new Vector2(startX, startY)
+        } else{
+            this.start = new Vector2(0, 0)
+            this.end = new Vector2(0, 0)
         }
     }
 }
@@ -141,6 +157,7 @@ export class PointPhysicsWorld{
 
     objects: Record<string, PointPhysicsObject> = {}
     rectWalls: Record<string, PointPhysicsRectWall> = {}
+    segWalls: Record<string, PointPhysicsSegmentWall> = {}
 
     lastLog = Date.now()
 
@@ -192,6 +209,16 @@ export class PointPhysicsWorld{
     removeRectWall(rectWall: PointPhysicsRectWall){
         if(rectWall.id in this.rectWalls){
             delete this.rectWalls[rectWall.id]
+        }
+    }
+
+    addSegWall(segWall: PointPhysicsSegmentWall){
+        this.segWalls[segWall.id] = segWall
+    }
+
+    removeSegWall(segWall: PointPhysicsSegmentWall){
+        if(segWall.id in this.segWalls){
+            delete this.segWalls[segWall.id]
         }
     }
 
@@ -309,6 +336,41 @@ export class PointPhysicsWorld{
 
                     object.velocity.qx += vx
                     object.velocity.qy += vy
+                }
+            }
+        }
+
+        // Collide with segment walls
+        const collidableSegWalls = Object.values(this.segWalls)
+        for(const object of collidableObjects){
+            for(const segWall of collidableSegWalls){
+                let pointX = segWall.start.x
+                let pointY = segWall.start.y
+                const singlePoint = segWall.start.x === segWall.end.x && segWall.start.y === segWall.end.y
+                if(!singlePoint){
+                    const { x, y } = nearestPointFromSegment(
+                        segWall.start.x, segWall.start.y,
+                        segWall.end.x, segWall.end.y,
+                        object.position.x, object.position.y,
+                    )
+                    pointX = x
+                    pointY = y
+                }
+
+                const dx = (pointX - object.position.x)
+                const dy = (pointY - object.position.y)
+                const dist = Math.max(POINT_PHYSICS_MIN_DIST, Math.sqrt(dx * dx + dy * dy))
+
+                const diff = ((segWall.radius + object.radius) - dist) / dist
+                const C = -0.5
+                const P = C * deltaTime
+
+                if(dist < segWall.radius + object.radius){
+                    object.velocity.qx += dx * diff * C
+                    object.velocity.qy += dy * diff * C
+
+                    object.position.qx += dx * diff * P
+                    object.position.qy += dy * diff * P
                 }
             }
         }

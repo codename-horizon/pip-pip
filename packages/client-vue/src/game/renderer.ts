@@ -10,6 +10,8 @@ import { DisplacementFilter } from "@pixi/filter-displacement"
 import { Point } from "pixi.js"
 import { SHIP_DAIMETER, TILE_SIZE } from "@pip-pip/game/src/logic/constants"
 import { PointPhysicsRectWall } from "@pip-pip/core/src/physics"
+import { generateId } from "@pip-pip/core/src/lib/utils"
+import { PipGameTile } from "@pip-pip/game/src/logic/map"
 
 const SMOOTHING = {
     CAMERA_MOVEMENT: 5,
@@ -55,22 +57,20 @@ export class StarGraphic {
     }
 }
 
-export class RectWallGraphic { 
+export class MapTileGraphic { 
     id: string
-    rectWall: PointPhysicsRectWall
     sprite: PIXI.Sprite
 
-    constructor(rectWall: PointPhysicsRectWall, texture = "tile_default"){
-        this.id = rectWall.id
-        this.rectWall = rectWall
+    constructor(tile: PipGameTile){
+        this.id = ""
 
-        const spriteTexture = assetLoader.get(texture)
+        const spriteTexture = assetLoader.get(tile.texture)
         this.sprite = new PIXI.Sprite(spriteTexture)
         this.sprite.anchor.set(0.5)
         this.sprite.width = TILE_SIZE
         this.sprite.height = TILE_SIZE
-        this.sprite.position.x = rectWall.center.x
-        this.sprite.position.y = rectWall.center.y
+        this.sprite.position.x = tile.x
+        this.sprite.position.y = tile.y
     }
 }
 
@@ -119,7 +119,7 @@ export class PipPipRenderer{
     mapForegroundContainer = new PIXI.Container()
 
     players: Record<string, PlayerGraphic> = {}
-    rectWalls: RectWallGraphic[] = []
+    mapTiles: MapTileGraphic[] = []
 
     container?: HTMLDivElement
 
@@ -227,17 +227,36 @@ export class PipPipRenderer{
     }
 
     updateMapGraphics(){
-        for(const graphic of this.rectWalls){
+        for(const graphic of this.mapTiles){
             this.mapBackgroundContainer.removeChild(graphic.sprite)
         }
 
-        this.rectWalls = []
+        this.mapTiles = []
 
-        for(const rectWall of this.game.map.rectWalls){
-            const graphic = new RectWallGraphic(rectWall)
+        for(const tile of this.game.map.tiles){
+            const graphic = new MapTileGraphic(tile)
             this.mapBackgroundContainer.addChild(graphic.sprite)
 
-            this.rectWalls.push(graphic)
+            this.mapTiles.push(graphic)
+        }
+
+        const graphic = new PIXI.Graphics()
+        graphic.lineStyle({
+            width: 10,
+            color: 0xff0000,
+        })
+        this.mapForegroundContainer.addChild(graphic)
+        for(const segWall of this.game.map.segWalls){
+            if(segWall.start.x === segWall.end.x && segWall.start.y === segWall.end.y){
+                const offset = TILE_SIZE / 4
+                graphic.moveTo(segWall.start.x - offset, segWall.start.y - offset)
+                graphic.lineTo(segWall.end.x + offset, segWall.end.y + offset)
+                graphic.moveTo(segWall.start.x + offset, segWall.start.y - offset)
+                graphic.lineTo(segWall.end.x - offset, segWall.end.y + offset)
+            } else{
+                graphic.moveTo(segWall.start.x, segWall.start.y)
+                graphic.lineTo(segWall.end.x, segWall.end.y)
+            }
         }
     }
 

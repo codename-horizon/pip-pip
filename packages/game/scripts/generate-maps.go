@@ -43,6 +43,7 @@ type GameMap struct {
 	WallTiles    TileSet       `json:"wallTiles"`
 	SpawnTiles   TileSet       `json:"spawnTiles"`
 	WallSegments []TileSegment `json:"wallSegments"`
+	WallSegmentTiles TileSet `json:"wallSegmentTiles"`
 }
 
 func translateTileSet(t TileSet, x int, y int) TileSet {
@@ -84,6 +85,72 @@ func tilePatternExists(t TileSet, centerX int, centerY int, pattern TileMatrix) 
 		}
 	}
 	return true
+}
+
+func tileCountCorners(t TileSet, centerX int, centerY int) int {
+	sum := 0
+	if tilePatternExists(t, centerX, centerX, TileMatrix{
+		1, n, n,
+		n, n, n,
+		n, n, n,
+	}) {
+		sum++
+	}
+	if tilePatternExists(t, centerX, centerX, TileMatrix{
+		n, n, 1,
+		n, n, n,
+		n, n, n,
+	}) {
+		sum++
+	}
+	if tilePatternExists(t, centerX, centerX, TileMatrix{
+		n, n, n,
+		n, n, n,
+		n, n, 1,
+	}) {
+		sum++
+	}
+	if tilePatternExists(t, centerX, centerX, TileMatrix{
+		n, n, n,
+		n, n, n,
+		1, n, n,
+	}) {
+		sum++
+	}
+	return sum
+}
+
+func tileCountSides(t TileSet, centerX int, centerY int) int {
+	sum := 0
+	if tilePatternExists(t, centerX, centerX, TileMatrix{
+		n, 1, n,
+		n, n, n,
+		n, n, n,
+	}) {
+		sum++
+	}
+	if tilePatternExists(t, centerX, centerX, TileMatrix{
+		n, n, n,
+		n, n, 1,
+		n, n, n,
+	}) {
+		sum++
+	}
+	if tilePatternExists(t, centerX, centerX, TileMatrix{
+		n, n, n,
+		n, n, n,
+		n, 1, n,
+	}) {
+		sum++
+	}
+	if tilePatternExists(t, centerX, centerX, TileMatrix{
+		n, n, n,
+		1, n, n,
+		n, n, n,
+	}) {
+		sum++
+	}
+	return sum
 }
 
 func getTileSetBounds(t TileSet) (int, int, int, int) {
@@ -132,122 +199,101 @@ func (gm *GameMap) Center() {
 	gm.Translate(-centerX, -centerY)
 }
 
-func (gm *GameMap) GenerateWalls() {
-	walls := []TileSegment{}
-	pool := gm.WallTiles
+func (gm *GameMap) GenerateSegments() {
+	segments := []TileSegment{}
+
+	pool := TileSet{}
+
+	for i := 0; i < len(gm.WallTiles); i++ {
+		tile := gm.WallTiles[i]
+		if !tilePatternExists(gm.WallTiles, tile[0], tile[1], TileMatrix{
+			1, 1, 1,
+			1, n, 1,
+			1, 1, 1,
+		}) && tileCountCorners(pool, tile[0], tile[1]) <= 4 {
+			pool = append(pool, tile)
+		}
+	}
+
 	minX, maxX, minY, maxY := getTileSetBounds(pool)
-	width, height := maxX-minX, maxY-minY
-	maxDim := int(math.Max(float64(width), float64(height)))
 
-	// get left to right
-	for y := minY; y <= maxY; y++ {
-		tracking := false
-		start := TilePoint{0, 0}
-		for x := minX; x <= maxX; x++ {
-			if tracking && tilePatternExists(pool, x, y, TileMatrix{
-				n, n, n,
-				n, 1, 0,
-				n, n, n,
-			}) {
-				tracking = false
-				walls = append(walls, TileSegment{start[0], start[1], x, y})
-			} else if !tracking && tilePatternExists(pool, x, y, TileMatrix{
-				n, n, n,
-				n, 1, 1,
-				n, n, n,
-			}) {
-				tracking = true
-				start = TilePoint{x, y}
+	getCon := func(x int, y int, offsetX int, offsetY int) (bool, bool) {
+		con := tileExists(pool, x, y)
+		start := con && tileExists(pool, x + offsetX, y + offsetY)
+		return con, start
+	}
+
+	// horizontal
+	for y := minY - 1; y <= maxY + 1; y++ {
+		tracking, startX, startY := false, 0, 0
+		for x := minX - 1; x <= maxX + 1; x++ {
+			con, start := getCon(x, y, 1, 0)
+			if tracking {
+				if con {
+					// continue
+				} else {
+					segments = append(segments, TileSegment{startX, startY, x - 1, y})
+					tracking = false
+				}
+			} else{ 
+				if start {
+					tracking, startX, startY = true, x, y
+				}
 			}
 		}
 	}
 
-	// get top to bottom
-	for x := minX; x <= maxX; x++ {
-		tracking := false
-		start := TilePoint{0, 0}
-		for y := minY; y <= maxY; y++ {
-			if tracking && tilePatternExists(pool, x, y, TileMatrix{
-				n, n, n,
-				n, 1, n,
-				n, 0, n,
-			}) {
-				tracking = false
-				walls = append(walls, TileSegment{start[0], start[1], x, y})
-			} else if !tracking && tilePatternExists(pool, x, y, TileMatrix{
-				n, n, n,
-				n, 1, n,
-				n, 1, n,
-			}) {
-				tracking = true
-				start = TilePoint{x, y}
+	// vertical
+	for x := minX - 1; x <= maxX + 1; x++ {
+		tracking, startX, startY := false, 0, 0
+		for y := minY - 1; y <= maxY + 1; y++ {
+			con, start := getCon(x, y, 0, 1)
+			if tracking {
+				if con {
+					// continue
+				} else {
+					segments = append(segments, TileSegment{startX, startY, x, y - 1})
+					tracking = false
+				}
+			} else{ 
+				if start {
+					tracking, startX, startY = true, x, y
+				}
 			}
 		}
 	}
 
-	// get lone tiles
-	for x := minX; x <= maxX; x++ {
-		for y := minY; y <= maxY; y++ {
-			if tilePatternExists(pool, x, y, TileMatrix{
-				0, 0, 0,
-				0, 1, 0,
-				0, 0, 0,
-			}) {
-				walls = append(walls, TileSegment{x, y, x, y})
-			}
-		}
-	}
-
-	// get top left to bottom right
-	for c := minX - maxDim; c <= maxX+maxDim; c++ {
-		tracking := false
-		start := TilePoint{0, 0}
-		for o := c; o <= maxDim; o++ {
-			x, y := c+o, o
-			if tracking && tilePatternExists(pool, x, y, TileMatrix{
-				n, n, n,
+	// lone tiles
+	for x := minX - 1; x <= maxX + 1; x++ {
+		for y := minY - 1; y <= maxY + 1; y++ {
+			if tileExists(pool, x, y) && !tilePatternExists(pool, x, y, TileMatrix{
 				n, 1, n,
-				n, n, 0,
-			}) {
-				tracking = false
-				walls = append(walls, TileSegment{start[0], start[1], x, y})
-			} else if !tracking && tilePatternExists(pool, x, y, TileMatrix{
-				n, n, n,
-				n, 1, 0,
-				n, 0, 1,
-			}) {
-				tracking = true
-				start = TilePoint{x, y}
-			}
-		}
-	}
-
-	// get top right to bottom left
-	for c := maxX + maxDim; c >= minX-maxDim; c-- {
-		tracking := false
-		start := TilePoint{0, 0}
-		for o := c; o <= maxDim; o++ {
-			x, y := c-o, o
-			if tracking && tilePatternExists(pool, x, y, TileMatrix{
-				n, n, n,
+				1, n, 1,
 				n, 1, n,
-				0, n, n,
 			}) {
-				tracking = false
-				walls = append(walls, TileSegment{start[0], start[1], x, y})
-			} else if !tracking && tilePatternExists(pool, x, y, TileMatrix{
-				n, n, n,
-				0, 1, n,
-				1, 0, n,
-			}) {
-				tracking = true
-				start = TilePoint{x, y}
+				segments = append(segments, TileSegment{x, y, x, y})
 			}
 		}
 	}
+	
+	gm.WallSegmentTiles = pool
+	gm.WallSegments = segments
+}
 
-	gm.WallSegments = walls
-	fmt.Println((gm.WallSegments))
+func whyTheFuckDoesGoNotHaveSplice(slice [][]TilePoint, index int) [][]TilePoint {
+	if index < 0 {
+		return slice
+	}
+	if index > len(slice){
+		return slice
+	}
+	if index == 0{
+		return slice[1:]
+	}
+	if index == len(slice) - 1{
+		return slice[:index]
+	}
+	return append(slice[:index], slice[index+1:]...)
 }
 
 func processFile(filename string) {
@@ -282,7 +328,7 @@ func processFile(filename string) {
 	}
 
 	gameMap.Center()
-	gameMap.GenerateWalls()
+	gameMap.GenerateSegments()
 
 	jsonMarshal, jsonErr := json.Marshal(gameMap)
 

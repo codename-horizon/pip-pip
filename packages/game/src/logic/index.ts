@@ -116,6 +116,9 @@ export class PipPipGame{
             for(const rectWall of this.map.rectWalls){
                 this.physics.removeRectWall(rectWall)
             }
+            for(const segWall of this.map.segWalls){
+                this.physics.removeSegWall(segWall)
+            }
         }
 
         const mapType = PIP_MAPS[index]
@@ -124,6 +127,10 @@ export class PipPipGame{
         // Add walls
         for(const rectWall of map.rectWalls){
             this.physics.addRectWall(rectWall)
+        }
+
+        for(const segWall of map.segWalls){
+            this.physics.addSegWall(segWall)
         }
 
         this.map = map

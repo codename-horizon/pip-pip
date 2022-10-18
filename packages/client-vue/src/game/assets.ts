@@ -70,10 +70,12 @@ assetLoader.addBundle("ships", shipAssets)
 import star_1 from "../assets/stars/star-1.png"
 import displacement_map from "../assets/displacement-map.png"
 import tile_default from "../assets/tiles/default.png"
+import tile_hidden from "../assets/tiles/hidden.png"
 
 assetLoader.addBundle("misc", {
     star_1,
     displacement_map,
 
     tile_default,
+    tile_hidden,
 })
