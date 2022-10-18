@@ -97,6 +97,12 @@ export class MouseListener extends EventEmitter<MouseListenerEventMap>{
     }
     
     mouseHandler(e: MouseEvent){
+        // Ignore inputs
+        const t = e.target as HTMLElement
+        if(t.tagName === "INPUT" || t.tagName === "TEXTAREA"){
+            return
+        }
+
         if(e.type === "mousedown"){
             if(e.button === 0){
                 this.state.left.down = true

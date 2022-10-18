@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import GameButton from "../components/GameButton.vue"
+import GameInput from "../components/GameInput.vue";
 
 import { onMounted } from "vue"
 import { useUiStore } from "../store/ui";
@@ -25,6 +26,7 @@ onMounted(() => {
 
         .buttons
             GameButton(@click="hostGame") Host Game 
+            GameInput
             GameButton(@click="notYetImplemented") Join Game 
             GameButton.accent(@click="notYetImplemented") Settings
             GameButton.accent(@click="notYetImplemented") Credits

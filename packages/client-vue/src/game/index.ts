@@ -12,6 +12,7 @@ import { encode, packetManager, PipPacketSerializerMap } from "@pip-pip/game/src
 import { Ticker } from "@pip-pip/core/src/common/ticker"
 import { processPackets, sendPackets } from "./client"
 import { processInputs } from "./ui"
+import { processChat } from "./chat"
 
 export class GameContext{
     game!: PipPipGame
@@ -74,6 +75,7 @@ export class GameContext{
         this.updateTick.on("tick", () => {
             // Apply messages
             processPackets(this)
+            processChat(this)
 
             // Apply inputs
             processInputs(this)

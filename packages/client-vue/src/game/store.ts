@@ -3,6 +3,7 @@ import { PIP_SHIPS } from "@pip-pip/game/src/ships"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import { GAME_CONTEXT, GameContext, getClientPlayer } from "."
+import { ChatMessage } from "./chat"
 
 export const useGameStore = defineStore("game", () => {
     const loading = ref(false)
@@ -20,6 +21,7 @@ export const useGameStore = defineStore("game", () => {
     const isPhaseMatch = computed(() => phase.value === PipPipGamePhase.MATCH)
     const isPhaseResults = computed(() => phase.value === PipPipGamePhase.RESULTS)
 
+    const chatMessages = ref<ChatMessage[]>([])
 
     function sync(){
         const { game } = GAME_CONTEXT
@@ -53,6 +55,8 @@ export const useGameStore = defineStore("game", () => {
         isPhaseCountdown,
         isPhaseMatch,
         isPhaseResults,
+
+        chatMessages,
 
         sync,
     }

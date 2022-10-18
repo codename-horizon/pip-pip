@@ -60,3 +60,26 @@ body, html
         transform: scale(1 - $amount)
     to
         transform: rotate(1 + $amount)
+
+    
+#game-container
+    position: fixed
+    inset: 0
+    width: 100%
+    height: 100%
+    z-index: 0
+
+.game-overlay
+    position: fixed
+    inset: 0
+    width: 100%
+    height: 100%
+    z-index: 100
+
+#game-countdown
+    inset: 0
+    display: grid
+    align-items: center
+    justify-items: center
+    font-size: 2em
+    background-color: rgba(0, 0, 0, 0.5)

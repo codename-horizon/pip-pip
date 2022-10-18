@@ -117,7 +117,7 @@ export const processPackets = (gameContext: GameContext) => {
             player.inputs.aimRotation = inputs.aimRotation
         }
 
-        console.log(packets)
+        // console.log(packets)
     }
 }
 
