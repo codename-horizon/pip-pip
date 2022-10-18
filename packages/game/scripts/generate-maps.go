@@ -73,82 +73,36 @@ var n = 2
 
 type TileMatrix [9]int
 
-func tilePatternExists(t TileSet, centerX int, centerY int, pattern TileMatrix) bool {
-	for y := 0; y < 3; y++ {
-		for x := 0; x < 3; x++ {
-			i := y*3 + x
-			condition := pattern[i]
-			exists := tileExists(t, centerX+x-1, centerY+y-1)
-			if (condition == 0 && exists) || condition == 1 && !exists {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func tileCountCorners(t TileSet, centerX int, centerY int) int {
 	sum := 0
-	if tilePatternExists(t, centerX, centerX, TileMatrix{
-		1, n, n,
-		n, n, n,
-		n, n, n,
-	}) {
-		sum++
+	if tileExists(t, centerX - 1, centerY - 1){
+		sum = sum + 1
 	}
-	if tilePatternExists(t, centerX, centerX, TileMatrix{
-		n, n, 1,
-		n, n, n,
-		n, n, n,
-	}) {
-		sum++
+	if tileExists(t, centerX - 1, centerY + 1){
+		sum = sum + 1
 	}
-	if tilePatternExists(t, centerX, centerX, TileMatrix{
-		n, n, n,
-		n, n, n,
-		n, n, 1,
-	}) {
-		sum++
+	if tileExists(t, centerX + 1, centerY - 1){
+		sum = sum + 1
 	}
-	if tilePatternExists(t, centerX, centerX, TileMatrix{
-		n, n, n,
-		n, n, n,
-		1, n, n,
-	}) {
-		sum++
+	if tileExists(t, centerX + 1, centerY + 1){
+		sum = sum + 1
 	}
 	return sum
 }
 
 func tileCountSides(t TileSet, centerX int, centerY int) int {
 	sum := 0
-	if tilePatternExists(t, centerX, centerX, TileMatrix{
-		n, 1, n,
-		n, n, n,
-		n, n, n,
-	}) {
-		sum++
+	if tileExists(t, centerX - 1, centerY){
+		sum = sum + 1
 	}
-	if tilePatternExists(t, centerX, centerX, TileMatrix{
-		n, n, n,
-		n, n, 1,
-		n, n, n,
-	}) {
-		sum++
+	if tileExists(t, centerX + 1, centerY){
+		sum = sum + 1
 	}
-	if tilePatternExists(t, centerX, centerX, TileMatrix{
-		n, n, n,
-		n, n, n,
-		n, 1, n,
-	}) {
-		sum++
+	if tileExists(t, centerX, centerY + 1){
+		sum = sum + 1
 	}
-	if tilePatternExists(t, centerX, centerX, TileMatrix{
-		n, n, n,
-		1, n, n,
-		n, n, n,
-	}) {
-		sum++
+	if tileExists(t, centerX, centerY - 1){
+		sum = sum + 1
 	}
 	return sum
 }
@@ -204,13 +158,12 @@ func (gm *GameMap) GenerateSegments() {
 
 	pool := TileSet{}
 
-	for i := 0; i < len(gm.WallTiles); i++ {
-		tile := gm.WallTiles[i]
-		if !tilePatternExists(gm.WallTiles, tile[0], tile[1], TileMatrix{
-			1, 1, 1,
-			1, n, 1,
-			1, 1, 1,
-		}) && tileCountCorners(pool, tile[0], tile[1]) <= 4 {
+	basePool := TileSet{}
+	basePool = append(basePool, gm.WallTiles...)
+
+	for i := 0; i < len(basePool); i++ {
+		tile := basePool[i]
+		if (tileCountCorners(basePool, tile[0], tile[1]) + tileCountSides(basePool, tile[0], tile[1])) < 8 {
 			pool = append(pool, tile)
 		}
 	}
@@ -218,7 +171,9 @@ func (gm *GameMap) GenerateSegments() {
 	minX, maxX, minY, maxY := getTileSetBounds(pool)
 
 	getCon := func(x int, y int, offsetX int, offsetY int) (bool, bool) {
-		con := tileExists(pool, x, y)
+		corners := tileCountCorners(pool, x, y) <= 3
+		sides := tileCountSides(pool, x, y) <= 3
+		con := tileExists(pool, x, y) && (corners || sides)
 		start := con && tileExists(pool, x + offsetX, y + offsetY)
 		return con, start
 	}
@@ -264,15 +219,10 @@ func (gm *GameMap) GenerateSegments() {
 	}
 
 	// lone tiles
-	for x := minX - 1; x <= maxX + 1; x++ {
-		for y := minY - 1; y <= maxY + 1; y++ {
-			if tileExists(pool, x, y) && !tilePatternExists(pool, x, y, TileMatrix{
-				n, 1, n,
-				1, n, 1,
-				n, 1, n,
-			}) {
-				segments = append(segments, TileSegment{x, y, x, y})
-			}
+	for i := 0; i < len(pool); i++ {
+		tile := pool[i]
+		if tileCountSides(pool, tile[0], tile[1]) == 0 && tileCountCorners(pool, tile[0], tile[1]) == 0 {
+			segments = append(segments, TileSegment{tile[0], tile[1], tile[0], tile[1]})
 		}
 	}
 	

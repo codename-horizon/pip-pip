@@ -1,5 +1,5 @@
 import { generateId } from "../lib/utils"
-import { nearestPointFromSegment } from "../math"
+import { forgivingEqual, nearestPointFromSegment } from "../math"
 
 export class Vector2{
     _x = 0
@@ -259,8 +259,8 @@ export class PointPhysicsWorld{
                 const diff = ((a.radius + b.radius) - dist) / dist
                 const s1 = (1 / a.mass) / ((1 / a.mass) + (1 / b.mass))
                 const s2 = 1 - s1
-                const C = 0.5
-                const P = C * deltaTime
+                const C = 0.5 * deltaTime
+                const P = 0.5 * deltaTime
 
                 if(dist < a.radius + b.radius){
                     a.velocity.qx += vdx * s1 * diff * C
@@ -343,6 +343,7 @@ export class PointPhysicsWorld{
         // Collide with segment walls
         const collidableSegWalls = Object.values(this.segWalls)
         for(const object of collidableObjects){
+            const points: number[][] = []
             for(const segWall of collidableSegWalls){
                 let pointX = segWall.start.x
                 let pointY = segWall.start.y
@@ -362,16 +363,22 @@ export class PointPhysicsWorld{
                 const dist = Math.max(POINT_PHYSICS_MIN_DIST, Math.sqrt(dx * dx + dy * dy))
 
                 const diff = ((segWall.radius + object.radius) - dist) / dist
-                const C = -0.5
-                const P = C * deltaTime
-
+                
                 if(dist < segWall.radius + object.radius){
-                    object.velocity.qx += dx * diff * C
-                    object.velocity.qy += dy * diff * C
-
-                    object.position.qx += dx * diff * P
-                    object.position.qy += dy * diff * P
+                    const match = points.find(([x, y]) => forgivingEqual(x, pointX, 1) && forgivingEqual(y, pointY, 1))
+                    if(typeof match === "undefined"){
+                        points.push([pointX, pointY, dx * diff, dy * diff])
+                    }
                 }
+            }
+            const C = -0.5 * deltaTime
+            const P = -1 * deltaTime
+            for(const [_x, _y, vx, vy] of points){
+                object.velocity.qx += vx * C
+                object.velocity.qy += vy * C
+
+                object.position.qx += vx * P
+                object.position.qy += vy * P
             }
         }
 
