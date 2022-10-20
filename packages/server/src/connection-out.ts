@@ -64,7 +64,7 @@ export function getFullGameState(context: ConnectionContext): number[][] {
 }
 
 export function getPartialGameState(context: ConnectionContext): number[][] {
-    const { game, gameEvents, connection } = context
+    const { game, gameEvents, connection, lobbyEvents } = context
 
     const messages = []
     
@@ -112,6 +112,18 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
     // Send game map
     if(gameEvents.filter("setMap").length > 0){
         messages.push(encode.gameMap(game))
+    }
+
+    for(const events of lobbyEvents.filter("packetMessage")){
+        const { packets, connection } = events.packetMessage
+
+        // Broadcast chat message
+        for(const { message } of packets.sendChat || []){
+            const player = game.players[connection.id]
+            if(typeof player !== "undefined"){
+                messages.push(encode.receiveChat(player, message))
+            }
+        }
     }
 
     

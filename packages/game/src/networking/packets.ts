@@ -10,11 +10,10 @@ export const CONNECTION_ID_LENGTH = 2
 export const LOBBY_ID_LENGTH = 4
 
 export const packetManager = new PacketManager({
-    uploadChat: new Packet({
+    sendChat: new Packet({
         message: $varstring,
     }),
-    downloadMessage: new Packet({
-        order: $uint16,
+    receiveChat: new Packet({
         playerId: $string(CONNECTION_ID_LENGTH),
         message: $varstring,
     }),
@@ -88,6 +87,14 @@ export type PipPacketManager = typeof packetManager
 export type PipPacketSerializerMap = ExtractSerializerMap<PipPacketManager>
 
 export const encode = {
+    sendChat: (message: string) => packetManager.serializers.sendChat.encode({
+        message,
+    }),
+    receiveChat: (player: PipPlayer, message: string) => packetManager.serializers.receiveChat.encode({
+        playerId: player.id,
+        message,
+    }),
+
     gameState: (game: PipPipGame) => packetManager.serializers.gameState.encode({
         mode: game.settings.mode,
         useTeams: game.settings.useTeams,
@@ -104,6 +111,7 @@ export const encode = {
     gameMap: (game: PipPipGame) => packetManager.serializers.gameMap.encode({
         mapIndex: game.mapIndex,
     }),
+
     addPlayer: (player: PipPlayer) => packetManager.serializers.addPlayer.encode({
         playerId: player.id,
     }),

@@ -65,6 +65,34 @@ GAME_COMMANDS.push({
 })
 
 GAME_COMMANDS.push({
+    command: "skip",
+    name: "Skip game countdown",
+    inputs: [],
+    description: "Skip game countdown",
+    callback(message, inputs){
+        if(GAME_CONTEXT.store.isHost){
+            GAME_CONTEXT.sendGamePhase(PipPipGamePhase.MATCH)
+        } else{
+            return MESSAGE_ERROR_NOT_HOST
+        }
+    }
+})
+
+GAME_COMMANDS.push({
+    command: "stop",
+    name: "Stop Game",
+    inputs: [],
+    description: "Stops the game",
+    callback(message, inputs){
+        if(GAME_CONTEXT.store.isHost){
+            GAME_CONTEXT.sendGamePhase(PipPipGamePhase.SETUP)
+        } else{
+            return MESSAGE_ERROR_NOT_HOST
+        }
+    }
+})
+
+GAME_COMMANDS.push({
     command: "clear",
     name: "Clear Chat",
     inputs: [],
@@ -95,6 +123,7 @@ GAME_COMMANDS.push({
 })
 
 export function processChat(gameContext: GameContext){
+    let clearChat = false
     // player join
     for(const event of gameContext.gameEvents.filter("addPlayer")){
         const { player } = event.addPlayer
@@ -107,6 +136,10 @@ export function processChat(gameContext: GameContext){
                 text: "joined",
             }],
         })
+
+        if(player.id === gameContext.client.connectionId){
+            clearChat = true
+        }
     }
 
     // player leave
@@ -123,7 +156,7 @@ export function processChat(gameContext: GameContext){
         })
     }
 
-    // player disconnected
+    // player disconnected or disconnected
     for(const event of gameContext.gameEvents.filter("playerIdleChange")){
         const { player } = event.playerIdleChange
         if(player.idle){
@@ -148,5 +181,36 @@ export function processChat(gameContext: GameContext){
             })
         }
     }
-    // player reconnected
+
+    // send phase change
+    if(gameContext.gameEvents.filter("phaseChange").length > 0){
+        if(gameContext.game.phase === PipPipGamePhase.SETUP){
+            gameContext.store.chatMessages.push({
+                text: [{
+                    style: "good",
+                    text: "Game is now in lobby mode.",
+                }],
+            })
+        }
+        if(gameContext.game.phase === PipPipGamePhase.COUNTDOWN){
+            gameContext.store.chatMessages.push({
+                text: [{
+                    style: "good",
+                    text: "Get ready...",
+                }],
+            })
+        }
+        if(gameContext.game.phase === PipPipGamePhase.MATCH){
+            gameContext.store.chatMessages.push({
+                text: [{
+                    style: "good",
+                    text: "The match has started.",
+                }],
+            })
+        }
+    }
+
+    if(clearChat){
+        gameContext.store.chatMessages = []
+    }
 }

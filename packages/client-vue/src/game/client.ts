@@ -1,6 +1,6 @@
 import { forgivingEqual } from "@pip-pip/core/src/math"
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
-import { PLAYER_POSITION_TOLERANCE } from "@pip-pip/game/src/logic/constants"
+import { CHAT_MAX_MESSAGE_LENGTH, PLAYER_POSITION_TOLERANCE } from "@pip-pip/game/src/logic/constants"
 import { encode } from "@pip-pip/game/src/networking/packets"
 import { GAME_CONTEXT, GameContext, getClientPlayer } from "."
 
@@ -116,8 +116,24 @@ export const processPackets = (gameContext: GameContext) => {
             player.inputs.movementAmount = inputs.movementAmount
             player.inputs.aimRotation = inputs.aimRotation
         }
-
-        // console.log(packets)
+        
+        // Receive chat messages
+        for(const { playerId, message } of packets.receiveChat || []){
+            const player = game.players[playerId]
+            if(typeof player !== "undefined"){
+                const sanitizedMessage = message.trim().substring(0, CHAT_MAX_MESSAGE_LENGTH)
+                if(sanitizedMessage.length > 0){
+                    gameContext.store.chatMessages.push({
+                        text: [{
+                            style: "player",
+                            text: player.name,
+                        }, {
+                            text: `: ${sanitizedMessage}`,
+                        }],
+                    })
+                }
+            }
+        }
     }
 }
 
@@ -143,6 +159,14 @@ export const sendPackets = (gameContext: GameContext) => {
             messages.push(encode.playerPosition(clientPlayer))
             messages.push(encode.playerInputs(clientPlayer))
         }
+    }
+
+    // send chat messages
+    if(gameContext.store.outgoingMessages.length > 0){
+        for(const text of gameContext.store.outgoingMessages){
+            messages.push(encode.sendChat(text))
+        }
+        gameContext.store.outgoingMessages = []
     }
     
 

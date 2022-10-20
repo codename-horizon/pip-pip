@@ -1,4 +1,5 @@
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
+import { CHAT_MAX_MESSAGE_LENGTH } from "@pip-pip/game/src/logic/constants"
 import { PIP_SHIPS } from "@pip-pip/game/src/ships"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
@@ -22,6 +23,11 @@ export const useGameStore = defineStore("game", () => {
     const isPhaseResults = computed(() => phase.value === PipPipGamePhase.RESULTS)
 
     const chatMessages = ref<ChatMessage[]>([])
+    const outgoingMessages = ref<string[]>([])
+
+    function addOutgoingMessage(text: string){
+        outgoingMessages.value.push(text.trim().substring(0, CHAT_MAX_MESSAGE_LENGTH))
+    }
 
     function sync(){
         const { game } = GAME_CONTEXT
@@ -57,6 +63,9 @@ export const useGameStore = defineStore("game", () => {
         isPhaseResults,
 
         chatMessages,
+
+        outgoingMessages,
+        addOutgoingMessage,
 
         sync,
     }

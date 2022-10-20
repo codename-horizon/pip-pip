@@ -81,6 +81,12 @@ const inputModel = computed({
     }
 })
 
+defineExpose({
+    inputModel,
+    focus,
+    input,
+})
+
 </script>
 
 <template lang="pug">
