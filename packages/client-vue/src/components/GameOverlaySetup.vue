@@ -7,7 +7,7 @@ import GameChat from './GameChat.vue';
 import { ref } from 'vue';
 
 function startGame(){
-  GAME_CONTEXT.sendGamePhase(PipPipGamePhase.COUNTDOWN)
+  GAME_CONTEXT.startGame()
 }
 </script>
 

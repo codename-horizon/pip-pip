@@ -16,6 +16,7 @@ export type PipPipGameEventMap = {
 
     playerSetShip: { player: PipPlayer, ship: PipShip },
     playerRemoveShip: { player: PipPlayer, ship: PipShip },
+    playerSpawned: { player: PipPlayer },
 
     setHost: { player: PipPlayer },
     removeHost: undefined,
@@ -38,6 +39,7 @@ export type PipPipGameOptions = {
     calculateAi: boolean,
     assignHost: boolean,
     triggerPhases: boolean
+    triggerSpawns: boolean,
 }
 
 export enum PipPipGameMode {
@@ -70,6 +72,7 @@ export class PipPipGame{
         calculateAi: true,
         assignHost: false,
         triggerPhases: false,
+        triggerSpawns: false,
     }
 
     events: EventEmitter<PipPipGameEventMap> = new EventEmitter()
@@ -133,6 +136,7 @@ export class PipPipGame{
             this.physics.addSegWall(segWall)
         }
 
+        this.despawnPlayers()
         this.map = map
         this.mapIndex = index
         this.mapType = mapType
@@ -174,6 +178,18 @@ export class PipPipGame{
         this.events.emit("phaseChange")
     }
 
+    startMatch(){
+        this.countdown = this.tps * 6 // 6 second count down
+        this.setPhase(PipPipGamePhase.COUNTDOWN)
+        if(this.options.triggerSpawns === true){
+            const players = Object.values(this.players)
+            for(const player of players){
+                player.setSpawned(false)
+                this.spawnPlayer(player)
+            }
+        }
+    }
+
     get playerCount(){ return Object.keys(this.players).length }
     
     setHost(player: PipPlayer){
@@ -203,8 +219,8 @@ export class PipPipGame{
         this.tickNumber++
         this.lastTick = Date.now()
         if(this.phase === PipPipGamePhase.SETUP){
-            // do nothing
-            return
+            // despawn all players
+            this.despawnPlayers()
         }
 
         if(this.phase === PipPipGamePhase.COUNTDOWN){
@@ -217,7 +233,52 @@ export class PipPipGame{
             }
         }
         
-        this.updatePhysics()
+        if(this.phase === PipPipGamePhase.MATCH){
+            //
+        }
+        
+        if(this.phase !== PipPipGamePhase.SETUP){
+            this.updatePhysics()
+        }
+    }
+
+    despawnPlayers() {
+        if(this.options.triggerSpawns){
+            const players = Object.values(this.players)
+            for(const player of players){
+                if(player.spawned === true){
+                    player.setSpawned(false)
+                }
+            }
+        }
+    }
+
+    spawnPlayer(player: PipPlayer, x?: number, y?: number){
+        let finalX: number
+        let finalY: number
+        if(typeof x === "number" && typeof y === "number"){
+            finalX = x
+            finalY = y
+        } else{
+            if(player.canSpawn === false) return
+            if(this.map.spawns.length === 0) return
+            const index = Math.floor(Math.random() * this.map.spawns.length)
+            const spawn = this.map.spawns[index]
+            const angle = Math.random() * Math.PI * 2
+            finalX = Math.round(spawn.x + Math.cos(angle) * spawn.radius)
+            finalY = Math.round(spawn.y + Math.sin(angle) * spawn.radius)
+        }
+        player.ship.physics.position.x = finalX
+        player.ship.physics.position.y = finalY
+        player.ship.physics.velocity.x = 0
+        player.ship.physics.velocity.y = 0
+
+        player.setSpawned(true)
+    }
+
+    addPlayerMidGame(player: PipPlayer){
+        if(this.phase === PipPipGamePhase.SETUP) return
+        this.spawnPlayer(player)
     }
 
     updatePhysics(){
@@ -226,25 +287,26 @@ export class PipPipGame{
             player.ship.update()
         }
 
-        for(const player of Object.values(this.players)){
-
-            // accelerate players
-            const vel = Math.sqrt(
-                player.ship.physics.velocity.x * player.ship.physics.velocity.x +
-                player.ship.physics.velocity.y * player.ship.physics.velocity.y
-            )
-            const playerMovementInput = Math.max(0, Math.min(1, player.inputs.movementAmount)) 
-            const playerAccelerationInput = player.ship.stats.movement.acceleration.normal * playerMovementInput
-            const playerSpeedLimitTip = Math.max(0, (vel + playerAccelerationInput) - player.ship.stats.movement.speed.normal / (1 - player.ship.physics.airResistance))
-            const playerCappedAccelerationInput = playerAccelerationInput - playerSpeedLimitTip
-            
-            if(playerCappedAccelerationInput > 0){
-                const angleDiff = radianDifference(player.inputs.movementAngle, player.inputs.aimRotation)
-                const angleEffect = (angleDiff / Math.PI) * (Math.PI / 6) * (1 - player.ship.stats.movement.agility)
-                const agilityModifier = Math.pow(player.ship.stats.movement.agility + (1 - Math.abs(angleDiff) / Math.PI) * (1 - player.ship.stats.movement.agility), 2)
-                const agilityAcceleration = playerCappedAccelerationInput * agilityModifier
-                player.ship.physics.velocity.x += Math.cos(player.inputs.movementAngle + angleEffect) * agilityAcceleration
-                player.ship.physics.velocity.y += Math.sin(player.inputs.movementAngle + angleEffect) * agilityAcceleration
+        if(this.phase === PipPipGamePhase.MATCH){
+            for(const player of Object.values(this.players)){
+                // accelerate players
+                const vel = Math.sqrt(
+                    player.ship.physics.velocity.x * player.ship.physics.velocity.x +
+                    player.ship.physics.velocity.y * player.ship.physics.velocity.y
+                )
+                const playerMovementInput = Math.max(0, Math.min(1, player.inputs.movementAmount)) 
+                const playerAccelerationInput = player.ship.stats.movement.acceleration.normal * playerMovementInput
+                const playerSpeedLimitTip = Math.max(0, (vel + playerAccelerationInput) - player.ship.stats.movement.speed.normal / (1 - player.ship.physics.airResistance))
+                const playerCappedAccelerationInput = playerAccelerationInput - playerSpeedLimitTip
+                
+                if(playerCappedAccelerationInput > 0){
+                    const angleDiff = radianDifference(player.inputs.movementAngle, player.inputs.aimRotation)
+                    const angleEffect = (angleDiff / Math.PI) * (Math.PI / 6) * (1 - player.ship.stats.movement.agility)
+                    const agilityModifier = Math.pow(player.ship.stats.movement.agility + (1 - Math.abs(angleDiff) / Math.PI) * (1 - player.ship.stats.movement.agility), 2)
+                    const agilityAcceleration = playerCappedAccelerationInput * agilityModifier
+                    player.ship.physics.velocity.x += Math.cos(player.inputs.movementAngle + angleEffect) * agilityAcceleration
+                    player.ship.physics.velocity.y += Math.sin(player.inputs.movementAngle + angleEffect) * agilityAcceleration
+                }
             }
         }
 

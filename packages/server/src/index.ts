@@ -56,6 +56,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby}) => {
         shootAiBullets: true,
         assignHost: true,
         triggerPhases: true,
+        triggerSpawns: true,
     })
 
     const lobbyEvents = new EventCollector(lobby.events)
@@ -98,8 +99,8 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby}) => {
     })
 
     debugTick.on("tick", () => {
-        const players = Object.keys(game.players)
-        if(players.length) console.log(players)
+        // const players = Object.keys(game.players)
+        // if(players.length) console.log(players)
     })
     
     lobby.events.on("destroy", () => {
@@ -132,29 +133,29 @@ async function run(){
 
     console.log(artLines.join("\n"))
 
-    let logTimeout: NodeJS.Timeout
-    const conLobWatch = new EventCollector(server.events, [
-        "addConnection", 
-        "createConnection", 
-        "createLobby", 
-        "removeConnection", 
-        "removeLobby", 
-        "connectionStatusChange",
-        "lobbyStatusChange",
-    ])
-    conLobWatch.on("collect", () => {
-        clearTimeout(logTimeout)
-        logTimeout = setTimeout(() => {
-            const map = (a: PipPipLobby | PipPipConnection) => {
-                return [a.id, a.status].join(":")
-            }
-            console.log({
-                connections: Object.values(server.connections).map(map),
-                lobbies: Object.values(server.lobbies).map(map),
-            })
-            conLobWatch.flush()
-        }, 100)
-    })
+    // let logTimeout: NodeJS.Timeout
+    // const conLobWatch = new EventCollector(server.events, [
+    //     "addConnection", 
+    //     "createConnection", 
+    //     "createLobby", 
+    //     "removeConnection", 
+    //     "removeLobby", 
+    //     "connectionStatusChange",
+    //     "lobbyStatusChange",
+    // ])
+    // conLobWatch.on("collect", () => {
+    //     clearTimeout(logTimeout)
+    //     logTimeout = setTimeout(() => {
+    //         const map = (a: PipPipLobby | PipPipConnection) => {
+    //             return [a.id, a.status].join(":")
+    //         }
+    //         console.log({
+    //             connections: Object.values(server.connections).map(map),
+    //             lobbies: Object.values(server.lobbies).map(map),
+    //         })
+    //         conLobWatch.flush()
+    //     }, 100)
+    // })
 }
 
 run()

@@ -66,8 +66,6 @@ export default defineComponent({
                     tileXY[1] -= centerY
                 }
             }
-
-            console.log({centerX, centerY})
         }
 
         const getTileIndex = (type: TileTypes, x: number, y: number) => {

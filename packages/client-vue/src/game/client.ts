@@ -96,7 +96,7 @@ export const processPackets = (gameContext: GameContext) => {
                 const x = forgivingEqual((state.positionX + state.velocityX), (pos.positionX), PLAYER_POSITION_TOLERANCE)
                 const y = forgivingEqual((state.positionY + state.velocityY), (pos.positionY), PLAYER_POSITION_TOLERANCE)
                 if(x && y) continue
-                console.log("Moving player back...")
+                // Log reconciliation
                 xOffset = -state.velocityX
                 yOffset = -state.velocityY
             }
@@ -107,6 +107,7 @@ export const processPackets = (gameContext: GameContext) => {
             player.ship.physics.velocity.y = pos.velocityY
         }
 
+        // set player inputs
         for(const inputs of packets.playerInputs || []){
             if(inputs.playerId === gameContext.client.connectionId) continue
             
@@ -115,6 +116,20 @@ export const processPackets = (gameContext: GameContext) => {
             player.inputs.movementAngle = inputs.movementAngle
             player.inputs.movementAmount = inputs.movementAmount
             player.inputs.aimRotation = inputs.aimRotation
+        }
+
+        // despawn player
+        for(const { playerId } of packets.despawnPlayer || []){
+            const player = game.players[playerId]
+            if(typeof player === "undefined") continue
+            player.setSpawned(false)
+        }
+
+        // spawn player
+        for(const { playerId, x, y } of packets.spawnPlayer || []){
+            const player = game.players[playerId]
+            if(typeof player === "undefined") continue
+            game.spawnPlayer(player, x, y)
         }
         
         // Receive chat messages
@@ -132,6 +147,18 @@ export const processPackets = (gameContext: GameContext) => {
                         }],
                     })
                 }
+            }
+        }
+
+        const ignorePacket = [
+            "playerPositionSync",
+            "playerPosition", "playerInputs", 
+            "gameCountdown",
+            "ping", "playerPing"]
+        for(const key of Object.keys(packets)){
+            if(ignorePacket.includes(key)) continue
+            for(const packet of packets[key as keyof typeof packets] || []){
+                console.log(key, packet)
             }
         }
     }
@@ -176,10 +203,4 @@ export const sendPackets = (gameContext: GameContext) => {
         const buffer = new Uint8Array(code).buffer
         gameContext.client.send(buffer)
     }
-}
-
-export function sendGamePhase(phase: PipPipGamePhase){
-    const code = encode.gamePhase(phase)
-    const buffer = new Uint8Array(code).buffer
-    GAME_CONTEXT.client.send(buffer)
 }

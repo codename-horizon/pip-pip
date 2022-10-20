@@ -133,13 +133,25 @@ export class GameContext{
             }
         }
     }
-    
-    sendGamePhase(phase: PipPipGamePhase){
-        const code = encode.gamePhase(phase)
+
+    sendCode(code: number[]){
         const buffer = new Uint8Array(code).buffer
         this.client.send(buffer)
     }
+    
+    sendGamePhase(phase: PipPipGamePhase){
+        const code = encode.gamePhase(phase)
+        this.sendCode(code)
+    }
 
+    startGame(){
+        this.sendGamePhase(PipPipGamePhase.MATCH)
+    }
+
+    setMap(index: number){
+        const code = encode.gameMap(index)
+        this.sendCode(code)
+    }
 }
 
 export const GAME_CONTEXT = new GameContext()

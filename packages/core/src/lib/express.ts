@@ -23,7 +23,7 @@ export const handleError: ErrorRequestHandler = (err, req: Request, res: Respons
         message,
     })
 
-    console.warn(err)
+    // console.warn(err)
 }
 
 export type AsyncHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>

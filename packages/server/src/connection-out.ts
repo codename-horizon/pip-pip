@@ -49,6 +49,12 @@ export function getFullGameState(context: ConnectionContext): number[][] {
         messages.push(encode.playerPositionSync(player))
         messages.push(encode.playerPosition(player))
         messages.push(encode.playerPing(player))
+
+        if(player.spawned){
+            messages.push(encode.spawnPlayer(player))
+        } else{
+            messages.push(encode.despawnPlayer(player))
+        }
     }
     
     if(typeof game.host !== "undefined"){
@@ -58,7 +64,7 @@ export function getFullGameState(context: ConnectionContext): number[][] {
     messages.push(encode.gamePhase(game))
     messages.push(encode.gameCountdown(game))
     messages.push(encode.gameState(game))
-    messages.push(encode.gameMap(game))
+    messages.push(encode.gameMap(game.mapIndex))
 
     return messages
 }
@@ -94,6 +100,16 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         messages.push(encode.playerSetShip(player))
     }
 
+    
+    for(const event of gameEvents.filter("playerSpawned")){
+        const { player } = event.playerSpawned
+        if(player.spawned === true){
+            messages.push(encode.spawnPlayer(player))
+        } else{
+            messages.push(encode.despawnPlayer(player))
+        }
+    }
+
     // Send host
     if(gameEvents.filter("setHost").length > 0 && typeof game.host !== "undefined"){
         messages.push(encode.setHost(game.host))
@@ -111,7 +127,7 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
 
     // Send game map
     if(gameEvents.filter("setMap").length > 0){
-        messages.push(encode.gameMap(game))
+        messages.push(encode.gameMap(game.mapIndex))
     }
 
     for(const events of lobbyEvents.filter("packetMessage")){

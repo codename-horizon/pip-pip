@@ -1,5 +1,6 @@
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
+import { PIP_MAPS } from "@pip-pip/game/src/maps"
 import { GameContext, GAME_CONTEXT } from "."
 
 export type ChatCommand = {
@@ -57,21 +58,7 @@ GAME_COMMANDS.push({
     description: "Starts the game",
     callback(){
         if(GAME_CONTEXT.store.isHost){
-            GAME_CONTEXT.sendGamePhase(PipPipGamePhase.COUNTDOWN)
-        } else{
-            return MESSAGE_ERROR_NOT_HOST
-        }
-    }
-})
-
-GAME_COMMANDS.push({
-    command: "skip",
-    name: "Skip game countdown",
-    inputs: [],
-    description: "Skip game countdown",
-    callback(){
-        if(GAME_CONTEXT.store.isHost){
-            GAME_CONTEXT.sendGamePhase(PipPipGamePhase.MATCH)
+            GAME_CONTEXT.startGame()
         } else{
             return MESSAGE_ERROR_NOT_HOST
         }
@@ -93,6 +80,40 @@ GAME_COMMANDS.push({
 })
 
 GAME_COMMANDS.push({
+    command: "map",
+    name: "Select a map",
+    inputs: ["name|index"],
+    description: "Select a map",
+    callback(message, [nameIndex]){
+        if(!GAME_CONTEXT.store.isHost) return MESSAGE_ERROR_NOT_HOST
+        let index = -1
+        const forcedNumber = Number(nameIndex)
+        if(typeof forcedNumber === "number" && !Number.isNaN(forcedNumber)){
+            index = forcedNumber
+        } else if(typeof nameIndex === "string"){
+            index = PIP_MAPS.findIndex(mapType => 
+                mapType.id === nameIndex ||
+                mapType.name === nameIndex)
+        }
+
+        if(index in PIP_MAPS){
+            const mapType = PIP_MAPS[index]
+            GAME_CONTEXT.setMap(index)
+            return {
+                text: [{
+                    style: "info",
+                    text: "Map chosen:"
+                }, CHAT_SPACE, {
+                    text: mapType.name,
+                }],
+            }
+        } else{
+            return createErrorChatMessage("UNKNOWN", "Map not found.")
+        }
+    }
+})
+
+GAME_COMMANDS.push({
     command: "clear",
     name: "Clear Chat",
     inputs: [],
@@ -109,10 +130,12 @@ GAME_COMMANDS.push({
     description: "Show all commands",
     callback(){
         for(const command of GAME_COMMANDS){
+            const inputs = command.inputs.length === 0 ? "" : " " +
+                command.inputs.map(input => `[${input}]`)
             GAME_CONTEXT.store.chatMessages.push({
                 text: [{
                     style: "info",
-                    text: `/${command.command}`
+                    text: `/${command.command}${inputs}`
                 }, CHAT_SPACE, {
                     text: `${command.name}`
                 }],
@@ -205,6 +228,19 @@ export function processChat(gameContext: GameContext){
                 text: [{
                     style: "good",
                     text: "The match has started.",
+                }],
+            })
+        }
+    }
+
+    // send countdown
+    if(gameContext.game.phase === PipPipGamePhase.COUNTDOWN){
+        if(gameContext.game.countdown % gameContext.game.tps === 0){
+            const seconds = gameContext.game.countdown / gameContext.game.tps
+            gameContext.store.chatMessages.push({
+                text: [{
+                    style: "info",
+                    text: `Match begins in ${seconds}...`,
                 }],
             })
         }

@@ -16,14 +16,21 @@ export const packetManager = new PacketManager({
         playerId: $string(CONNECTION_ID_LENGTH),
         message: $varstring,
     }),
+
     addPlayer: new Packet({
         playerId: $string(CONNECTION_ID_LENGTH),
     }),
     removePlayer: new Packet({
         playerId: $string(CONNECTION_ID_LENGTH),
     }),
-    setHost: new Packet({
+    
+    despawnPlayer: new Packet({
         playerId: $string(CONNECTION_ID_LENGTH),
+    }),
+    spawnPlayer: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        x: $float16,
+        y: $float16,
     }),
     playerName: new Packet({
         playerId: $string(CONNECTION_ID_LENGTH),
@@ -63,6 +70,10 @@ export const packetManager = new PacketManager({
         useWeapon: $bool,
         useTactical: $bool,
         doReload: $bool,
+    }),
+
+    setHost: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
     }),
     gameState: new Packet({
         mode: $uint8,
@@ -107,8 +118,8 @@ export const encode = {
     gameCountdown: (game: PipPipGame) => packetManager.serializers.gameCountdown.encode({
         countdown: game.countdown,
     }),
-    gameMap: (game: PipPipGame) => packetManager.serializers.gameMap.encode({
-        mapIndex: game.mapIndex,
+    gameMap: (mapIndex: number) => packetManager.serializers.gameMap.encode({
+        mapIndex,
     }),
 
     addPlayer: (player: PipPlayer) => packetManager.serializers.addPlayer.encode({
@@ -117,6 +128,15 @@ export const encode = {
     removePlayer: (player: PipPlayer) => packetManager.serializers.removePlayer.encode({
         playerId: player.id,
     }),
+    despawnPlayer: (player: PipPlayer) => packetManager.serializers.despawnPlayer.encode({
+        playerId: player.id,
+    }),
+    spawnPlayer: (player: PipPlayer) => packetManager.serializers.spawnPlayer.encode({
+        playerId: player.id,
+        x: player.ship.physics.position.x,
+        y: player.ship.physics.position.y,
+    }),
+
     setHost: (player: PipPlayer) => packetManager.serializers.setHost.encode({
         playerId: player.id,
     }),

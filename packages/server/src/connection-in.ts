@@ -1,6 +1,7 @@
 import { forgivingEqual } from "@pip-pip/core/src/math"
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { PLAYER_POSITION_TOLERANCE } from "@pip-pip/game/src/logic/constants"
+import { PIP_MAPS } from "@pip-pip/game/src/maps"
 import { GameTickContext } from "."
 
 export function processLobbyPackets(context: GameTickContext){
@@ -9,9 +10,7 @@ export function processLobbyPackets(context: GameTickContext){
     for(const events of lobbyEvents.filter("addConnection")){
         const { connection } = events.addConnection
         const player = game.createPlayer(connection.id)
-
-        player.ship.physics.position.x = Math.random() * 500
-        player.ship.physics.position.y = Math.random() * 500
+        game.addPlayerMidGame(player)
     }
     // Remove players
     for(const events of lobbyEvents.filter("removeConnection")){
@@ -21,6 +20,7 @@ export function processLobbyPackets(context: GameTickContext){
             player.remove()
         }
     }
+
     // Update player status
     for(const events of lobbyEvents.filter("connectionStatusChange")){
         const { connection } = events.connectionStatusChange
@@ -30,6 +30,14 @@ export function processLobbyPackets(context: GameTickContext){
     // Process packets
     for(const events of lobbyEvents.filter("packetMessage")){
         const { packets, connection } = events.packetMessage
+
+        for(const { mapIndex } of packets.gameMap || []){
+            if(game.host?.id === connection.id){
+                if(mapIndex in PIP_MAPS){
+                    game.setMap(mapIndex)
+                }
+            }
+        }
 
         // set player ship
         for(const { playerId, shipIndex } of packets.playerSetShip || []){
@@ -42,11 +50,12 @@ export function processLobbyPackets(context: GameTickContext){
         //  Set game phase if host
         for(const { phase } of packets.gamePhase || []){
             if(game.host?.id === connection.id){
-                if(phase === PipPipGamePhase.COUNTDOWN){
-                    game.countdown = 20 * 5
+                if(phase === PipPipGamePhase.SETUP){
+                    // cancel game if ever
                     game.setPhase(phase)
-                } else{
-                    game.setPhase(phase)
+                }
+                if(phase === PipPipGamePhase.MATCH){
+                    game.startMatch()
                 }
             }
         }
@@ -65,7 +74,7 @@ export function processLobbyPackets(context: GameTickContext){
                     player.ship.physics.velocity.x = pos.velocityX
                     player.ship.physics.velocity.y = pos.velocityY
                 } else{
-                    console.log("discarding player position")
+                    console.log(`Player ${player.id} position discarded. x: ${state.positionX.toFixed(2)}, y: ${state.positionY.toFixed(2)}`)
                 }
             }
         }

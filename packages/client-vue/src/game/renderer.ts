@@ -238,24 +238,24 @@ export class PipPipRenderer{
             this.mapTiles.push(graphic)
         }
 
-        const graphic = new PIXI.Graphics()
-        graphic.lineStyle({
-            width: 10,
-            color: 0xff0000,
-        })
-        this.mapForegroundContainer.addChild(graphic)
-        for(const segWall of this.game.map.segWalls){
-            if(segWall.start.x === segWall.end.x && segWall.start.y === segWall.end.y){
-                const offset = TILE_SIZE / 4
-                graphic.moveTo(segWall.start.x - offset, segWall.start.y - offset)
-                graphic.lineTo(segWall.end.x + offset, segWall.end.y + offset)
-                graphic.moveTo(segWall.start.x + offset, segWall.start.y - offset)
-                graphic.lineTo(segWall.end.x - offset, segWall.end.y + offset)
-            } else{
-                graphic.moveTo(segWall.start.x, segWall.start.y)
-                graphic.lineTo(segWall.end.x, segWall.end.y)
-            }
-        }
+        // const graphic = new PIXI.Graphics()
+        // graphic.lineStyle({
+        //     width: 10,
+        //     color: 0xff0000,
+        // })
+        // this.mapForegroundContainer.addChild(graphic)
+        // for(const segWall of this.game.map.segWalls){
+        //     if(segWall.start.x === segWall.end.x && segWall.start.y === segWall.end.y){
+        //         const offset = TILE_SIZE / 4
+        //         graphic.moveTo(segWall.start.x - offset, segWall.start.y - offset)
+        //         graphic.lineTo(segWall.end.x + offset, segWall.end.y + offset)
+        //         graphic.moveTo(segWall.start.x + offset, segWall.start.y - offset)
+        //         graphic.lineTo(segWall.end.x - offset, segWall.end.y + offset)
+        //     } else{
+        //         graphic.moveTo(segWall.start.x, segWall.start.y)
+        //         graphic.lineTo(segWall.end.x, segWall.end.y)
+        //     }
+        // }
     }
 
     getViewportRadius(){
@@ -298,12 +298,18 @@ export class PipPipRenderer{
                 graphic.container.position.y += dy * movementSmoothing
             }
 
-
             graphic.container.rotation += radianDifference(graphic.container.rotation, graphic.player.ship.rotation) * playerRotationSmoothing
 
+            graphic.container.visible = graphic.player.spawned
+
             if(isClient && typeof graphic.player.spectating === "undefined"){
-                this.camera.target.x = tx
-                this.camera.target.y = ty
+                if(graphic.player.spawned){
+                    this.camera.target.x = tx
+                    this.camera.target.y = ty
+                } else{
+                    this.camera.target.x = 0
+                    this.camera.target.y = 0
+                }
             }
         }
 

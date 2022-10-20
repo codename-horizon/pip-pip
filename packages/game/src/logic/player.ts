@@ -15,6 +15,10 @@ export type PlayerInputs = {
     doReload: boolean,
 }
 
+export type PlayerTimings = {
+    spawnTime: number,
+}
+
 export type PlayerPositionState = {
     positionX: number,
     positionY: number,
@@ -56,6 +60,13 @@ export class PipPlayer{
         doReload: false,
     }
 
+    timings: PlayerTimings = {
+        spawnTime: 0,
+    }
+
+    spectator = false
+    spawned = false
+
     positionStates: PlayerPositionState[] = []
 
     constructor(game: PipPipGame, id: string){
@@ -69,9 +80,16 @@ export class PipPlayer{
         this.setShip()
     }
 
+    get canSpawn(){
+        if(this.spectator === true) return false
+        if(this.spawned === true) return false
+        if(this.timings.spawnTime > 0) return false
+        return true
+    }
+
     remove(){
         if(!(this.id in this.game.players)) return
-        this.game.physics.removeObject(this.ship.physics)
+        this.setSpawned(false)
         delete this.game.players[this.id]
         this.game.events.emit("removePlayer", { player: this })
         this.game.setHostIfNeeded()
@@ -87,6 +105,18 @@ export class PipPlayer{
     setIdle(idle: boolean){
         this.idle = idle
         this.game.events.emit("playerIdleChange", { player: this })
+    }
+
+    setSpawned(state: boolean){
+        if(typeof this.ship !== "undefined"){
+            if(state === true){
+                this.game.physics.addObject(this.ship.physics)
+            } else{
+                this.game.physics.removeObject(this.ship.physics)
+            }
+        }
+        this.spawned = state
+        this.game.events.emit("playerSpawned", { player: this })
     }
 
     setShip(index?: number){
@@ -110,11 +140,15 @@ export class PipPlayer{
             this.game.physics.removeObject(this.ship.physics)
         }
 
+        if(this.spawned === true){
+            this.game.physics.removeObject(this.ship.physics)
+            this.game.physics.addObject(ship.physics)
+        }
+
         this.ship = ship
         this.shipIndex = index
         this.shipType = shipType
 
-        this.game.physics.addObject(this.ship.physics)
         this.game.events.emit("playerSetShip", {
             player: this,
             ship,
