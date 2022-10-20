@@ -109,7 +109,7 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
         client.send(code)
     })
 
-    client.getPing = () => new Promise((resolve, reject) => {
+    client.getPing = () => new Promise((resolve) => {
         let completed = false
 
         const now = Date.now()

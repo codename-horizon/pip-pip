@@ -97,6 +97,7 @@ export class Client<T extends PacketManagerSerializerMap>{
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface Client<T extends PacketManagerSerializerMap>{
     // axios.ts
     api: AxiosInstance

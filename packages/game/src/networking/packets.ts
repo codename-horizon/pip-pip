@@ -1,8 +1,7 @@
-import { $bool, $float16, $float64, $string, $uint16, $uint32, $uint8, $varstring } from "@pip-pip/core/src/networking/packets/serializer"
-import { PacketManager, GetPacketSerializerMap, ExtractSerializerMap } from "@pip-pip/core/src/networking/packets/manager"
+import { $bool, $float16, $string, $uint16, $uint8, $varstring } from "@pip-pip/core/src/networking/packets/serializer"
+import { PacketManager, ExtractSerializerMap } from "@pip-pip/core/src/networking/packets/manager"
 import { Packet } from "@pip-pip/core/src/networking/packets/packet"
 
-import { Bullet } from "../logic/bullet"
 import { PipPlayer } from "../logic/player"
 import { PipPipGame, PipPipGamePhase } from "../logic"
 

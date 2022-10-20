@@ -8,7 +8,8 @@
     "dev:latency": "HRZN_FORCE_LATENCY=30 yarn dev",
     "dev:jitter": "HRZN_FORCE_LATENCY=30 HRZN_FORCE_JITTER=5 yarn dev",
     "prod": "NODE_ENV=production node ./dist/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint . --ext .ts"
   },
   "peerDependencies": {
     "@pip-pip/core": "*",

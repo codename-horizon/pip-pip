@@ -82,7 +82,7 @@ export function initializeRoutes<
     }))
 
     // Get available lobbies
-    router.get("/lobbies", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+    router.get("/lobbies", server.routerAuthMiddleware, asyncHandler(async () => {
         throw createHttpError(400, "Not yet implemented.")
     }))
 

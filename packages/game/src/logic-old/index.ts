@@ -217,9 +217,9 @@ export class PipPipGame{
 
         const bullets = Object.values(this.bullets)
 
-        for(const bullet of bullets){
-            // collision checks
-        }
+        // for(const bullet of bullets){
+        //     // collision checks
+        // }
 
         this.physics.update(this.deltaMs)
 

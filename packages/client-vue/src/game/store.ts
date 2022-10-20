@@ -3,7 +3,7 @@ import { CHAT_MAX_MESSAGE_LENGTH } from "@pip-pip/game/src/logic/constants"
 import { PIP_SHIPS } from "@pip-pip/game/src/ships"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
-import { GAME_CONTEXT, GameContext, getClientPlayer } from "."
+import { GAME_CONTEXT, getClientPlayer } from "."
 import { ChatMessage } from "./chat"
 
 export const useGameStore = defineStore("game", () => {

@@ -66,7 +66,7 @@ export function initializeWebSockets<
         connection.send(code)
     })
 
-    connection.getPing = () => new Promise((resolve, reject) => {
+    connection.getPing = () => new Promise((resolve) => {
         let completed = false
 
         const now = Date.now()

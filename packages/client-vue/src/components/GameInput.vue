@@ -58,7 +58,6 @@ const inputEventListener = (e: Event) => {
 }
 
 onMounted(() => {
-    console.log(props)
     input.value?.addEventListener("focus", inputEventListener)
     input.value?.addEventListener("blur", inputEventListener)
     input.value?.addEventListener("keyup", inputEventListener)

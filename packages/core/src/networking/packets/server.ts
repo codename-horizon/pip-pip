@@ -1,4 +1,4 @@
-import { $biguint64, $string } from "./serializer"
+import { $string } from "./serializer"
 import { Packet } from "./packet"
 
 export const PING_PONG_PACKET_ID_LENGTH = 1

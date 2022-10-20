@@ -4,7 +4,8 @@
   "main": "./src/index.ts",
   "license": "MIT",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint . --ext .ts"
   },
   "dependencies": {
     "@petamoriken/float16": "^3.6.6",

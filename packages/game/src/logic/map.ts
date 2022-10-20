@@ -1,5 +1,4 @@
 import { PointPhysicsRectWall, PointPhysicsSegmentWall } from "@pip-pip/core/src/physics"
-import { PipPipGame } from "."
 import { TILE_SIZE, SPAWN_DIAMETER } from "./constants"
 
 export class PointRadius{
@@ -112,7 +111,5 @@ export class JSONPipGameMap extends PipGameMap{
         this.bounds.max.x = maxX + TILE_SIZE / 2
         this.bounds.min.y = minY - TILE_SIZE / 2
         this.bounds.max.y = maxY + TILE_SIZE / 2
-
-        console.log(this.bounds)
     }
 }

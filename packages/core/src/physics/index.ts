@@ -374,6 +374,7 @@ export class PointPhysicsWorld{
             }
             const C = -0.5 * deltaTime
             const P = -1 * deltaTime
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             for(const [_x, _y, vx, vy] of points){
                 object.velocity.qx += vx * C
                 object.velocity.qy += vy * C

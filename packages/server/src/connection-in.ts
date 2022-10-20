@@ -1,7 +1,6 @@
 import { forgivingEqual } from "@pip-pip/core/src/math"
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { PLAYER_POSITION_TOLERANCE } from "@pip-pip/game/src/logic/constants"
-import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import { GameTickContext } from "."
 
 export function processLobbyPackets(context: GameTickContext){

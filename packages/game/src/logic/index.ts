@@ -147,6 +147,7 @@ export class PipPipGame{
             const key = _key as keyof PipPipGameSettings
             if(this.settings[key] !== settings[key]){
                 changed = true
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const s = this.settings as any // TODO: Fix type
                 if(key in s) s[key] = settings[key]
             }

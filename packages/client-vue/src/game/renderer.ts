@@ -5,12 +5,10 @@ import * as PIXI from "pixi.js"
 import { GameContext } from "."
 import { assetLoader } from "./assets"
 
-import { CRTFilter, GlitchFilter, PixelateFilter, BulgePinchFilter } from 'pixi-filters'
+import { CRTFilter, GlitchFilter, PixelateFilter, BulgePinchFilter } from "pixi-filters"
 import { DisplacementFilter } from "@pixi/filter-displacement"
 import { Point } from "pixi.js"
 import { SHIP_DAIMETER, TILE_SIZE } from "@pip-pip/game/src/logic/constants"
-import { PointPhysicsRectWall } from "@pip-pip/core/src/physics"
-import { generateId } from "@pip-pip/core/src/lib/utils"
 import { PipGameTile } from "@pip-pip/game/src/logic/map"
 
 const SMOOTHING = {

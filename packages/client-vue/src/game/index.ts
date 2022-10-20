@@ -68,7 +68,7 @@ export class GameContext{
 
         this.renderer.mount(container)
 
-        this.renderTick.on("tick", ({deltaMs, deltaTime}) => {
+        this.renderTick.on("tick", ({deltaMs}) => {
             this.renderer.render(this, deltaMs)
         })
 
@@ -109,7 +109,6 @@ export class GameContext{
     }
 
     unmountGameView(){
-        console.log("unmounted")
         this.game?.destroy()
         this.gameEvents?.destroy()
         this.renderTick?.destroy()

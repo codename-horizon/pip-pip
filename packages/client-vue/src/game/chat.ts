@@ -55,7 +55,7 @@ GAME_COMMANDS.push({
     name: "Start Game",
     inputs: [],
     description: "Starts the game",
-    callback(message, inputs){
+    callback(){
         if(GAME_CONTEXT.store.isHost){
             GAME_CONTEXT.sendGamePhase(PipPipGamePhase.COUNTDOWN)
         } else{
@@ -69,7 +69,7 @@ GAME_COMMANDS.push({
     name: "Skip game countdown",
     inputs: [],
     description: "Skip game countdown",
-    callback(message, inputs){
+    callback(){
         if(GAME_CONTEXT.store.isHost){
             GAME_CONTEXT.sendGamePhase(PipPipGamePhase.MATCH)
         } else{
@@ -83,7 +83,7 @@ GAME_COMMANDS.push({
     name: "Stop Game",
     inputs: [],
     description: "Stops the game",
-    callback(message, inputs){
+    callback(){
         if(GAME_CONTEXT.store.isHost){
             GAME_CONTEXT.sendGamePhase(PipPipGamePhase.SETUP)
         } else{
@@ -97,7 +97,7 @@ GAME_COMMANDS.push({
     name: "Clear Chat",
     inputs: [],
     description: "Clears the whole chat only for you.",
-    callback(message, inputs){
+    callback(){
         GAME_CONTEXT.store.chatMessages = []
     }
 })
@@ -107,7 +107,7 @@ GAME_COMMANDS.push({
     name: "Help",
     inputs: [],
     description: "Show all commands",
-    callback(message, inputs){
+    callback(){
         for(const command of GAME_COMMANDS){
             GAME_CONTEXT.store.chatMessages.push({
                 text: [{

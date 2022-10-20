@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "maps": "go run ./scripts/generate-maps.go"
+    "maps": "go run ./scripts/generate-maps.go",
+    "lint": "eslint . --ext .ts"
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^5.37.0",

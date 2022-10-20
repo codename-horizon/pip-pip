@@ -1,5 +1,4 @@
 import { RecursivePartial } from "@pip-pip/core/src/lib/types"
-import { generateId } from "@pip-pip/core/src/lib/utils"
 import { radianDifference } from "@pip-pip/core/src/math"
 import { PointPhysicsObject } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
@@ -122,14 +121,17 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
 export const createShipStats = (stats: RecursivePartial<ShipStats> = {}): ShipStats => {
     const output = {} as ShipStats
 
+    type T = Record<string, unknown>
+    type K = T | undefined
+
     function applyChanges(
-        target: Record<string, any>, 
-        changes: Record<string, any> | undefined, 
-        source: Record<string, any>){
+        target: T, 
+        changes: K, 
+        source: T){
         for(const key in source){
             if(typeof source[key] === "object"){
                 target[key] = {}
-                applyChanges(target[key], changes?.[key], source[key])
+                applyChanges(target[key] as T, changes?.[key] as K, source[key] as T)
             } else{
                 if(typeof changes === "undefined"){
                     target[key] = source[key]
