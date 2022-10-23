@@ -17,6 +17,7 @@ export type PipPipGameEventMap = {
     playerSetShip: { player: PipPlayer, ship: PipShip },
     playerRemoveShip: { player: PipPlayer, ship: PipShip },
     playerSpawned: { player: PipPlayer },
+    playerScoreChanged: { player: PipPlayer },
 
     setHost: { player: PipPlayer },
     removeHost: undefined,
@@ -40,6 +41,7 @@ export type PipPipGameOptions = {
     assignHost: boolean,
     triggerPhases: boolean
     triggerSpawns: boolean,
+    setScores: boolean,
 }
 
 export enum PipPipGameMode {
@@ -73,6 +75,7 @@ export class PipPipGame{
         assignHost: false,
         triggerPhases: false,
         triggerSpawns: false,
+        setScores: false,
     }
 
     events: EventEmitter<PipPipGameEventMap> = new EventEmitter()
@@ -188,6 +191,12 @@ export class PipPipGame{
                 this.spawnPlayer(player)
             }
         }
+        if(this.options.setScores){
+            const players = Object.values(this.players)
+            for(const player of players){
+                player.resetScores()
+            }
+        }
     }
 
     get playerCount(){ return Object.keys(this.players).length }
@@ -284,7 +293,7 @@ export class PipPipGame{
     updatePhysics(){
         // update players
         for(const player of Object.values(this.players)){
-            player.ship.update()
+            player.update()
         }
 
         if(this.phase === PipPipGamePhase.MATCH){

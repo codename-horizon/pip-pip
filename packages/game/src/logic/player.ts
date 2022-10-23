@@ -13,6 +13,8 @@ export type PlayerInputs = {
     useWeapon: boolean,
     useTactical: boolean,
     doReload: boolean,
+
+    spawn: boolean,
 }
 
 export type PlayerTimings = {
@@ -24,6 +26,13 @@ export type PlayerPositionState = {
     positionY: number,
     velocityX: number,
     velocityY: number,
+}
+
+export type PlayerScores = {
+    kills: number,
+    assists: number,
+    deaths: number,
+    damage: number,
 }
 
 export const MAX_PLAYER_POSITION_STATES = 8
@@ -43,11 +52,13 @@ export class PipPlayer{
     ping = 0
 
     team = 0
-    kills = 0
-    assists = 0
-    deaths = 0
 
-    checkpoint = 0
+    score: PlayerScores = {
+        kills: 0,
+        assists: 0,
+        deaths: 0,
+        damage: 0,
+    }
 
     inputs: PlayerInputs = {
         movementAngle: 0,
@@ -58,6 +69,8 @@ export class PipPlayer{
         useWeapon: false,
         useTactical: false,
         doReload: false,
+
+        spawn: false,
     }
 
     timings: PlayerTimings = {
@@ -94,12 +107,32 @@ export class PipPlayer{
         this.game.events.emit("removePlayer", { player: this })
         this.game.setHostIfNeeded()
     }
+    
+    setKills(n: number){
+        this.score.kills = n
+        this.game.events.emit("playerScoreChanged", { player: this })
+    }
+    
+    setAssists(n: number){
+        this.score.assists = n
+        this.game.events.emit("playerScoreChanged", { player: this })
+    }
+    
+    setDeaths(n: number){
+        this.score.deaths = n
+        this.game.events.emit("playerScoreChanged", { player: this })
+    }
+    
+    setDamage(n: number){
+        this.score.damage = n
+        this.game.events.emit("playerScoreChanged", { player: this })
+    }
 
     resetScores(){
-        this.kills = 0
-        this.assists = 0
-        this.deaths = 0
-        this.checkpoint = 0
+        this.setKills(0)
+        this.setAssists(0)
+        this.setDeaths(0)
+        this.setDamage(0)
     }
 
     setIdle(idle: boolean){
@@ -190,5 +223,9 @@ export class PipPlayer{
             velocityX: from.velocityX + (to.velocityX - from.velocityX) * dist,
             velocityY: from.velocityY + (to.velocityY - from.velocityY) * dist,
         }
+    }
+
+    update(){
+        this.ship?.update()
     }
 }

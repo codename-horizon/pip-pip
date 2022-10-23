@@ -40,10 +40,10 @@ type TilePoint [2]int
 type TileSet []TilePoint
 
 type GameMap struct {
-	WallTiles    TileSet       `json:"wallTiles"`
-	SpawnTiles   TileSet       `json:"spawnTiles"`
-	WallSegments []TileSegment `json:"wallSegments"`
-	WallSegmentTiles TileSet `json:"wallSegmentTiles"`
+	WallTiles        TileSet       `json:"wallTiles"`
+	SpawnTiles       TileSet       `json:"spawnTiles"`
+	WallSegments     []TileSegment `json:"wallSegments"`
+	WallSegmentTiles TileSet       `json:"wallSegmentTiles"`
 }
 
 func translateTileSet(t TileSet, x int, y int) TileSet {
@@ -75,16 +75,16 @@ type TileMatrix [9]int
 
 func tileCountCorners(t TileSet, centerX int, centerY int) int {
 	sum := 0
-	if tileExists(t, centerX - 1, centerY - 1){
+	if tileExists(t, centerX-1, centerY-1) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX - 1, centerY + 1){
+	if tileExists(t, centerX-1, centerY+1) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX + 1, centerY - 1){
+	if tileExists(t, centerX+1, centerY-1) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX + 1, centerY + 1){
+	if tileExists(t, centerX+1, centerY+1) {
 		sum = sum + 1
 	}
 	return sum
@@ -92,16 +92,16 @@ func tileCountCorners(t TileSet, centerX int, centerY int) int {
 
 func tileCountSides(t TileSet, centerX int, centerY int) int {
 	sum := 0
-	if tileExists(t, centerX - 1, centerY){
+	if tileExists(t, centerX-1, centerY) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX + 1, centerY){
+	if tileExists(t, centerX+1, centerY) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX, centerY + 1){
+	if tileExists(t, centerX, centerY+1) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX, centerY - 1){
+	if tileExists(t, centerX, centerY-1) {
 		sum = sum + 1
 	}
 	return sum
@@ -174,14 +174,14 @@ func (gm *GameMap) GenerateSegments() {
 		corners := tileCountCorners(pool, x, y) <= 3
 		sides := tileCountSides(pool, x, y) <= 3
 		con := tileExists(pool, x, y) && (corners || sides)
-		start := con && tileExists(pool, x + offsetX, y + offsetY)
+		start := con && tileExists(pool, x+offsetX, y+offsetY)
 		return con, start
 	}
 
 	// horizontal
-	for y := minY - 1; y <= maxY + 1; y++ {
+	for y := minY - 1; y <= maxY+1; y++ {
 		tracking, startX, startY := false, 0, 0
-		for x := minX - 1; x <= maxX + 1; x++ {
+		for x := minX - 1; x <= maxX+1; x++ {
 			con, start := getCon(x, y, 1, 0)
 			if tracking {
 				if con {
@@ -190,7 +190,7 @@ func (gm *GameMap) GenerateSegments() {
 					segments = append(segments, TileSegment{startX, startY, x - 1, y})
 					tracking = false
 				}
-			} else{ 
+			} else {
 				if start {
 					tracking, startX, startY = true, x, y
 				}
@@ -199,9 +199,9 @@ func (gm *GameMap) GenerateSegments() {
 	}
 
 	// vertical
-	for x := minX - 1; x <= maxX + 1; x++ {
+	for x := minX - 1; x <= maxX+1; x++ {
 		tracking, startX, startY := false, 0, 0
-		for y := minY - 1; y <= maxY + 1; y++ {
+		for y := minY - 1; y <= maxY+1; y++ {
 			con, start := getCon(x, y, 0, 1)
 			if tracking {
 				if con {
@@ -210,7 +210,7 @@ func (gm *GameMap) GenerateSegments() {
 					segments = append(segments, TileSegment{startX, startY, x, y - 1})
 					tracking = false
 				}
-			} else{ 
+			} else {
 				if start {
 					tracking, startX, startY = true, x, y
 				}
@@ -221,11 +221,11 @@ func (gm *GameMap) GenerateSegments() {
 	// lone tiles
 	for i := 0; i < len(pool); i++ {
 		tile := pool[i]
-		if tileCountSides(pool, tile[0], tile[1]) == 0 && tileCountCorners(pool, tile[0], tile[1]) == 0 {
+		if (tileCountSides(pool, tile[0], tile[1]) + tileCountCorners(pool, tile[0], tile[1])) <= 2 {
 			segments = append(segments, TileSegment{tile[0], tile[1], tile[0], tile[1]})
 		}
 	}
-	
+
 	gm.WallSegmentTiles = pool
 	gm.WallSegments = segments
 }
@@ -234,13 +234,13 @@ func whyTheFuckDoesGoNotHaveSplice(slice [][]TilePoint, index int) [][]TilePoint
 	if index < 0 {
 		return slice
 	}
-	if index > len(slice){
+	if index > len(slice) {
 		return slice
 	}
-	if index == 0{
+	if index == 0 {
 		return slice[1:]
 	}
-	if index == len(slice) - 1{
+	if index == len(slice)-1 {
 		return slice[:index]
 	}
 	return append(slice[:index], slice[index+1:]...)

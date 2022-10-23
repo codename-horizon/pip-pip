@@ -227,6 +227,31 @@ export class PipShip{
         this.physics.collision.channels = []
     }
 
+    get maxHealth(){
+        return this.stats.health.capacity.normal
+    }
+
+    get isDead(){
+        if(this.capacities.health === 0) return true
+        return false
+    }
+
+    get isReloading(){
+        if(this.timings.weaponReload !== 0) return true
+        return false
+    }
+
+    get canReload(){
+        if(this.isReloading) return false
+        return true
+    }
+
+    get canUseWeapon(){
+        if(this.capacities.tactical === 0) return false
+        if(this.timings.weaponRate !== 0) return false
+        return true
+    }
+
     update(){
         this.timings.invincibility = decrease(this.timings.invincibility)
         this.timings.healthRegenerationHeal = decrease(this.timings.healthRegenerationHeal)

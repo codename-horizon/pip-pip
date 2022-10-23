@@ -57,6 +57,7 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby}) => {
         assignHost: true,
         triggerPhases: true,
         triggerSpawns: true,
+        setScores: true,
     })
 
     const lobbyEvents = new EventCollector(lobby.events)

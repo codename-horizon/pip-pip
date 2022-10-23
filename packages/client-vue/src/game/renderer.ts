@@ -10,6 +10,7 @@ import { DisplacementFilter } from "@pixi/filter-displacement"
 import { Point } from "pixi.js"
 import { SHIP_DAIMETER, TILE_SIZE } from "@pip-pip/game/src/logic/constants"
 import { PipGameTile } from "@pip-pip/game/src/logic/map"
+import { COLORS, DIMS } from "./styles"
 
 const SMOOTHING = {
     CAMERA_MOVEMENT: 5,
@@ -78,6 +79,7 @@ export class PlayerGraphic {
 
     container: PIXI.Container = new PIXI.Container()
     
+    overlayGraphic: PIXI.Graphics = new PIXI.Graphics()
     shipContainer: PIXI.Container = new PIXI.Container()
     shipSprite?: PIXI.Sprite
 
@@ -86,9 +88,10 @@ export class PlayerGraphic {
         this.player = player
 
         this.container.addChild(this.shipContainer)
+        this.container.addChild(this.overlayGraphic)
     }
 
-    updateShip(){
+    updateShipSprite(){
         if(typeof this.shipSprite !== "undefined"){
             this.shipContainer.removeChild(this.shipSprite)
         }
@@ -207,7 +210,7 @@ export class PipPipRenderer{
         })
 
         this.game.events.on("playerSetShip", ({ player }) => {
-            this.players[player.id]?.updateShip()
+            this.players[player.id]?.updateShipSprite()
         })
 
         this.game.events.on("removePlayer", ({ player }) => {
@@ -281,7 +284,7 @@ export class PipPipRenderer{
         const playerMovementSmoothing = deltaTime / SMOOTHING.PLAYER_MOVEMENT
         const clientPlayerMovementSmoothing = deltaTime / SMOOTHING.CLIENT_PLAYER_MOVEMENT
         for(const graphic of players){
-            const isClient = graphic.player.id === gameContext.client.connectionId
+            const isClient = graphic.player === gameContext.getClientPlayer()
             const movementSmoothing = isClient ? clientPlayerMovementSmoothing : playerMovementSmoothing
 
             const tx = graphic.player.ship.physics.position.x + graphic.player.ship.physics.velocity.x * lerp
@@ -298,9 +301,25 @@ export class PipPipRenderer{
                 graphic.container.position.y += dy * movementSmoothing
             }
 
-            graphic.container.rotation += radianDifference(graphic.container.rotation, graphic.player.ship.rotation) * playerRotationSmoothing
+            graphic.shipContainer.rotation += radianDifference(graphic.shipContainer.rotation, graphic.player.ship.rotation) * playerRotationSmoothing
 
             graphic.container.visible = graphic.player.spawned
+
+            graphic.overlayGraphic.clear()
+            graphic.overlayGraphic.lineStyle({
+                width: DIMS.HEALTH_BAR_HEIGHT + DIMS.HEALTH_BAR_BORDER * 2,
+                color: COLORS.DARK_1,
+            })
+            graphic.overlayGraphic.moveTo(-(DIMS.HEALTH_BAR_WIDTH / 2 + DIMS.HEALTH_BAR_BORDER), DIMS.HEALTH_BAR_OFFSET)
+            graphic.overlayGraphic.lineTo(DIMS.HEALTH_BAR_WIDTH / 2 + DIMS.HEALTH_BAR_BORDER, DIMS.HEALTH_BAR_OFFSET)
+
+            graphic.overlayGraphic.lineStyle({
+                width: DIMS.HEALTH_BAR_HEIGHT,
+                color: isClient ? COLORS.GOOD : COLORS.BAD,
+            })
+            graphic.overlayGraphic.moveTo(-(DIMS.HEALTH_BAR_WIDTH / 2), DIMS.HEALTH_BAR_OFFSET)
+            const h = graphic.player.ship.capacities.health / graphic.player.ship.maxHealth
+            graphic.overlayGraphic.lineTo(DIMS.HEALTH_BAR_WIDTH * h - (DIMS.HEALTH_BAR_WIDTH / 2), DIMS.HEALTH_BAR_OFFSET)
 
             if(isClient && typeof graphic.player.spectating === "undefined"){
                 if(graphic.player.spawned){
