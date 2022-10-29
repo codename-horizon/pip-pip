@@ -8,6 +8,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -22,6 +23,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	routines := 0
+
+	c := make(chan struct{})
 	for _, file := range files {
 		filename := file.Name()
 		if file.IsDir() || !strings.HasSuffix(strings.ToLower(filename), FILE_FORMAT) {
@@ -30,14 +34,23 @@ func main() {
 		}
 
 		fmt.Println("Processing file:", filename)
-		processFile(filename)
+		routines++
+		go func() {
+			processFile(filename)
+			c <- struct{}{}
+		}()
 	}
 
+	for i := 0; i < routines; i++ {
+		<-c
+	}
 }
 
 type TileSegment [4]int
 type TilePoint [2]int
 type TileSet []TilePoint
+
+type TileHash = map[string]bool
 
 type GameMap struct {
 	WallTiles        TileSet       `json:"wallTiles"`
@@ -69,39 +82,61 @@ func tileExists(t TileSet, x int, y int) bool {
 	return false
 }
 
+func createTileKey(x int, y int) string {
+	return strconv.Itoa(x) + "-" + strconv.Itoa(y)
+}
+
+func createTileHash(t TileSet) TileHash {
+	hash := make(TileHash)
+
+	for i := 0; i < len(t); i++ {
+		_x, _y := t[i][0], t[i][1]
+		key := createTileKey(_x, _y)
+		hash[key] = true
+	}
+
+	return hash
+}
+
+func tileExistsInHash(t TileHash, x int, y int) bool {
+	key := createTileKey(x, y)
+	_, ok := t[key]
+	return ok
+}
+
 var n = 2
 
 type TileMatrix [9]int
 
-func tileCountCorners(t TileSet, centerX int, centerY int) int {
+func tileCountCorners(t TileHash, centerX int, centerY int) int {
 	sum := 0
-	if tileExists(t, centerX-1, centerY-1) {
+	if tileExistsInHash(t, centerX-1, centerY-1) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX-1, centerY+1) {
+	if tileExistsInHash(t, centerX-1, centerY+1) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX+1, centerY-1) {
+	if tileExistsInHash(t, centerX+1, centerY-1) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX+1, centerY+1) {
+	if tileExistsInHash(t, centerX+1, centerY+1) {
 		sum = sum + 1
 	}
 	return sum
 }
 
-func tileCountSides(t TileSet, centerX int, centerY int) int {
+func tileCountSides(t TileHash, centerX int, centerY int) int {
 	sum := 0
-	if tileExists(t, centerX-1, centerY) {
+	if tileExistsInHash(t, centerX-1, centerY) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX+1, centerY) {
+	if tileExistsInHash(t, centerX+1, centerY) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX, centerY+1) {
+	if tileExistsInHash(t, centerX, centerY+1) {
 		sum = sum + 1
 	}
-	if tileExists(t, centerX, centerY-1) {
+	if tileExistsInHash(t, centerX, centerY-1) {
 		sum = sum + 1
 	}
 	return sum
@@ -161,9 +196,11 @@ func (gm *GameMap) GenerateSegments() {
 	basePool := TileSet{}
 	basePool = append(basePool, gm.WallTiles...)
 
+	basePoolHash := createTileHash(basePool)
+
 	for i := 0; i < len(basePool); i++ {
 		tile := basePool[i]
-		if (tileCountCorners(basePool, tile[0], tile[1]) + tileCountSides(basePool, tile[0], tile[1])) < 8 {
+		if (tileCountCorners(basePoolHash, tile[0], tile[1]) + tileCountSides(basePoolHash, tile[0], tile[1])) < 8 {
 			pool = append(pool, tile)
 		}
 	}
@@ -171,10 +208,10 @@ func (gm *GameMap) GenerateSegments() {
 	minX, maxX, minY, maxY := getTileSetBounds(pool)
 
 	getCon := func(x int, y int, offsetX int, offsetY int) (bool, bool) {
-		corners := tileCountCorners(pool, x, y) <= 3
-		sides := tileCountSides(pool, x, y) <= 3
-		con := tileExists(pool, x, y) && (corners || sides)
-		start := con && tileExists(pool, x+offsetX, y+offsetY)
+		corners := tileCountCorners(basePoolHash, x, y) <= 3
+		sides := tileCountSides(basePoolHash, x, y) <= 3
+		con := tileExistsInHash(basePoolHash, x, y) && (corners || sides)
+		start := con && tileExistsInHash(basePoolHash, x+offsetX, y+offsetY)
 		return con, start
 	}
 
@@ -221,7 +258,7 @@ func (gm *GameMap) GenerateSegments() {
 	// lone tiles
 	for i := 0; i < len(pool); i++ {
 		tile := pool[i]
-		if (tileCountSides(pool, tile[0], tile[1]) + tileCountCorners(pool, tile[0], tile[1])) <= 2 {
+		if (tileCountSides(basePoolHash, tile[0], tile[1]) + tileCountCorners(basePoolHash, tile[0], tile[1])) <= 2 {
 			segments = append(segments, TileSegment{tile[0], tile[1], tile[0], tile[1]})
 		}
 	}
@@ -247,6 +284,7 @@ func whyTheFuckDoesGoNotHaveSplice(slice [][]TilePoint, index int) [][]TilePoint
 }
 
 func processFile(filename string) {
+	fmt.Println("Starting processing...")
 	inputPath := SRC_MAPS_DIR + "/" + filename
 	outputPath := OUT_MAPS_DIR + "/" + strings.Replace(filename, FILE_FORMAT, ".map.json", -1)
 

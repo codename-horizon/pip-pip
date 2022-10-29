@@ -17,6 +17,7 @@
     "map": "yarn workspace @pip-pip/map-maker",
     "build": "bash ./scripts/build.sh",
     "deploy": "bash ./scripts/deploy.sh",
-    "lint": "yarn client lint && yarn core lint && yarn game lint && yarn server lint"
+    "lint": "yarn client lint && yarn core lint && yarn game lint && yarn server lint",
+    "generate-maps": "cd tools/game_maps && cargo run"
   }
 }

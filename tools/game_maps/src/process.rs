@@ -1,51 +1,84 @@
+use std::{path::Path, fs::write};
+
 use image::{self, GenericImageView};
 
-use crate::{GameMap, MapPNG};
+use crate::{GameMap, MapPNG, OUTPUT_DIR, fs};
 
-pub fn get_gamep_maps(map_pngs: &Vec<MapPNG>) {
-    for map_png in map_pngs {
-        let path = map_png.path.path();
-        let path = match path.to_str() {
-            Some(p) => p,
-            None => {
-                println!("Skipping a path...");
-                continue;
-            }
-        };
+pub fn process_game_maps(map_pngs: &Vec<MapPNG>) {
+    crossbeam::scope(|s| {
+        for map_png in map_pngs {
+            s.spawn(|_| process_game_map(map_png));
+        }
+        Some(())
+    }).unwrap(); // 670ms
 
-        let img = match image::open(path) {
-            Ok(img) => img,
-            Err(_) => {
-                print!("Could not open image {}", path);
-                continue;
-            }
-        };
+    // 729ms
+    // for map_png in map_pngs {
+    //     process_game_map(map_png);
+    // }
+}
 
-        let mut game_map = GameMap {
-            wall_tiles: Vec::new(),
-            spawn_tiles: Vec::new(),
-            wall_segments: Vec::new(),
-            wall_segment_tiles: Vec::new(),
-        };
+pub fn process_game_map(map_png: &MapPNG) {
+    let path = map_png.path.path();
+    let path = match path.to_str() {
+        Some(p) => p,
+        None => {
+            println!("Skipping a path...");
+            return;
+        }
+    };
 
-        for (x, y, rgba) in img.pixels() {
-            let [r, g, b, a] = rgba.0;
-            if a != 255 {
-                continue;
-            }
+    let img = match image::open(path) {
+        Ok(img) => img,
+        Err(_) => {
+            print!("Could not open image {}", path);
+            return;
+        }
+    };
 
-            // wall tiles
-            if r + g + b == 0 {
-                game_map.wall_tiles.push([x as i64, y as i64]);
-            }
+    let mut game_map = GameMap {
+        wall_tiles: Vec::new(),
+        spawn_tiles: Vec::new(),
+        wall_segments: Vec::new(),
+        wall_segment_tiles: Vec::new(),
+    };
 
-            // spawn tiles
-            if r == 255 && g + b == 0 {
-                game_map.spawn_tiles.push([x as i64, y as i64]);
-            }
+    for (x, y, rgba) in img.pixels() {
+        let [r, g, b, a] = rgba.0;
+        if a != 255 {
+            continue;
         }
 
-        game_map.center_tiles();
-        game_map.log();
+        // wall tiles
+        if r + g + b == 0 {
+            game_map.wall_tiles.push([x as i64, y as i64]);
+        }
+
+        // spawn tiles
+        if r == 255 && g + b == 0 {
+            game_map.spawn_tiles.push([x as i64, y as i64]);
+        }
     }
+
+    game_map.center_tiles();
+    game_map.generate_segments();
+    game_map.log();
+
+    save_game_map(map_png, &game_map);
+}
+
+fn save_game_map(map_png: &MapPNG,game_map: &GameMap) {
+    // save game_map
+    let j = serde_json::to_string(&game_map)
+        .expect("Could not convert to json");
+
+    let file_name = map_png.path.file_name();
+    let file_name = file_name.to_str().unwrap();
+    let file_name = Path::new(file_name).file_stem().unwrap().to_str().unwrap();
+    let file_name = format!("{}.rust.map.json", file_name);
+
+    let path = Path::new(OUTPUT_DIR).join(file_name);
+    let path = path.to_str().unwrap();
+
+    write(path, j).expect("Could not write JSON to file.");
 }

@@ -1,8 +1,7 @@
 use std::fs::{self};
 
-use crate::MapPNG;
+use crate::{MapPNG, MAP_DIR};
 
-const MAP_DIR: &str = "../../packages/game/maps/";
 
 pub fn get_map_pngs() -> Option<Vec<MapPNG>> {
     let mut pngs: Vec<MapPNG> = Vec::new();

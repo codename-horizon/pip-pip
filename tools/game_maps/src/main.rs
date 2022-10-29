@@ -1,7 +1,7 @@
-use game_maps::{get_gamep_maps, get_map_pngs};
+use game_maps::{get_map_pngs, process_game_maps};
 
 fn main() {
     let pngs = get_map_pngs().expect("Could not get pngs.");
 
-    get_gamep_maps(&pngs);
+    process_game_maps(&pngs);
 }
