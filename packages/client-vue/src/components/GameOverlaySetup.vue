@@ -2,9 +2,10 @@
 import { PipPipGamePhase } from '@pip-pip/game/src/logic';
 import { GAME_CONTEXT } from '../game';
 import GameButton from './GameButton.vue';
+import GamePlayerList from './GamePlayerList.vue';
 import GameInput from './GameInput.vue';
 import GameChat from './GameChat.vue';
-import { computed, ComputedRef, ref, watch } from 'vue';
+import { computed, ComputedRef, Ref, ref, watch } from 'vue';
 
 function startGame(){
   GAME_CONTEXT.startGame()
@@ -13,6 +14,7 @@ function startGame(){
 type SetupTab = {
   id: string,
   name: string,
+  notifCount?: ComputedRef<string>,
   show?: ComputedRef<boolean>,
 }
 
@@ -27,6 +29,7 @@ baseTabs.push({
 baseTabs.push({
   id: "players",
   name: "Players",
+  notifCount: computed(() => GAME_CONTEXT.store.players.length.toString()),
 })
 
 const displayTabs = computed(() => baseTabs.filter(tab => {
@@ -35,9 +38,9 @@ const displayTabs = computed(() => baseTabs.filter(tab => {
 }))
 
 const displayTabIndex = ref(0)
-watch(displayTabs, () => {
+watch(computed(() => displayTabs.value.length), () => {
   displayTabIndex.value = 0
-}, { deep: true })
+})
 
 const displayTab = computed(() => {
   let index = displayTabIndex.value < displayTabs.value.length ? displayTabIndex.value : 0
@@ -56,7 +59,10 @@ const displayTab = computed(() => {
           class="setup-tab-nav" 
           :class="displayTabIndex === index ? 'active' : ''"
           v-for="(tab, index) of displayTabs"
-          @click="displayTabIndex = index">{{ tab.name }}</div>
+          @click="displayTabIndex = index">
+            <div class="text">{{ tab.name }}</div>
+            <div class="notif" v-if="typeof tab.notifCount !== 'undefined'">{{tab.notifCount.value}}</div>
+          </div>
       </div>
       
       <div class="setup-tab" v-if="displayTab.id === 'host'">
@@ -64,7 +70,7 @@ const displayTab = computed(() => {
       </div>
       
       <div class="setup-tab" v-if="displayTab.id === 'players'">
-        <pre>this should show a list of players</pre>
+        <GamePlayerList></GamePlayerList>
       </div>
 
     </div>
@@ -95,9 +101,21 @@ const displayTab = computed(() => {
       gap: 1.5em
       padding-bottom: 0.8em
       .setup-tab-nav
-        font-size: 3em
         cursor: pointer
         transition: all 0.1s
+        .text
+          font-size: 3em
+          display: inline-block
+        .notif
+          display: inline-block
+          vertical-align: top
+          top: 0.5em
+          margin-left: 0.2em
+          background-color: $color-bad
+          color: white
+          font-size: 1.5em
+          padding: 0.1em 0.2em
+          border-radius: $border-radius
         &.active
           color: $color-main
 

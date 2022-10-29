@@ -1,10 +1,37 @@
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { CHAT_MAX_MESSAGE_LENGTH } from "@pip-pip/game/src/logic/constants"
-import { PIP_SHIPS } from "@pip-pip/game/src/ships"
+import { PipPlayer, PlayerScores } from "@pip-pip/game/src/logic/player"
+import { PIP_SHIPS, ShipType } from "@pip-pip/game/src/ships"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import { GAME_CONTEXT, getClientPlayer } from "."
 import { ChatMessage } from "./chat"
+
+export type GameStorePlayer = {
+    id: string,
+    name: string,
+    idle: boolean,
+    ping: number,
+    score: PlayerScores,
+    shipIndex: number,
+    shipType: ShipType,
+    isHost: boolean,
+}
+
+export function playerToGameStore(player: PipPlayer): GameStorePlayer {
+    const output: GameStorePlayer = {
+        id: player.id,
+        name: player.name,
+        idle: player.idle,
+        ping: player.ping,
+        score: player.score,
+        shipIndex: player.shipIndex,
+        shipType: player.shipType,
+        isHost: GAME_CONTEXT.game.host?.id === player.id,
+    }
+
+    return output
+}
 
 export const useGameStore = defineStore("game", () => {
     const loading = ref(false)
@@ -16,6 +43,8 @@ export const useGameStore = defineStore("game", () => {
 
     const clientPlayerShipIndex = ref(0)
     const clientPlayerShipType = computed(() => PIP_SHIPS[clientPlayerShipIndex.value])
+    
+    const players = ref<GameStorePlayer[]>([])
 
     const isPhaseSetup = computed(() => phase.value === PipPipGamePhase.SETUP)
     const isPhaseCountdown = computed(() => phase.value === PipPipGamePhase.COUNTDOWN)
@@ -44,6 +73,8 @@ export const useGameStore = defineStore("game", () => {
             ping.value = gameClientPlayer.ping
             clientPlayerShipIndex.value = gameClientPlayer.shipIndex
         }
+
+        players.value = Object.values(game.players).map(playerToGameStore)
     }
 
     return {
@@ -55,6 +86,7 @@ export const useGameStore = defineStore("game", () => {
         ping,
         clientPlayerShipIndex,
         clientPlayerShipType,
+        players,
         
         phase,
         isPhaseSetup,
