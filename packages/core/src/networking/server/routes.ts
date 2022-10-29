@@ -11,8 +11,8 @@ import { Server } from "."
 
 export function initializeRoutes<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >(server: Server<T, R, P>){
     server.app.use(cors())
     server.app.use(bodyParser.json())
@@ -48,6 +48,23 @@ export function initializeRoutes<
         res.json(connection.toJson())
     }))
 
+    // Get connection lobby
+    router.get("/connection/lobby", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+        const connection = server.getConnectionFromRequest(req) as Connection<T, R, P>
+        if(typeof connection.lobby === "undefined") throw createHttpError(400, "Connection not in lobby.")
+
+        const lobby = connection.lobby
+        if(typeof lobby === "undefined") throw createHttpError(400, "Connection is not connected to any lobby.")
+
+        const output: ConnectionLobbyJSON = {
+            connection: connection.toJson(),
+            lobby: lobby.toJson()
+        }
+
+        res.json(output)
+    }))
+
+
     // Create lobby details
     router.get("/lobbies", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
         if(typeof req.query.id !== "string") {
@@ -65,7 +82,7 @@ export function initializeRoutes<
     }))
 
     // Get available lobbies
-    router.get("/lobbies", server.routerAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+    router.get("/lobbies", server.routerAuthMiddleware, asyncHandler(async () => {
         throw createHttpError(400, "Not yet implemented.")
     }))
 

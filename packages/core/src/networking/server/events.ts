@@ -7,8 +7,8 @@ import { Lobby, LobbyStatus } from "../lobby"
 
 export type ServerEventMap<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 > = {
     start: undefined,
 
@@ -20,8 +20,10 @@ export type ServerEventMap<
     removeLobby: { lobby: Lobby<T, R, P> },
 
     socketOpen: { ws: WebSocket },
-
     socketReady: { ws: WebSocket, connection: Connection<T, R, P> },
+
+    connectionStatusChange: { connection: Connection<T, R, P> },
+    lobbyStatusChange: { lobby: Lobby<T, R, P> },
 
     socketMessage: { ws: WebSocket, data: RawData, connection?: Connection<T, R, P> },
     packetMessage: { 
@@ -38,8 +40,8 @@ export type ServerEventMap<
 
 export type ConnectionEventMap<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 > = {
     idleStart: undefined,
     idleEnd: undefined,
@@ -55,14 +57,16 @@ export type ConnectionEventMap<
 
     lobbyJoin: { lobby: Lobby<T, R, P> },
     lobbyLeave: { lobby: Lobby<T, R, P> },
+    
+    lobbyStatusChange: { lobby: Lobby<T, R, P> },
 
     destroy: undefined,
 }
 
 export type LobbyEventMap<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 > = {
     idleStart: undefined,
     idleEnd: undefined,
@@ -76,6 +80,7 @@ export type LobbyEventMap<
     }
 
     addConnection: { connection: Connection<T, R, P> },
+    connectionStatusChange: { connection: Connection<T, R, P> },
     removeConnection: { connection: Connection<T, R, P> },
 
     destroy: undefined,

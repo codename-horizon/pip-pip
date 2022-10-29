@@ -9,9 +9,11 @@ export type EventNameParmeter<T extends EventMap> = {
     [K in keyof T]?: T[K] extends undefined ? EmptyEventParams : T[K]
 }
 
-export class EmptyEventParams{
+export class EmptyEventParams{}
 
-}
+export type EventMapOf<T> = T extends EventEmitter<infer R> ? R : never
+
+export type EventCallbackOf<T extends EventMap, K extends keyof T> = EventCallback<T[K]>
 
 export type EventEmitterSubscriptionCallback<T extends EventMap> = (event: EventNameParmeter<T>) => void
 
@@ -75,7 +77,7 @@ export class EventEmitter<T extends EventMap  = Record<string, never>>{
         this.subscribers = this.subscribers.filter(sub => sub !== callback)
     }
 
-    reset(){
+    destroy(){
         this.listeners = {}
     }
 }

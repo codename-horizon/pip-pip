@@ -4,10 +4,10 @@ import { Server } from "."
 
 export function initializeLobbyMethods<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >(server: Server<T, R, P>){
-    server.registerLobby = (type: string, options: LobbyTypeOptions, initializer: LobbyInitializer<T>) => {
+    server.registerLobby = (type: string, options: LobbyTypeOptions, initializer: LobbyInitializer<T, R, P>) => {
         if(type in server.lobbyType) throw new Error(`Lobby Type "${type}" already registered in server.`)
         server.lobbyType[type] = {
             options,

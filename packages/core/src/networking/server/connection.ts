@@ -6,8 +6,8 @@ import { Server } from "."
 
 export function initializeConnectionMethods<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >(server: Server<T, R, P>){
     server.getConnectionFromRequest = (req: Request) => {
         if(typeof req.headers[server.options.authHeader] !== "undefined"){

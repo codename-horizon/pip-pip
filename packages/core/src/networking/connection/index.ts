@@ -32,8 +32,8 @@ export enum ConnectionStatus {
 
 export class Connection<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >{
     id: string
     token = {
@@ -49,7 +49,7 @@ export class Connection<
     locals = {} as R
 
     packets: {
-        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap>>
+        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap, R, P>>
     }
 
     latencyHistory: ConnectionLatencyRecord[] = []
@@ -82,13 +82,26 @@ export class Connection<
 
     get status(): ConnectionStatus{
         if(this.destroyed) return ConnectionStatus.DESTROYED
-        if(typeof this.ws !== undefined) return ConnectionStatus.READY
-        return ConnectionStatus.IDLE
+        if(typeof this.idleTimeout !== "undefined") return ConnectionStatus.IDLE
+        return ConnectionStatus.READY
+        
     }
 
     get isIdle(){ return this.status === ConnectionStatus.IDLE }
     get isReady(){ return this.status === ConnectionStatus.READY }
     get isDestroyed(){ return this.status === ConnectionStatus.DESTROYED }
+
+    statusChangeTimeout?: NodeJS.Timeout
+    emitStatusChange(){
+        if(typeof this.statusChangeTimeout !== "undefined"){
+            clearTimeout(this.statusChangeTimeout)
+        }
+        this.statusChangeTimeout = setTimeout(() => {
+            this.events.emit("statusChange", { status: this.status })
+            this.server.events.emit("connectionStatusChange", { connection: this })
+            this.lobby?.events.emit("connectionStatusChange", { connection: this })
+        }, 0)
+    }
 
     startIdle(){
         this.stopIdle()
@@ -96,7 +109,7 @@ export class Connection<
             this.destroy()
         }, this.server.options.connectionIdleLifespan)
         this.events.emit("idleStart")
-        this.events.emit("statusChange", { status: this.status })
+        this.emitStatusChange()
     }
 
     stopIdle(){
@@ -104,7 +117,7 @@ export class Connection<
         clearTimeout(this.idleTimeout)
         this.idleTimeout = undefined
         this.events.emit("idleEnd")
-        this.events.emit("statusChange", { status: this.status })
+        this.emitStatusChange()
     }
 
     destroy(){
@@ -118,8 +131,7 @@ export class Connection<
             this.removeWebSocket()
 
             this.events.emit("destroy")
-            // TODO: Imrpove status change calls
-            this.events.emit("statusChange", { status: this.status })
+            this.emitStatusChange()
         }
     }
 
@@ -157,8 +169,8 @@ export class Connection<
 
 export interface Connection<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >{
     // websockets.ts
     setWebSocket: (ws: WebSocket) => void

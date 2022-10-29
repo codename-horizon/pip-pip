@@ -1,12 +1,14 @@
-import { $biguint64 } from "./serializer"
+import { $string } from "./serializer"
 import { Packet } from "./packet"
+
+export const PING_PONG_PACKET_ID_LENGTH = 1
 
 export const serverPackets = {
     ping: new Packet({
-        time: $biguint64,
+        id: $string(PING_PONG_PACKET_ID_LENGTH),
     }),
     pong: new Packet({
-        time: $biguint64,
+        id: $string(PING_PONG_PACKET_ID_LENGTH),
     }),
 }
 

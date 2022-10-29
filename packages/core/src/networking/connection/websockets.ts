@@ -1,16 +1,17 @@
 import WebSocket, { RawData } from "ws"
 
 import { PacketManagerSerializerMap, ServerPacketManagerEventMap } from "../packets/manager"
-import { ServerSerializerMap } from "../packets/server"
+import { PING_PONG_PACKET_ID_LENGTH, ServerSerializerMap } from "../packets/server"
 import { getForceLatency } from "../../lib/server-env"
-import { EventEmitter } from "../../common/events"
+import { EventCallbackOf, EventEmitter } from "../../common/events"
 import { Connection } from "."
 import { compress } from "../../lib/compression"
+import { generateId } from "../../lib/utils"
 
 export function initializeWebSockets<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >(connection: Connection<T, R, P>){
 
     const handleSocketMessage = (data: RawData) => {
@@ -54,35 +55,42 @@ export function initializeWebSockets<
         else setTimeout(send, latency)
     }
 
-    
-    const pe = connection.packets.events as EventEmitter<ServerPacketManagerEventMap<ServerSerializerMap>>
+    type PMSEM = ServerPacketManagerEventMap<ServerSerializerMap, R, P>
+    const pe = connection.packets.events as EventEmitter<PMSEM>
 
     pe.on("ping", ({ data }) => {
         const { pong } = connection.server.packets.manager.serializers
         const code = new Uint8Array(pong.encode({
-            time: data.time,
+            id: data.id,
         }))
         connection.send(code)
     })
 
-    connection.getPing = () => new Promise((resolve, reject) => {
+    connection.getPing = () => new Promise((resolve) => {
         let completed = false
 
-        const cancel = pe.once("pong", ({ data }) => {
-            const ping = Date.now() - data.time
+        const now = Date.now()
+        const id = generateId(PING_PONG_PACKET_ID_LENGTH)
+
+        const complete = () => {
+            const ping = Date.now() - now
             completed = true
+            pe.off("pong", cb)
             clearTimeout(timeout)
             resolve(ping)
-        })
+        }
+
+        const cb: EventCallbackOf<PMSEM, "pong"> = ({ data }) => {
+            if(data.id === id) complete()
+        }
+
+        pe.on("pong", cb)
 
         const timeout = setTimeout(() => {
-            if(completed === false){
-                cancel()
-                resolve(connection.server.options.maxPing)
-            }
+            if(completed === false) complete()
         }, connection.server.options.maxPing)
 
-        const code = connection.server.packets.manager.serializers.ping.encode({ time: Date.now() })
+        const code = connection.server.packets.manager.serializers.ping.encode({ id })
         const buffer = new Uint8Array(code).buffer
         connection.send(buffer)
     })

@@ -9,9 +9,9 @@ import { Server } from "../server"
 
 export type LobbyInitializer<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
-> = (arg: {
+    R extends Record<string, any>,
+    P extends Record<string, any>,
+> = (args: {
     lobby: Lobby<T, R, P>,
     server: Server<T, R, P>,
 }) => void
@@ -24,8 +24,8 @@ export type LobbyTypeOptions = {
 
 export type LobbyType<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 > = {
     options: LobbyTypeOptions,
     initializer: LobbyInitializer<T, R, P>,
@@ -39,8 +39,8 @@ export enum LobbyStatus {
 
 export class Lobby<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >{
     id: string
     type: string
@@ -53,7 +53,7 @@ export class Lobby<
     locals = {} as P
 
     packets: {
-        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap>>
+        events: EventEmitter<ServerPacketManagerEventMap<T & ServerSerializerMap, R, P>>
     }
 
     idleTimeout?: NodeJS.Timeout
@@ -73,6 +73,20 @@ export class Lobby<
         if(this.destroyed === true) return LobbyStatus.DESTROYED
         if(typeof this.idleTimeout !== "undefined") return LobbyStatus.IDLE
         return LobbyStatus.ACTIVE
+    }
+
+    statusChangeTimeout?: NodeJS.Timeout
+    emitStatusChange(){
+        if(typeof this.statusChangeTimeout !== "undefined"){
+            clearTimeout(this.statusChangeTimeout)
+        }
+        this.statusChangeTimeout = setTimeout(() => {
+            this.events.emit("statusChange", { status: this.status })
+            this.server.events.emit("lobbyStatusChange", { lobby: this })
+            for(const connectionId in this.connections){
+                this.connections[connectionId].events.emit("lobbyStatusChange", { lobby: this })
+            }
+        }, 0)
     }
 
     addConnection(connection: Connection<T, R, P>){
@@ -106,7 +120,7 @@ export class Lobby<
             this.destroy()
         }, this.server.options.lobbyIdleLifespan)
         this.events.emit("idleStart")
-        this.events.emit("statusChange", { status: this.status })
+        this.emitStatusChange()
     }
 
     stopIdle(){
@@ -114,7 +128,7 @@ export class Lobby<
         clearTimeout(this.idleTimeout)
         this.idleTimeout = undefined
         this.events.emit("idleEnd")
-        this.events.emit("statusChange", { status: this.status })
+        this.emitStatusChange()
     }
 
     destroy(){
@@ -126,8 +140,7 @@ export class Lobby<
             }
             this.server.removeLobby(this)
             this.events.emit("destroy")
-            // TODO: Imrpove status change calls
-            this.events.emit("statusChange", { status: this.status })
+            this.emitStatusChange()
         }
     }
 

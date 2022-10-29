@@ -5,33 +5,29 @@ import { PacketManagerSerializerMap } from "../packets/manager"
 import { Client } from "."
 
 export function initializeAxios<T extends PacketManagerSerializerMap>(client: Client<T>){
-    const getHttpUrl = () => [
-        client.options.https ? "https" : "http",
-        "://", client.options.host, ":",
-        client.options.port, client.options.baseRoute,
-    ].join("")
-
-    client.api = axios.create({
-        baseURL: getHttpUrl(),
-        headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json; charset=utf-8",
-        },
-    })
-
-    client.api.interceptors.request.use((config) => {
-        const { connectionToken } = client
-
-        if(
-            typeof config.headers !== "undefined" &&
-            typeof connectionToken === "string" &&
-            connectionToken.length > 0
-        ){
-            config.headers[client.options.authHeader] = connectionToken
-        }
-
-        return config
-    })
+    client.initializeApi = () => {
+        client.api = axios.create({
+            baseURL: client.httpUrl,
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json; charset=utf-8",
+            },
+        })
+    
+        client.api.interceptors.request.use((config) => {
+            const { connectionToken } = client
+    
+            if(
+                typeof config.headers !== "undefined" &&
+                typeof connectionToken === "string" &&
+                connectionToken.length > 0
+            ){
+                config.headers[client.options.authHeader] = connectionToken
+            }
+    
+            return config
+        })
+    }
 
     client.requestConnection = async () => {
         const { data } = await client.api.post<ConnectionJSON>("/connection")
@@ -46,12 +42,41 @@ export function initializeAxios<T extends PacketManagerSerializerMap>(client: Cl
         return data
     }
 
+    client.requestConnectionIfNeeded = async () => {
+        let output: ConnectionJSON | undefined
+
+        try{
+            if(client.hasIdAndTokens){
+                output = await client.verifyConnection()
+            }
+        } catch(e){
+            console.warn(e)
+        }
+
+        if(typeof output === "undefined"){   
+            output = await client.requestConnection()
+        }
+
+        return output
+    }
+
     client.createLobby = async (type: string) => {
         const { data } = await client.api.post<LobbyJSON>("/lobbies", { type })
         return data
     }
 
+    client.getClientLobby = async () => {
+        const { data } = await client.api.get<ConnectionLobbyJSON>("/connection/lobby")
+        return data
+    }
+
     client.joinLobby = async (id: string) => {
+        try{
+            const connectedLobby = await client.getClientLobby()
+            return connectedLobby
+        } catch(e){
+            // Probably not connected in lobby
+        }
         const { data } = await client.api.post<ConnectionLobbyJSON>("/lobbies/join", { id })
         return data
     }

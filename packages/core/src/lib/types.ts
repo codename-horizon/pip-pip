@@ -20,3 +20,10 @@ export type PickArray<T extends Record<string, unknown>> = Pick<T, OmitNever<Non
 export type TypeOrFactoryType<T> = T | ((value: Readonly<T>) => T)
 
 export type Concrete<T> = T extends Partial<infer R> ? R : T
+
+export type RecursivePartial<T> = {
+    [P in keyof T]?:
+        T[P] extends (infer U)[] ? RecursivePartial<U>[] :
+        T[P] extends object ? RecursivePartial<T[P]> :
+        T[P]
+}

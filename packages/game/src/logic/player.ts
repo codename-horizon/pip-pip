@@ -1,65 +1,231 @@
-import { PointPhysicsObject } from "@pip-pip/core/src/physics"
+import { PointPhysicsObject, Vector2 } from "@pip-pip/core/src/physics"
+import { PipPipGame } from "."
+import { PIP_SHIPS, ShipType } from "../ships"
 
-import { Ship } from "./ship"
+import { PipShip } from "./ship"
 
-export class Player{
+export type PlayerInputs = {
+    movementAngle: number,
+    movementAmount: number,
+
+    aimRotation: number,
+
+    useWeapon: boolean,
+    useTactical: boolean,
+    doReload: boolean,
+
+    spawn: boolean,
+}
+
+export type PlayerTimings = {
+    spawnTime: number,
+}
+
+export type PlayerPositionState = {
+    positionX: number,
+    positionY: number,
+    velocityX: number,
+    velocityY: number,
+}
+
+export type PlayerScores = {
+    kills: number,
+    assists: number,
+    deaths: number,
+    damage: number,
+}
+
+export const MAX_PLAYER_POSITION_STATES = 8
+
+export class PipPlayer{
     id: string
+    
+    ship!: PipShip
+    shipIndex!: number
+    shipType!: ShipType
 
-    ai = false
+    game: PipPipGame
+    spectating?: PipPlayer | PipShip | PointPhysicsObject | Vector2
 
-    physics: PointPhysicsObject = new PointPhysicsObject()
-
-    ship?: Ship
-
-    debugMagModifier = 0
-
-    targetRotation = 0
-    aimRotation = 0
-
-    reloadTimeLeft = 0
-    ammo = 0
-
-    lastShotTick = -100
-
-    inputShooting = false
-    inputReloading = false
-
-    acceleration = {
-        angle: 0,
-        magnitude: 0,
-    }
-
+    name = "Pilot" + Math.floor(Math.random() * 1000)
+    idle = false
     ping = 0
 
-    constructor(id: string){
-        this.id = id
-        this.physics.mass = 500
-        this.physics.airResistance = 0.1
-        this.physics.collision.enabled = true
-        this.physics.collision.channels = []
+    team = 0
+
+    score: PlayerScores = {
+        kills: 0,
+        assists: 0,
+        deaths: 0,
+        damage: 0,
     }
 
-    reload(){
-        if(this.canReload === true && typeof this.ship !== "undefined"){
-            this.reloadTimeLeft = this.ship.reloadDuration
+    inputs: PlayerInputs = {
+        movementAngle: 0,
+        movementAmount: 0,
+
+        aimRotation: 0,
+
+        useWeapon: false,
+        useTactical: false,
+        doReload: false,
+
+        spawn: false,
+    }
+
+    timings: PlayerTimings = {
+        spawnTime: 0,
+    }
+
+    spectator = false
+    spawned = false
+
+    positionStates: PlayerPositionState[] = []
+
+    constructor(game: PipPipGame, id: string){
+        this.game = game
+        this.id = id
+
+        if(id in this.game.players) throw new Error("Player already in game.")
+        this.game.players[id] = this
+        this.game.events.emit("addPlayer", { player: this })
+        this.game.setHostIfNeeded()
+        this.setShip()
+    }
+
+    get canSpawn(){
+        if(this.spectator === true) return false
+        if(this.spawned === true) return false
+        if(this.timings.spawnTime > 0) return false
+        return true
+    }
+
+    remove(){
+        if(!(this.id in this.game.players)) return
+        this.setSpawned(false)
+        delete this.game.players[this.id]
+        this.game.events.emit("removePlayer", { player: this })
+        this.game.setHostIfNeeded()
+    }
+    
+    setKills(n: number){
+        this.score.kills = n
+        this.game.events.emit("playerScoreChanged", { player: this })
+    }
+    
+    setAssists(n: number){
+        this.score.assists = n
+        this.game.events.emit("playerScoreChanged", { player: this })
+    }
+    
+    setDeaths(n: number){
+        this.score.deaths = n
+        this.game.events.emit("playerScoreChanged", { player: this })
+    }
+    
+    setDamage(n: number){
+        this.score.damage = n
+        this.game.events.emit("playerScoreChanged", { player: this })
+    }
+
+    resetScores(){
+        this.setKills(0)
+        this.setAssists(0)
+        this.setDeaths(0)
+        this.setDamage(0)
+    }
+
+    setIdle(idle: boolean){
+        this.idle = idle
+        this.game.events.emit("playerIdleChange", { player: this })
+    }
+
+    setSpawned(state: boolean){
+        if(typeof this.ship !== "undefined"){
+            if(state === true){
+                this.game.physics.addObject(this.ship.physics)
+            } else{
+                this.game.physics.removeObject(this.ship.physics)
+            }
+        }
+        this.spawned = state
+        this.game.events.emit("playerSpawned", { player: this })
+    }
+
+    setShip(index?: number){
+        if(typeof index === "number"){
+            index = Math.max(0, Math.min(index, PIP_SHIPS.length - 1))
+        } else{
+            index = Math.floor(Math.random() * PIP_SHIPS.length)
+        }
+        if(this.shipIndex === index) return
+        
+        const shipType = PIP_SHIPS[index]
+
+        const ship = new shipType.Ship(this.game, this.id)
+        ship.setPlayer(this)
+
+        if(typeof this.ship !== "undefined"){
+            ship.physics.position.x = this.ship.physics.position.x
+            ship.physics.position.y = this.ship.physics.position.y
+            ship.physics.velocity.x = this.ship.physics.velocity.x
+            ship.physics.velocity.y = this.ship.physics.velocity.y
+            this.game.physics.removeObject(this.ship.physics)
+        }
+
+        if(this.spawned === true){
+            this.game.physics.removeObject(this.ship.physics)
+            this.game.physics.addObject(ship.physics)
+        }
+
+        this.ship = ship
+        this.shipIndex = index
+        this.shipType = shipType
+
+        this.game.events.emit("playerSetShip", {
+            player: this,
+            ship,
+        })
+    }
+
+    getPositionState(): PlayerPositionState{
+        return {
+            positionX: this.ship.physics.position.x,
+            positionY: this.ship.physics.position.y,
+            velocityX: this.ship.physics.velocity.x,
+            velocityY: this.ship.physics.velocity.y,
         }
     }
 
-    get canReload(){
-        if(typeof this.ship === "undefined") return false
-        if(this.ammo >= this.ship.bullet.count) return false
-        if(this.isReloading) return false
-        return true
+    trackPositionState(){
+        const state = this.getPositionState()
+
+        if(this.positionStates.length >= MAX_PLAYER_POSITION_STATES){
+            this.positionStates.pop()
+        }
+        this.positionStates.unshift(state)
     }
 
-    get isReadyToShoot(){
-        if(this.isReloading) return false
-        if(this.ammo === 0) return false
-        return true
+    getLastPositionState(index: number){
+        if(this.positionStates.length === 0){
+            return this.getPositionState()
+        }
+        index = Math.max(0, Math.min(index, this.positionStates.length - 1))
+        const fromIndex = Math.floor(index)
+        const toIndex = Math.ceil(index)
+        const from = this.positionStates[fromIndex]
+        const to = this.positionStates[toIndex]
+        if(fromIndex === toIndex) return this.positionStates[fromIndex]
+        const dist = index - fromIndex
+        return {
+            positionX: from.positionX + (to.positionX - from.positionX) * dist,
+            positionY: from.positionY + (to.positionY - from.positionY) * dist,
+            velocityX: from.velocityX + (to.velocityX - from.velocityX) * dist,
+            velocityY: from.velocityY + (to.velocityY - from.velocityY) * dist,
+        }
     }
 
-    get isReloading(){
-        if(this.reloadTimeLeft === 0) return false
-        return true
+    update(){
+        this.ship?.update()
     }
 }

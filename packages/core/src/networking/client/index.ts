@@ -56,6 +56,34 @@ export class Client<T extends PacketManagerSerializerMap>{
 
         initializeAxios(this)
         initializeWebSockets(this)
+
+        this.setHost(this.options.host, this.options.port)
+    }
+
+    setHost(host: string, port?: number){
+        this.options.host = host
+        if(typeof port === "number") this.setPort(port)
+        this.initializeApi()
+    }
+
+    setPort(port: number){
+        this.options.port = port
+    }
+
+    get wsUrl(){
+        return [
+            this.options.wss ? "wss" : "ws",
+            "://", this.options.host, ":",
+            this.options.port,
+        ].join("")
+    }
+
+    get httpUrl(){
+        return [
+            this.options.https ? "https" : "http",
+            "://", this.options.host, ":",
+            this.options.port, this.options.baseRoute,
+        ].join("")
     }
 
     get hasIdAndTokens(){
@@ -69,14 +97,18 @@ export class Client<T extends PacketManagerSerializerMap>{
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface Client<T extends PacketManagerSerializerMap>{
     // axios.ts
     api: AxiosInstance
+    initializeApi: () => void
     requestConnection: () => Promise<ConnectionJSON>
+    requestConnectionIfNeeded: () => Promise<ConnectionJSON>
     verifyConnection: () => Promise<ConnectionJSON>
 
     createLobby: (type: string) => Promise<LobbyJSON>
     joinLobby: (id: string) => Promise<ConnectionLobbyJSON>
+    getClientLobby: () => Promise<ConnectionLobbyJSON>
     leaveLobby: () => Promise<ConnectionLobbyJSON>
 
     // websockets.ts
@@ -85,4 +117,5 @@ export interface Client<T extends PacketManagerSerializerMap>{
     send: (data: string | ArrayBuffer) => void
     connect: () => Promise<void>
     getPing: () => Promise<number>
+    disconnect: () => Promise<void>
 }

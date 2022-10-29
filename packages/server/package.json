@@ -5,9 +5,11 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development nodemon --watch ./src --watch ../core/src --watch ../game/src ./src/index.ts",
-    "dev:latency": "HRZN_FORCE_LATENCY=60 HRZN_FORCE_JITTER=20 yarn dev",
+    "dev:latency": "HRZN_FORCE_LATENCY=30 yarn dev",
+    "dev:jitter": "HRZN_FORCE_LATENCY=30 HRZN_FORCE_JITTER=5 yarn dev",
     "prod": "NODE_ENV=production node ./dist/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint . --ext .ts"
   },
   "peerDependencies": {
     "@pip-pip/core": "*",

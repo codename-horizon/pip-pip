@@ -1,122 +1,183 @@
-import { $bool, $float16, $float64, $string, $uint16, $uint32, $uint8, $varstring } from "@pip-pip/core/src/networking/packets/serializer"
-import { PacketManager } from "@pip-pip/core/src/networking/packets/manager"
+import { $bool, $float16, $string, $uint16, $uint8, $varstring } from "@pip-pip/core/src/networking/packets/serializer"
+import { PacketManager, ExtractSerializerMap } from "@pip-pip/core/src/networking/packets/manager"
 import { Packet } from "@pip-pip/core/src/networking/packets/packet"
 
-import { Bullet } from "../logic/bullet"
-import { Player } from "../logic/player"
-import { PipPipGame } from "../logic"
+import { PipPlayer } from "../logic/player"
+import { PipPipGame, PipPipGamePhase } from "../logic"
 
 export const CONNECTION_ID_LENGTH = 2
+export const LOBBY_ID_LENGTH = 4
 
 export const packetManager = new PacketManager({
-    tick: new Packet({
-        number: $uint32,
-    }),
-    syncTick: new Packet({
-        number: $uint32,
-    }),
-    uploadChat: new Packet({
+    sendChat: new Packet({
         message: $varstring,
     }),
-    downloadMessage: new Packet({
-        order: $uint16,
+    receiveChat: new Packet({
         playerId: $string(CONNECTION_ID_LENGTH),
         message: $varstring,
     }),
-    newPlayer: new Packet({
-        id: $string(CONNECTION_ID_LENGTH),
-        x: $float16,
-        y: $float16,
-        ai: $bool,
-    }),
-    movePlayer: new Packet({
-        id: $string(CONNECTION_ID_LENGTH),
-        x: $float16,
-        y: $float16,
-        vx: $float16,
-        vy: $float16,
-        accelerationMagnitude: $float16,
-        accelerationAngle: $float16,
-        targetRotation: $float16,
-    }),
-    playerInput: new Packet({
-        x: $float64,
-        y: $float64,
-        vx: $float64,
-        vy: $float64,
-        accelerationMagnitude: $float64,
-        accelerationAngle: $float64,
-        targetRotation: $float64,
-        shooting: $bool,
-        reloading: $bool,
-    }),
-    playerGun: new Packet({
-        ammo: $uint8,
-        reloadTimeLeft: $uint16,
-    }),
-    shootBullet: new Packet({
+
+    addPlayer: new Packet({
         playerId: $string(CONNECTION_ID_LENGTH),
-        x: $float16,
-        y: $float16,
-        vx: $float16,
-        vy: $float16,
-    }),
-    playerPing: new Packet({
-        id: $string(CONNECTION_ID_LENGTH),
-        ping: $uint16,
     }),
     removePlayer: new Packet({
-        id: $string(CONNECTION_ID_LENGTH),
+        playerId: $string(CONNECTION_ID_LENGTH),
+    }),
+    
+    despawnPlayer: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+    }),
+    spawnPlayer: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        x: $float16,
+        y: $float16,
+    }),
+    playerName: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        name: $varstring,
+    }),
+    playerIdle: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        idle: $bool
+    }),
+    playerPing: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        ping: $uint16,
+    }),
+    playerSetShip: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        shipIndex: $uint8,
+    }),
+    playerPosition: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        positionX: $float16,
+        positionY: $float16,
+        velocityX: $float16,
+        velocityY: $float16,
+    }),
+    playerPositionSync: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        positionX: $float16,
+        positionY: $float16,
+        velocityX: $float16,
+        velocityY: $float16,
+    }),
+    playerInputs: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        movementAngle: $float16,
+        movementAmount: $float16,
+        aimRotation: $float16,
+        useWeapon: $bool,
+        useTactical: $bool,
+        doReload: $bool,
+    }),
+
+    setHost: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+    }),
+    gameState: new Packet({
+        mode: $uint8,
+        useTeams: $bool,
+        maxDeaths: $uint8,
+        maxKills: $uint8,
+        friendlyFire: $bool,
+    }),
+    gamePhase: new Packet({
+        phase: $uint8,
+    }),
+    gameCountdown: new Packet({
+        countdown: $uint8,
+    }),
+    gameMap: new Packet({
+        mapIndex: $uint8,
     }),
 })
 
+export type PipPacketManager = typeof packetManager
+export type PipPacketSerializerMap = ExtractSerializerMap<PipPacketManager>
+
 export const encode = {
-    tick: (game: PipPipGame) => packetManager.serializers.tick.encode({
-        number: game.tickNumber,
+    sendChat: (message: string) => packetManager.serializers.sendChat.encode({
+        message,
     }),
-    syncTick: (game: PipPipGame) => packetManager.serializers.syncTick.encode({
-        number: game.tickNumber,
+    receiveChat: (player: PipPlayer, message: string) => packetManager.serializers.receiveChat.encode({
+        playerId: player.id,
+        message,
     }),
-    newPlayer: (player: Player) => packetManager.serializers.newPlayer.encode({
-        id: player.id,
-        x: player.physics.position.x,
-        y: player.physics.position.y,
-        ai: player.ai,
+
+    gameState: (game: PipPipGame) => packetManager.serializers.gameState.encode({
+        mode: game.settings.mode,
+        useTeams: game.settings.useTeams,
+        maxDeaths: game.settings.maxDeaths,
+        maxKills: game.settings.maxKills,
+        friendlyFire: game.settings.friendlyFire,
     }),
-    movePlayer: (player: Player) => packetManager.serializers.movePlayer.encode({
-        id: player.id,
-        x: player.physics.position.x,
-        y: player.physics.position.y,
-        vx: player.physics.velocity.x,
-        vy: player.physics.velocity.y,
-        accelerationMagnitude: player.acceleration.magnitude,
-        accelerationAngle: player.acceleration.angle,
-        targetRotation: player.targetRotation,
+    gamePhase: (gameOrPhase: PipPipGame | PipPipGamePhase) => packetManager.serializers.gamePhase.encode({
+        phase: gameOrPhase instanceof PipPipGame ? gameOrPhase.phase : gameOrPhase,
     }),
-    playerInput: (player: Player) => packetManager.serializers.playerInput.encode({
-        x: player.physics.position.x,
-        y: player.physics.position.y,
-        vx: player.physics.velocity.x,
-        vy: player.physics.velocity.y,
-        accelerationMagnitude: player.acceleration.magnitude,
-        accelerationAngle: player.acceleration.angle,
-        targetRotation: player.targetRotation,
-        shooting: player.inputShooting,
-        reloading: player.inputReloading,
+    gameCountdown: (game: PipPipGame) => packetManager.serializers.gameCountdown.encode({
+        countdown: game.countdown,
     }),
-    playerGun: (player: Player) => packetManager.serializers.playerGun.encode({
-        ammo: player.ammo,
-        reloadTimeLeft: player.reloadTimeLeft,
+    gameMap: (mapIndex: number) => packetManager.serializers.gameMap.encode({
+        mapIndex,
     }),
-    shootBullet: (bullet: Bullet) => packetManager.serializers.shootBullet.encode({
-        playerId: bullet.owner?.id || "",
-        x: bullet.physics.position.x,
-        y: bullet.physics.position.y,
-        vx: bullet.physics.velocity.x,
-        vy: bullet.physics.velocity.y,
+
+    addPlayer: (player: PipPlayer) => packetManager.serializers.addPlayer.encode({
+        playerId: player.id,
     }),
-    playerPing: (player: Player) => packetManager.serializers.playerPing.encode({
-        id: player.id,
+    removePlayer: (player: PipPlayer) => packetManager.serializers.removePlayer.encode({
+        playerId: player.id,
+    }),
+    despawnPlayer: (player: PipPlayer) => packetManager.serializers.despawnPlayer.encode({
+        playerId: player.id,
+    }),
+    spawnPlayer: (player: PipPlayer) => packetManager.serializers.spawnPlayer.encode({
+        playerId: player.id,
+        x: player.ship.physics.position.x,
+        y: player.ship.physics.position.y,
+    }),
+
+    setHost: (player: PipPlayer) => packetManager.serializers.setHost.encode({
+        playerId: player.id,
+    }),
+    playerName: (player: PipPlayer) => packetManager.serializers.playerName.encode({
+        playerId: player.id,
+        name: player.name,
+    }),
+    playerIdle: (player: PipPlayer) => packetManager.serializers.playerIdle.encode({
+        playerId: player.id,
+        idle: player.idle,
+    }),
+    playerPing: (player: PipPlayer) => packetManager.serializers.playerPing.encode({
+        playerId: player.id,
         ping: player.ping,
     }),
+    playerSetShip: (player: PipPlayer) => packetManager.serializers.playerSetShip.encode({
+        playerId: player.id,
+        shipIndex: player.shipIndex,
+    }),
+    playerPosition: (player: PipPlayer) => packetManager.serializers.playerPosition.encode({
+        playerId: player.id,
+        positionX: player.ship.physics.position.x,
+        positionY: player.ship.physics.position.y,
+        velocityX: player.ship.physics.velocity.x,
+        velocityY: player.ship.physics.velocity.y,
+    }),
+    playerPositionSync: (player: PipPlayer) => packetManager.serializers.playerPositionSync.encode({
+        playerId: player.id,
+        positionX: player.ship.physics.position.x,
+        positionY: player.ship.physics.position.y,
+        velocityX: player.ship.physics.velocity.x,
+        velocityY: player.ship.physics.velocity.y,
+    }),
+    playerInputs: (player: PipPlayer) => packetManager.serializers.playerInputs.encode({
+        playerId: player.id,
+        movementAngle: player.inputs.movementAngle,
+        movementAmount: player.inputs.movementAmount,
+        aimRotation: player.inputs.aimRotation,
+        useWeapon: player.inputs.useWeapon,
+        useTactical: player.inputs.useTactical,
+        doReload: player.inputs.doReload,
+    }),
+    
 }

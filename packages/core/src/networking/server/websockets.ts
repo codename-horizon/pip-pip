@@ -8,8 +8,8 @@ import { decompress } from "../../lib/compression"
 
 export function initializeWebSockets<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 >(server: Server<T, R, P>){
     server.wss.on("connection", (ws: WebSocket) => {
         if(server.wss.clients.values.length >= server.options.maxConnections){

@@ -71,8 +71,8 @@ export type ServerPacketManager = BasePacketManager<ServerSerializerMap>
 
 export type ServerPacketManagerEventMap<
     T extends PacketManagerSerializerMap,
-    R extends Record<string, any> = Record<string, any>,
-    P extends Record<string, any> = Record<string, any>,
+    R extends Record<string, any>,
+    P extends Record<string, any>,
 > = {
     [K in keyof T]: {
         ws: WebSocket,

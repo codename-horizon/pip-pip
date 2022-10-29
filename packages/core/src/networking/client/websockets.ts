@@ -1,18 +1,14 @@
 import { RawData, WebSocket as NodeWebSocket } from "ws"
 
 import { ClientPacketManagerEventMap, PacketManagerSerializerMap } from "../packets/manager"
-import { ServerSerializerMap } from "../packets/server"
-import { EventEmitter } from "../../common/events"
+import { PING_PONG_PACKET_ID_LENGTH, ServerSerializerMap } from "../packets/server"
+import { EventCallbackOf, EventEmitter } from "../../common/events"
 import { Client } from "."
 import { compress, decompress } from "../../lib/compression"
+import { generateId } from "../../lib/utils"
 
 export function initializeWebSockets<T extends PacketManagerSerializerMap>(client: Client<T>){
     const isBrowser = typeof window !== "undefined"
-    const getWsUrl = () => [
-        client.options.wss ? "wss" : "ws",
-        "://", client.options.host, ":",
-        client.options.port,
-    ].join("")
 
     client.send = async (data: string | ArrayBuffer) => {
         if(typeof client.ws === "undefined") return
@@ -70,7 +66,7 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
         }
 
         if(isBrowser){
-            const ws = new WebSocket(getWsUrl())
+            const ws = new WebSocket(client.wsUrl)
             ws.binaryType = "arraybuffer"
             ws.addEventListener("open", openHandler)
             ws.addEventListener("close", closeHandler)
@@ -79,7 +75,7 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
             })
             client.ws = ws
         } else{
-            const ws = new NodeWebSocket(getWsUrl())
+            const ws = new NodeWebSocket(client.wsUrl)
             ws.binaryType = "arraybuffer"
             ws.on("open", openHandler)
             ws.on("close", closeHandler)
@@ -91,45 +87,53 @@ export function initializeWebSockets<T extends PacketManagerSerializerMap>(clien
     })
 
     client.connect = async () => {
-        try{
-            if(client.hasIdAndTokens){
-                await client.verifyConnection()
-            } else{
-                await client.requestConnection()
-            }
-        } catch(e){
-            await client.requestConnection()
-        }
+        if(client.isReady) return
+        await client.requestConnectionIfNeeded()
         await client.connectWebSocket()
     }
 
-    const pe = client.packets.events as EventEmitter<ClientPacketManagerEventMap<ServerSerializerMap>>
+    client.disconnect = async () => {
+        if(!client.isReady) return
+        if(typeof client.ws !== "undefined"){
+            client.ws.close()
+        }
+    }
+
+    type PMCEM = ClientPacketManagerEventMap<ServerSerializerMap>
+    const pe = client.packets.events as EventEmitter<PMCEM>
 
     pe.on("ping", ({ data }) => {
         const code = new Uint8Array(client.packets.manager.serializers.pong.encode({
-            time: data.time,
+            id: data.id,
         }))
         client.send(code)
     })
 
-    client.getPing = () => new Promise((resolve, reject) => {
+    client.getPing = () => new Promise((resolve) => {
         let completed = false
 
-        const cancel = pe.once("pong", ({ data }) => {
-            const ping = Date.now() - data.time
+        const now = Date.now()
+        const id = generateId(PING_PONG_PACKET_ID_LENGTH)
+
+        const complete = () => {
+            const ping = Date.now() - now
             completed = true
+            pe.off("pong", cb)
             clearTimeout(timeout)
             resolve(ping)
-        })
+        }
+
+        const cb: EventCallbackOf<PMCEM, "pong"> = ({ data }) => {
+            if(data.id === id) complete()
+        }
+
+        pe.on("pong", cb)
 
         const timeout = setTimeout(() => {
-            if(completed === false){
-                cancel()
-                resolve(client.options.maxPing)
-            }
+            if(completed === false) complete()
         }, client.options.maxPing)
 
-        const code = client.packets.manager.serializers.ping.encode({ time: Date.now() })
+        const code = client.packets.manager.serializers.ping.encode({ id })
         const buffer = new Uint8Array(code).buffer
         client.send(buffer)
     })
