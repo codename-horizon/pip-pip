@@ -55,7 +55,7 @@ onUnmounted(() => {
   window.removeEventListener("keyup", keyboardListener)
 })
 
-const chatMessages = computed(() => GAME_CONTEXT.store.chatMessages.slice(-20))
+const chatMessages = computed(() => GAME_CONTEXT.store.chatMessages.slice(-10))
 
 </script>
 
@@ -63,7 +63,7 @@ const chatMessages = computed(() => GAME_CONTEXT.store.chatMessages.slice(-20))
 .game-chat
   .game-chat-messages
     GameChatMessage(v-for="message in chatMessages" :message="message")
-  GameInput(
+  GameInput.game-chat-input(
     ref="inputComponent"
     v-model="chatMessage"
     @enter="sendMessage"
@@ -72,4 +72,11 @@ const chatMessages = computed(() => GAME_CONTEXT.store.chatMessages.slice(-20))
 </template>
 
 <style lang="sass" scoped>
+.game-chat
+  .game-chat-messages
+    margin-bottom: 0.5em
+    font-size: 1.2em
+  .game-chat-input
+    width: 100%
+
 </style>

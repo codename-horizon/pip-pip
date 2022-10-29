@@ -234,17 +234,17 @@ export function processChat(gameContext: GameContext){
     }
 
     // send countdown
-    if(gameContext.game.phase === PipPipGamePhase.COUNTDOWN){
-        if(gameContext.game.countdown % gameContext.game.tps === 0){
-            const seconds = gameContext.game.countdown / gameContext.game.tps
-            gameContext.store.chatMessages.push({
-                text: [{
-                    style: "info",
-                    text: `Match begins in ${seconds}...`,
-                }],
-            })
-        }
-    }
+    // if(gameContext.game.phase === PipPipGamePhase.COUNTDOWN){
+    //     if(gameContext.game.countdown % gameContext.game.tps === 0){
+    //         const seconds = gameContext.game.countdown / gameContext.game.tps
+    //         gameContext.store.chatMessages.push({
+    //             text: [{
+    //                 style: "info",
+    //                 text: `Match begins in ${seconds}...`,
+    //             }],
+    //         })
+    //     }
+    // }
 
     if(clearChat){
         gameContext.store.chatMessages = []

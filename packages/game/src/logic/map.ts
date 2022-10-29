@@ -53,10 +53,10 @@ export class PipGameMap{
 }
 
 export type JSONMapSource = {
-    wallTiles: number[][],
-    spawnTiles: number[][],
-    wallSegments: number[][],
-    wallSegmentTiles: number[][],
+    wall_tiles: number[][],
+    spawn_tiles: number[][],
+    wall_segments: number[][],
+    wall_segment_tiles: number[][],
 }
 
 export class JSONPipGameMap extends PipGameMap{
@@ -77,7 +77,7 @@ export class JSONPipGameMap extends PipGameMap{
             if(y > maxY) maxY = y
         }
 
-        for(const [x, y] of this.source.spawnTiles){
+        for(const [x, y] of this.source.spawn_tiles){
             this.spawns.push(new PointRadius(
                 x * TILE_SIZE,
                 y * TILE_SIZE,
@@ -86,8 +86,8 @@ export class JSONPipGameMap extends PipGameMap{
             compare(x * TILE_SIZE, y * TILE_SIZE)
         }
 
-        for(const [x, y] of this.source.wallTiles){
-            const inSegmentWalls = this.source.wallSegmentTiles.find(t => t[0] === x && t[1] === y)
+        for(const [x, y] of this.source.wall_tiles){
+            const inSegmentWalls = this.source.wall_segment_tiles.find(t => t[0] === x && t[1] === y)
             this.tiles.push({
                 x: x * TILE_SIZE,
                 y: y * TILE_SIZE,
@@ -96,7 +96,7 @@ export class JSONPipGameMap extends PipGameMap{
             compare(x * TILE_SIZE, y * TILE_SIZE)
         }
 
-        for(const [sx, sy, ex, ey] of this.source.wallSegments){
+        for(const [sx, sy, ex, ey] of this.source.wall_segments){
             const segWall = new PointPhysicsSegmentWall(undefined, 
                 sx * TILE_SIZE, 
                 sy * TILE_SIZE, 

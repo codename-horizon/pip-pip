@@ -238,6 +238,11 @@ impl GameMap {
                 self.wall_segments.push([x, y, x, y]);
             }
         }
+
+        // wall segment tiles
+        for tile in tile_pool {
+            self.wall_segment_tiles.push(*tile);
+        }
     }
 }
 

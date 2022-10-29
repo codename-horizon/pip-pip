@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref } from "vue"
 
 import GameOverlaySetup from "./GameOverlaySetup.vue"
+import GameOverlayCountdown from "./GameOverlayCountdown.vue"
 import { GAME_CONTEXT } from "../game"
 
 const container = ref<HTMLDivElement>()
@@ -24,10 +25,8 @@ export default {
 </script>
 
 <template>
-  <GameOverlaySetup v-if="GAME_CONTEXT.store.isPhaseSetup || true"></GameOverlaySetup>
-  <div id="game-countdown" class="overlay" v-if="GAME_CONTEXT.store.isPhaseCountdown">
-    Starting in {{ Number(GAME_CONTEXT.store.countdownMs / 1000).toFixed(2) }} seconds
-  </div>
+  <GameOverlaySetup v-if="GAME_CONTEXT.store.isPhaseSetup"></GameOverlaySetup>
+  <GameOverlayCountdown v-if="GAME_CONTEXT.store.isPhaseCountdown"></GameOverlayCountdown>
   <div id="game-container" ref="container"></div>
 </template>
 

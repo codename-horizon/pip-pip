@@ -111,6 +111,8 @@ defineExpose({
         padding: $text-padding-y $text-padding-x
         border: $border-size solid
         border-radius: $border-radius
+        display: block
+        width: 100%
 
 
 .input
