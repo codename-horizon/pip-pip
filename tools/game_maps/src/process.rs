@@ -12,7 +12,7 @@ pub fn process_game_maps(map_pngs: &Vec<MapPNG>) {
                 let name = name.to_str().unwrap();
                 println!("[RUST] start: {}", name);
                 process_game_map(map_png);
-                println!("[RUST] done: {}", name);
+                println!("[RUST] end: {}", name);
             });
         }
         Some(())
