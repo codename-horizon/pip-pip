@@ -1,8 +1,36 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { GAME_CONTEXT } from '../game';
+import { GameStorePlayer } from '../game/store';
 
-const players = computed(() => GAME_CONTEXT.store.players)
+function getPlayerListPriority(player: GameStorePlayer) {
+  let score = 0
+  if(player.isClient) score += 2
+  if(player.isHost) score += 1
+  if(player.idle) score -= 5
+  return score
+}
+
+const players = computed(() => GAME_CONTEXT.store.players.sort((a, b) => {
+  const A = getPlayerListPriority(a)
+  const B = getPlayerListPriority(b)
+  return B - A
+}))
+
+function getRowClass(player: GameStorePlayer): string {
+  let classes = []
+  if(player.isHost) classes.push("host")
+  if(player.isClient) classes.push("client")
+  if(player.idle) classes.push("idle")
+  return classes.join(" ")
+}
+
+function getRowTags(player: GameStorePlayer): string[] {
+  let tags = []
+  if(player.isClient) tags.push("You")
+  if(player.isHost) tags.push("Host")
+  return tags
+}
 </script>
 
 <template>
@@ -19,12 +47,15 @@ const players = computed(() => GAME_CONTEXT.store.players)
     </tr>
     <tr 
       class="row-player" 
-      :class="player.idle ? 'idle' : ''" 
+      :class="getRowClass(player)" 
       v-for="player in players">
       <td class="ping">{{ player.idle ? "DC" : `${player.ping}ms` }}</td>
-      <td class="name">{{ player.name + (
-        player.isHost ? " (Host)" : ""
-      ) }}</td>
+      <td class="name">
+        <span class="text">{{ player.name }}</span> 
+        <span class="tag" 
+          :class="tag.toLowerCase()"
+          v-for="tag in getRowTags(player)">{{tag}}</span>
+      </td>
       <td class="ship" :class="player.shipType.id">{{ player.shipType.name }}</td>
       <th class="deaths">{{ player.score.deaths }}</th>
       <th class="kills">{{ player.score.kills }}</th>
@@ -68,5 +99,25 @@ const players = computed(() => GAME_CONTEXT.store.players)
     tr.row-player
       border-top: 1px solid rgba(255, 255, 255, 0.1)
       &.idle *
-        color: $color-bad !important
+        color: rgba(255, 255, 255, 0.5) !important
+      &.client
+        color: $color-accent
+
+      td.name
+        .text
+          vertical-align: middle
+          display: inline-block
+        .tag
+          vertical-align: middle
+          display: inline-block
+          margin-left: 0.4em
+          font-size: 0.7em
+          text-transform: uppercase
+          padding: 0.025em 0.2em
+          border-radius: 3px
+          line-height: 1em
+          color: white
+          background-color: transparentize($color-main, 0.5)
+          &.you
+            background-color: transparentize($color-accent, 0.5)
 </style>

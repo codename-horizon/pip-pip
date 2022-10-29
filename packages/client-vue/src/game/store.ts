@@ -16,6 +16,7 @@ export type GameStorePlayer = {
     shipIndex: number,
     shipType: ShipType,
     isHost: boolean,
+    isClient: boolean,
 }
 
 export function playerToGameStore(player: PipPlayer): GameStorePlayer {
@@ -28,6 +29,7 @@ export function playerToGameStore(player: PipPlayer): GameStorePlayer {
         shipIndex: player.shipIndex,
         shipType: player.shipType,
         isHost: GAME_CONTEXT.game.host?.id === player.id,
+        isClient: GAME_CONTEXT.client.connectionId === player.id,
     }
 
     return output
