@@ -29,14 +29,14 @@ func main() {
 	for _, file := range files {
 		filename := file.Name()
 		if file.IsDir() || !strings.HasSuffix(strings.ToLower(filename), FILE_FORMAT) {
-			fmt.Println("Skipping file:", filename)
 			continue
 		}
 
-		fmt.Println("Processing file:", filename)
 		routines++
 		go func() {
+			fmt.Println("[GO] start:", filename)
 			processFile(filename)
+			fmt.Println("[GO] end:", filename)
 			c <- struct{}{}
 		}()
 	}
@@ -284,7 +284,6 @@ func whyTheFuckDoesGoNotHaveSplice(slice [][]TilePoint, index int) [][]TilePoint
 }
 
 func processFile(filename string) {
-	fmt.Println("Starting processing...")
 	inputPath := SRC_MAPS_DIR + "/" + filename
 	outputPath := OUT_MAPS_DIR + "/" + strings.Replace(filename, FILE_FORMAT, ".map.json", -1)
 

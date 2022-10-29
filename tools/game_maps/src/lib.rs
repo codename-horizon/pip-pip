@@ -34,9 +34,9 @@ impl GameTileComputations {
         hash
     }
 
-    fn tile_exists(tiles: &Vec<&GameMapTile>, x: i64, y: i64) -> bool {
-        tiles.iter().any(|&t| t[0] == x && t[1] == y)
-    }
+    // fn tile_exists(tiles: &Vec<&GameMapTile>, x: i64, y: i64) -> bool {
+    //     tiles.iter().any(|&t| t[0] == x && t[1] == y)
+    // }
 
     fn tile_exists_in_hash_map(hash_map: &GameTileExistHashMap, x: i64, y: i64) -> bool {
         let key = Self::xy_to_key(x, y);
@@ -113,10 +113,6 @@ pub struct GameMap {
 }
 
 impl GameMap {
-    fn log(&self) {
-        println!("{:?}", self.get_bounds())
-    }
-
     fn borrow_tiles(&self) -> Vec<&GameMapTile> {
         let mut pool: Vec<&GameMapTile> = Vec::new();
         pool.extend(&self.wall_tiles);
@@ -242,8 +238,6 @@ impl GameMap {
                 self.wall_segments.push([x, y, x, y]);
             }
         }
-
-        println!("len {} from {}", tile_pool.len(), wall_pool.len());
     }
 }
 

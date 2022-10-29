@@ -2,15 +2,24 @@ use std::{path::Path, fs::write};
 
 use image::{self, GenericImageView};
 
-use crate::{GameMap, MapPNG, OUTPUT_DIR, fs};
+use crate::{GameMap, MapPNG, OUTPUT_DIR};
 
 pub fn process_game_maps(map_pngs: &Vec<MapPNG>) {
     crossbeam::scope(|s| {
         for map_png in map_pngs {
-            s.spawn(|_| process_game_map(map_png));
+            s.spawn(|_| {
+                let name = map_png.path.file_name();
+                let name = name.to_str().unwrap();
+                println!("[RUST] start: {}", name);
+                process_game_map(map_png);
+                println!("[RUST] done: {}", name);
+            });
         }
         Some(())
-    }).unwrap(); // 670ms
+    }).unwrap(); 
+
+    // threaded optimized: 38ms
+    // threaded unoptimized: 670ms
 
     // 729ms
     // for map_png in map_pngs {
@@ -62,7 +71,6 @@ pub fn process_game_map(map_png: &MapPNG) {
 
     game_map.center_tiles();
     game_map.generate_segments();
-    game_map.log();
 
     save_game_map(map_png, &game_map);
 }

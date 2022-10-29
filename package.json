@@ -18,6 +18,7 @@
     "build": "bash ./scripts/build.sh",
     "deploy": "bash ./scripts/deploy.sh",
     "lint": "yarn client lint && yarn core lint && yarn game lint && yarn server lint",
-    "generate-maps": "cd tools/game_maps && cargo run"
+    "generate-maps": "cd tools/game_maps && cargo run",
+    "clear-maps": "rm ./packages/game/src/maps/*.map.json"
   }
 }
