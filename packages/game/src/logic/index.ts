@@ -1,8 +1,8 @@
 import { EventEmitter } from "@pip-pip/core/src/common/events"
-import { PointPhysicsWorld } from "@pip-pip/core/src/physics"
+import { PointPhysicsWorld, Vector2 } from "@pip-pip/core/src/physics"
 import { radianDifference } from "@pip-pip/core/src/math"
 
-import { Bullet } from "./bullet"
+import { Bullet, BulletPool } from "./bullet"
 import { PipPlayer } from "./player"
 import { PipShip } from "./ship"
 import { PipGameMap } from "./map"
@@ -29,6 +29,7 @@ export type PipPipGameEventMap = {
 
     addBullet: { bullet: Bullet },
     removeBullet: { bullet: Bullet },
+
     addShip: { ship: PipShip },
     removeShip: { ship: PipShip },
     playerReloadStart: { player: PipPlayer },
@@ -37,6 +38,8 @@ export type PipPipGameEventMap = {
 
 export type PipPipGameOptions = {
     shootAiBullets: boolean,
+    shootPlayerBullets: boolean,
+
     calculateAi: boolean,
     assignHost: boolean,
     triggerPhases: boolean
@@ -69,8 +72,11 @@ export class PipPipGame{
     readonly deltaMs = 1000 / this.tps
     readonly maxTeams = 4
 
+    clientPlayerId = ""
+
     options: PipPipGameOptions = {
         shootAiBullets: false,
+        shootPlayerBullets: false,
         calculateAi: true,
         assignHost: false,
         triggerPhases: false,
@@ -82,7 +88,7 @@ export class PipPipGame{
     physics: PointPhysicsWorld = new PointPhysicsWorld()
 
     players: Record<string, PipPlayer> = {}
-    bullets: Record<string, Bullet> = {}
+    bullets: BulletPool
     ships: Record<string, PipShip> = {}
 
     host?: PipPlayer
@@ -111,6 +117,7 @@ export class PipPipGame{
             ...options,
         }
         this.physics.options.baseTps = this.tps
+        this.bullets = new BulletPool(this)
         this.setMap()
     }
 
@@ -170,8 +177,8 @@ export class PipPipGame{
 
     destroy(){
         this.players = {}
-        this.bullets = {}
         this.ships = {}
+        this.bullets.destroy()
         this.events.destroy()
         this.physics.destroy()
     }
@@ -247,6 +254,7 @@ export class PipPipGame{
         }
         
         if(this.phase !== PipPipGamePhase.SETUP){
+            this.updateSystems()
             this.updatePhysics()
         }
     }
@@ -290,14 +298,29 @@ export class PipPipGame{
         this.spawnPlayer(player)
     }
 
-    updatePhysics(){
-        // update players
-        for(const player of Object.values(this.players)){
-            player.update()
-        }
-
+    updateSystems(){
         if(this.phase === PipPipGamePhase.MATCH){
             for(const player of Object.values(this.players)){
+                const playerIsClient = player.id === this.clientPlayerId
+                // update player
+                player.update()
+
+                // update bullet stuff
+                const authorizedToShootBullet = playerIsClient === true || this.options.shootPlayerBullets === true
+                if(authorizedToShootBullet && player.inputs.useWeapon === true){
+                    // shoot bullets
+                    if(player.ship.canUseWeapon === true){
+                        // shoot bullet
+                        const bullet = this.bullets.new({
+                            position: new Vector2(0, 0),
+                            velocity: new Vector2(0, 0),
+                            speed: 0,
+                            radius: 100,
+                            rotation: 0,
+                        })
+                    }
+                }
+                
                 // accelerate players
                 const vel = Math.sqrt(
                     player.ship.physics.velocity.x * player.ship.physics.velocity.x +
@@ -317,8 +340,25 @@ export class PipPipGame{
                     player.ship.physics.velocity.y += Math.sin(player.inputs.movementAngle + angleEffect) * agilityAcceleration
                 }
             }
-        }
 
+            // update bullets
+            for(const bullet of this.bullets.getActive()){
+                bullet.update()
+
+                // bullet lived too long
+                if(bullet.lifespan <= 0) {
+                    this.bullets.unset(bullet)
+                }
+            }
+        } else{
+            // destroy all bullets
+            this.bullets.destroy()
+        }
+        
+        // Kill bullets
+    }
+
+    updatePhysics(){
         // Run physics
         this.physics.update(this.deltaMs)
         

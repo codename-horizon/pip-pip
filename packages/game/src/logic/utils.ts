@@ -1,1 +1,1 @@
-export const decrease = (n: number, amount = 1) => Math.max(0, n - amount)
+export const tickDown = (n: number, amount = 1) => Math.max(0, n - amount)

@@ -53,6 +53,9 @@ export class GameContext{
     mountGameView(container: HTMLDivElement){
         this.unmountGameView()
         this.game = new PipPipGame()
+        if(typeof this.client.connectionId === "string"){
+            this.game.clientPlayerId = this.client.connectionId
+        }
 
         // this.renderer?.destroy()
         this.renderer = new PipPipRenderer(this.game)

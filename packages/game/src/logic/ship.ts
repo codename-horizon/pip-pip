@@ -4,7 +4,7 @@ import { PointPhysicsObject } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
 import { SHIP_DAIMETER } from "./constants"
 import { PipPlayer } from "./player"
-import { decrease } from "./utils"
+import { tickDown } from "./utils"
 
 export type StatRange = {
     low: number,
@@ -253,13 +253,13 @@ export class PipShip{
     }
 
     update(){
-        this.timings.invincibility = decrease(this.timings.invincibility)
-        this.timings.healthRegenerationHeal = decrease(this.timings.healthRegenerationHeal)
-        this.timings.healthRegenerationRest = decrease(this.timings.healthRegenerationRest)
-        this.timings.weaponReload = decrease(this.timings.weaponReload)
-        this.timings.weaponRate = decrease(this.timings.weaponRate)
-        this.timings.tacticalReload = decrease(this.timings.tacticalReload)
-        this.timings.tacticalRate = decrease(this.timings.tacticalRate)
+        this.timings.invincibility = tickDown(this.timings.invincibility)
+        this.timings.healthRegenerationHeal = tickDown(this.timings.healthRegenerationHeal)
+        this.timings.healthRegenerationRest = tickDown(this.timings.healthRegenerationRest)
+        this.timings.weaponReload = tickDown(this.timings.weaponReload)
+        this.timings.weaponRate = tickDown(this.timings.weaponRate)
+        this.timings.tacticalReload = tickDown(this.timings.tacticalReload)
+        this.timings.tacticalRate = tickDown(this.timings.tacticalRate)
 
         // take input from player
         if(typeof this.player !== "undefined"){

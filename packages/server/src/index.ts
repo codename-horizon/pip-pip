@@ -53,6 +53,7 @@ export type ConnectionContext = {
 server.registerLobby("default", defaultLobbyOptions, ({lobby}) => {
     const game = new PipPipGame({
         calculateAi: true,
+        shootPlayerBullets: true,
         shootAiBullets: true,
         assignHost: true,
         triggerPhases: true,
