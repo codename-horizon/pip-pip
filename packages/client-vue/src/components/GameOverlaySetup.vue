@@ -69,7 +69,7 @@ const displayTab = computed(() => {
         <GameButton @click="startGame" v-if="GAME_CONTEXT.store.isHost">Start Game</GameButton>
       </div>
       
-      <div class="setup-tab" v-if="displayTab.id === 'players'">
+      <div class="setup-tab players" v-if="displayTab.id === 'players'">
         <GamePlayerList></GamePlayerList>
       </div>
 
@@ -87,6 +87,7 @@ const displayTab = computed(() => {
   inset: $screen-margin-dynamic
   display: flex
   flex-direction: column
+  gap: 2em
   .game-chat
     flex-grow: 0
     flex-shrink: 0
@@ -95,8 +96,13 @@ const displayTab = computed(() => {
     flex-grow: 1
     flex-shrink: 1
     overflow: auto
+    display: flex
+    flex-direction: column
 
     .setup-tabs-nav
+      overflow: auto
+      flex-grow: 0
+      flex-shrink: 0
       display: flex
       gap: 1.5em
       padding-bottom: 0.8em
@@ -122,5 +128,15 @@ const displayTab = computed(() => {
         &:not(.active):hover
           color: $color-accent
           transform: translateY(-3px)
+    .setup-tab
+      flex-grow: 1
+      flex-shrink: 1
+      display: grid
+      justify-items: center
+      align-items: center
+
+      &.players > *
+        width: 100%
+        
     
 </style>
