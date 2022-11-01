@@ -4,6 +4,7 @@ import { Packet } from "@pip-pip/core/src/networking/packets/packet"
 
 import { PipPlayer } from "../logic/player"
 import { PipPipGame, PipPipGamePhase } from "../logic"
+import { Bullet } from "../logic/bullet"
 
 export const CONNECTION_ID_LENGTH = 2
 export const LOBBY_ID_LENGTH = 4
@@ -70,6 +71,14 @@ export const packetManager = new PacketManager({
         useWeapon: $bool,
         useTactical: $bool,
         doReload: $bool,
+    }),
+
+    playerShootBullet: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        positionX: $float16,
+        positionY: $float16,
+        velocityX: $float16,
+        velocityY: $float16,
     }),
 
     setHost: new Packet({
@@ -180,4 +189,11 @@ export const encode = {
         doReload: player.inputs.doReload,
     }),
     
+    playerShootBullet: (player: PipPlayer, bullet: Bullet) => packetManager.serializers.playerShootBullet.encode({
+        playerId: player.id,
+        positionX: bullet.physics.position.x,
+        positionY: bullet.physics.position.y,
+        velocityX: bullet.physics.velocity.x,
+        velocityY: bullet.physics.velocity.y,
+    }),
 }

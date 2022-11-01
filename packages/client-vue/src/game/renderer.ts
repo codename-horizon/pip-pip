@@ -11,6 +11,7 @@ import { Point } from "pixi.js"
 import { SHIP_DAIMETER, TILE_SIZE } from "@pip-pip/game/src/logic/constants"
 import { PipGameTile } from "@pip-pip/game/src/logic/map"
 import { COLORS, DIMS } from "./styles"
+import { Bullet } from "@pip-pip/game/src/logic/bullet"
 
 const SMOOTHING = {
     CAMERA_MOVEMENT: 5,
@@ -53,6 +54,76 @@ export class StarGraphic {
         const scale = STAR_BG.MIN_SCALE + (1 - this.zRatio) * (STAR_BG.MAX_SCALE - STAR_BG.MIN_SCALE)
         this.sprite.scale.set(scale)
         this.sprite.rotation = Math.random() * Math.PI
+    }
+}
+
+export class GraphicPool<T extends PoolableGraphic>{
+    stage: PIXI.Container
+    graphics: T[] = []
+    Graphic: new () => T
+
+    constructor(stage: PIXI.Container, Graphic: new () => T){
+        this.stage = stage
+        this.Graphic = Graphic
+    }
+
+    use(setup?: (graphic: T) => void){
+        let graphic = this.graphics.find(graphic => graphic.active === false)
+        if(typeof graphic === "undefined"){
+            graphic = new this.Graphic()
+            this.graphics.push(graphic)
+        }
+        graphic.active = true
+        if(typeof setup !== "undefined") setup(graphic)
+        this.stage.addChild(graphic.container)
+        console.log(graphic)
+        return graphic
+    }
+
+    get active(){
+        return this.graphics.filter(graphic => graphic.active === true)
+    }
+
+    free(graphic: T){
+        if(!(this.graphics.includes(graphic))) return
+        this.stage.removeChild(graphic.container)
+        graphic.active = false
+        graphic?.cleanUp()
+    }
+
+    destroy(){
+        for(const graphic of this.graphics){
+            this.free(graphic)
+        }
+        this.graphics = []
+    }
+}
+
+export interface PoolableGraphic{
+    cleanUp(): void,
+}
+
+export class PoolableGraphic{
+    active = false
+    container = new PIXI.Container()
+}
+
+export class BulletGraphic extends PoolableGraphic{
+    bullet?: Bullet
+    graphic = new PIXI.Graphics()
+
+    setup(bullet: Bullet){
+        this.bullet = bullet
+        this.container.addChild(this.graphic)
+        this.graphic.beginFill(0xFFFFFF)
+        this.graphic.arc(0, 0, bullet.physics.radius, 0, Math.PI * 2)
+        this.graphic.endFill()
+    }
+
+    cleanUp(){
+        this.bullet = undefined
+        this.container.removeChild(this.graphic)
+        this.graphic.clear()
     }
 }
 
@@ -115,10 +186,12 @@ export class PipPipRenderer{
 
     viewportContainer = new PIXI.Container()
     playersContainer = new PIXI.Container()
+    bulletsContainer = new PIXI.Container()
 
     mapBackgroundContainer = new PIXI.Container()
     mapForegroundContainer = new PIXI.Container()
 
+    bullets: GraphicPool<BulletGraphic>
     players: Record<string, PlayerGraphic> = {}
     mapTiles: MapTileGraphic[] = []
 
@@ -151,7 +224,10 @@ export class PipPipRenderer{
         this.viewportContainer.addChild(this.starsContainer)
         this.viewportContainer.addChild(this.mapBackgroundContainer)
         this.viewportContainer.addChild(this.playersContainer)
+        this.viewportContainer.addChild(this.bulletsContainer)
         this.viewportContainer.addChild(this.mapForegroundContainer)
+
+        this.bullets = new GraphicPool(this.bulletsContainer, BulletGraphic)
 
         this.crtFilter.enabled = true
         this.crtFilter.curvature = 100
@@ -224,6 +300,17 @@ export class PipPipRenderer{
         this.updateMapGraphics()
         this.game.events.on("setMap", () => {
             this.updateMapGraphics()
+        })
+
+        this.game.events.on("addBullet", ({ bullet }) => {
+            this.bullets.use(graphic => graphic.setup(bullet))
+        })
+
+        this.game.events.on("removeBullet", ({ bullet }) => {
+            const graphic = this.bullets.graphics.find(graphic => graphic.bullet === bullet)
+            if(typeof graphic !== "undefined"){
+                this.bullets.free(graphic)
+            }
         })
     }
 
@@ -330,6 +417,14 @@ export class PipPipRenderer{
                     this.camera.target.y = 0
                 }
             }
+        }
+
+        // update bullets
+        for(const graphic of this.bullets.active){
+            if(typeof graphic.bullet === "undefined") continue
+            graphic.container.position.x = graphic.bullet.physics.position.x + graphic.bullet.physics.velocity.x * lerp
+            graphic.container.position.y = graphic.bullet.physics.position.y + graphic.bullet.physics.velocity.y * lerp
+
         }
 
         // Compute camera

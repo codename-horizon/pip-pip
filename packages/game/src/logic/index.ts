@@ -309,14 +309,17 @@ export class PipPipGame{
                 const authorizedToShootBullet = playerIsClient === true || this.options.shootPlayerBullets === true
                 if(authorizedToShootBullet && player.inputs.useWeapon === true){
                     // shoot bullets
-                    if(player.ship.canUseWeapon === true){
+                    if(player.ship.shoot()){
                         // shoot bullet
-                        const bullet = this.bullets.new({
-                            position: new Vector2(0, 0),
-                            velocity: new Vector2(0, 0),
-                            speed: 0,
-                            radius: 100,
-                            rotation: 0,
+                        this.bullets.new({
+                            position: new Vector2(
+                                player.ship.physics.position.x, 
+                                player.ship.physics.position.y,
+                            ),
+                            owner: player,
+                            speed: player.ship.stats.bullet.velocity,
+                            radius: player.ship.stats.bullet.radius,
+                            rotation: player.ship.rotation,
                         })
                     }
                 }

@@ -26,7 +26,7 @@ export type ShipStats = {
         capacity: number,
         rate: number,
         reload: {
-            ticks: StatRange,
+            ticks: number,
         },
     },
     tactical: {
@@ -34,7 +34,7 @@ export type ShipStats = {
         rate: number,
         damage: StatRange,
         reload: {
-            ticks: StatRange,
+            ticks: number,
         },
     },
     bullet: {
@@ -85,7 +85,7 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
         capacity: 20,
         rate: 3,
         reload: {
-            ticks: createRange(20),
+            ticks: 20,
         },
     },
     tactical: {
@@ -93,12 +93,12 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
         rate: 20,
         damage: createRange(40),
         reload: {
-            ticks: createRange(20 * 5),
+            ticks: 20 * 5,
         },
     },
     bullet: {
-        velocity: 20,
-        radius:  20,
+        velocity: 50,
+        radius:  4,
         damage: createRange(10),
     },
     defense: {
@@ -246,13 +246,40 @@ export class PipShip{
         return true
     }
 
+    get weaponEmpty(){
+        return this.capacities.weapon === 0
+    }
+
     get canUseWeapon(){
-        if(this.capacities.tactical === 0) return false
+        if(this.isReloading === true) return false
+        if(this.weaponEmpty === true) return false
         if(this.timings.weaponRate !== 0) return false
         return true
     }
 
+    shoot(){
+        if(this.canUseWeapon){
+            this.capacities.weapon = tickDown(this.capacities.weapon, 1)
+            this.timings.weaponRate = this.stats.weapon.rate
+            return true
+        } else if(this.weaponEmpty){
+            this.reload()
+        }
+        return false
+    }
+
+    reload(){
+        if(this.canReload){
+            this.timings.weaponReload = this.stats.weapon.reload.ticks
+            if(typeof this.player !== "undefined"){
+                this.game.events.emit("playerReloadStart", { player: this.player })
+            }
+        }
+    }
+
     update(){
+        const wasReloading = this.isReloading
+
         this.timings.invincibility = tickDown(this.timings.invincibility)
         this.timings.healthRegenerationHeal = tickDown(this.timings.healthRegenerationHeal)
         this.timings.healthRegenerationRest = tickDown(this.timings.healthRegenerationRest)
@@ -265,6 +292,14 @@ export class PipShip{
         if(typeof this.player !== "undefined"){
             // set angle
             this.targetRotation = this.player.inputs.aimRotation
+        }
+
+        // check if reload is done
+        if(wasReloading && this.isReloading === false){
+            this.capacities.weapon = this.stats.weapon.capacity
+            if(typeof this.player !== "undefined"){
+                this.game.events.emit("playerReloadEnd", { player: this.player })
+            }
         }
 
         this.rotation += radianDifference(this.rotation, this.targetRotation) / (1 + 8 * (1 - this.stats.aim.accuracy))

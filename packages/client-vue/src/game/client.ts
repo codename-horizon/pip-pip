@@ -1,4 +1,5 @@
 import { forgivingEqual } from "@pip-pip/core/src/math"
+import { Vector2 } from "@pip-pip/core/src/physics"
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { CHAT_MAX_MESSAGE_LENGTH, PLAYER_POSITION_TOLERANCE } from "@pip-pip/game/src/logic/constants"
 import { encode } from "@pip-pip/game/src/networking/packets"
@@ -40,6 +41,21 @@ export const processPackets = (gameContext: GameContext) => {
         for(const { playerId, ping } of packets.playerPing || []){
             const player = game.players[playerId]
             if(typeof player !== "undefined") player.ping = ping
+        }
+
+        // shoot bullet
+        for(const packet of packets.playerShootBullet || []){
+            const player = game.players[packet.playerId]
+            if(typeof player !== "undefined"){
+                game.bullets.new({
+                    position: new Vector2(packet.positionX, packet.positionY),
+                    velocity: new Vector2(packet.velocityX, packet.velocityY),
+                    owner: player,
+                    speed: player.ship.stats.bullet.velocity,
+                    radius: player.ship.stats.bullet.radius,
+                    rotation: 0,
+                })
+            }
         }
 
         // Set player ship

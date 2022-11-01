@@ -1,5 +1,6 @@
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { PING_REFRESH } from "@pip-pip/game/src/logic/constants"
+import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import { encode } from "@pip-pip/game/src/networking/packets"
 import { ConnectionContext } from "."
 
@@ -54,6 +55,13 @@ export function getFullGameState(context: ConnectionContext): number[][] {
             messages.push(encode.spawnPlayer(player))
         } else{
             messages.push(encode.despawnPlayer(player))
+        }
+    }
+
+    // send all bulelts
+    for(const bullet of game.bullets.getActive()){
+        if(bullet.owner instanceof PipPlayer){
+            messages.push(encode.playerShootBullet(bullet.owner, bullet))
         }
     }
     
@@ -128,6 +136,15 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
     // Send game map
     if(gameEvents.filter("setMap").length > 0){
         messages.push(encode.gameMap(game.mapIndex))
+    }
+
+    // Shoot bullet
+    for(const event of gameEvents.filter("addBullet") || []){
+        const { bullet } = event.addBullet
+        if(bullet.owner instanceof PipPlayer){
+            if(bullet.owner.id === connection.id) continue
+            messages.push(encode.playerShootBullet(bullet.owner, bullet))
+        }
     }
 
     for(const events of lobbyEvents.filter("packetMessage")){

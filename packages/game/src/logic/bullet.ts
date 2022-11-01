@@ -7,7 +7,7 @@ import { tickDown } from "./utils"
 
 export type BulletParams = {
     position: Vector2, 
-    velocity: Vector2,
+    velocity?: Vector2, 
     owner?: PipPlayer,
 
     speed: number,
@@ -26,28 +26,39 @@ export class Bullet{
 
     owner?: PipPlayer
 
-    speed = 40
-    radius = 20
-    rotation = 0
-
     pool: BulletPool
 
     constructor(pool: BulletPool){
         this.pool = pool
-        this.physics.mass = 1
-        this.physics.radius = this.radius
-        this.physics.airResistance = 0
-        this.physics.collision.channels = [1]
-        this.physics.collision.excludeChannels = [1]
+        this.physics.collision.enabled = false
     }
 
     set(params: BulletParams){
         this.physics.position.x = params.position.x
         this.physics.position.y = params.position.y
-        this.physics.velocity.x = params.velocity.x
-        this.physics.velocity.y = params.velocity.y
+        
+        if(typeof params.velocity === "undefined"){
+            let velocityX = Math.cos(params.rotation) * params.speed
+            let velocityY = Math.sin(params.rotation) * params.speed
+            
+            if(params.owner instanceof PipPlayer){
+                velocityX += params.owner.ship.physics.velocity.x
+                velocityY += params.owner.ship.physics.velocity.y
+            }
+            
+            this.physics.velocity.x = velocityX
+            this.physics.velocity.y = velocityY
+        } else{
+            this.physics.velocity.x = params.velocity.x
+            this.physics.velocity.y = params.velocity.y
+        }
+        this.physics.radius = params.radius
+        this.physics.mass = 1
+        this.physics.airResistance = 0
+
         this.owner = params.owner
         this.lifespan = BULLET_DEFAULT_LIFESPAN
+
         this.dead = false
         this.pool.game.physics.addObject(this.physics)
         this.pool.game.events.emit("addBullet", { bullet: this })
@@ -63,13 +74,6 @@ export class Bullet{
         this.physics.velocity.x = 0
         this.physics.velocity.y = 0
         this.pool.game.physics.removeObject(this.physics)
-    }
-
-    setTrajectory(angle: number, speed?: number){
-        const s = typeof speed === "undefined" ? this.speed : speed
-        this.physics.velocity.x = Math.cos(angle) * s
-        this.physics.velocity.y = Math.sin(angle) * s
-        this.rotation = angle
     }
 
     update(){
