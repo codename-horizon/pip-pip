@@ -58,6 +58,8 @@ server.registerLobby("default", defaultLobbyOptions, ({lobby}) => {
         assignHost: true,
         triggerPhases: true,
         triggerSpawns: true,
+        triggerDamage: true,
+        considerPlayerPing: true,
         setScores: true,
     })
 

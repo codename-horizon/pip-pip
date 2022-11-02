@@ -83,4 +83,27 @@ export function nearestPointFromSegment(
         }
     }
 }
+
+export function intersectionOfTwoLines(
+    L1x1: number, L1y1: number, 
+    L1x2: number, L1y2: number, 
+    L2x1: number, L2y1: number, 
+    L2x2: number, L2y2: number,
+){
+    const A1 = L1y2 - L1y1
+    const B1 = L1x1 - L1x2
+    const C1 = A1 * L1x1 + B1 * L1y1
+
+    const A2 = L2y2 - L2y1
+    const B2 = L2x1 - L2x2
+    const C2 = A2 * L2x1 + B2 * L2y1
+
+    const det = A1 * B2 - A2 * B1
+    
+    if ( det === 0) return null
+
+    const x = (B2 * C1 - B1 * C2) / det
+    const y = (A1 * C2 - A2 * C1) / det
+    return { x, y }
+}
   

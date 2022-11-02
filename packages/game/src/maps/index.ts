@@ -10,6 +10,15 @@ export type PipMapType = {
 
 export const PIP_MAPS: PipMapType[] = []
 
+
+import TEST_MAP from "./test.rust.map.json"
+PIP_MAPS.push({
+    id: "test",
+    name: "Test",
+    texture: "default",
+    createMap: () => new JSONPipGameMap("test", TEST_MAP),
+})
+
 import PORTAL_MAP from "./portal.rust.map.json"
 PIP_MAPS.push({
     id: "portal",
@@ -34,14 +43,6 @@ PIP_MAPS.push({
     createMap: () => new JSONPipGameMap("maze", MAZE_MAP),
 })
 
-
-import TEST_MAP from "./test.rust.map.json"
-PIP_MAPS.push({
-    id: "test",
-    name: "Test",
-    texture: "default",
-    createMap: () => new JSONPipGameMap("test", TEST_MAP),
-})
 
 import GALAXY_MAP from "./galaxy.rust.map.json"
 PIP_MAPS.push({
