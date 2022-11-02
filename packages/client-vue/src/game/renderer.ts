@@ -76,7 +76,6 @@ export class GraphicPool<T extends PoolableGraphic>{
         graphic.active = true
         if(typeof setup !== "undefined") setup(graphic)
         this.stage.addChild(graphic.container)
-        console.log(graphic)
         return graphic
     }
 
@@ -111,10 +110,18 @@ export class PoolableGraphic{
 export class BulletGraphic extends PoolableGraphic{
     bullet?: Bullet
     graphic = new PIXI.Graphics()
+    startX = 0
+    startY = 0
 
     setup(bullet: Bullet){
         this.bullet = bullet
         this.container.addChild(this.graphic)
+        this.graphic.lineStyle({
+            width: 1,
+            color: 0xFFFFFF,
+        })
+        this.startX = bullet.physics.position.x
+        this.startY = bullet.physics.position.y
         this.graphic.beginFill(0xFFFFFF)
         this.graphic.arc(0, 0, bullet.physics.radius, 0, Math.PI * 2)
         this.graphic.endFill()
@@ -422,9 +429,13 @@ export class PipPipRenderer{
         // update bullets
         for(const graphic of this.bullets.active){
             if(typeof graphic.bullet === "undefined") continue
+            const tx = graphic.bullet.physics.position.x + graphic.bullet.physics.velocity.x * lerp
+            const ty = graphic.bullet.physics.position.y + graphic.bullet.physics.velocity.y * lerp
             graphic.container.position.x = graphic.bullet.physics.position.x + graphic.bullet.physics.velocity.x * lerp
             graphic.container.position.y = graphic.bullet.physics.position.y + graphic.bullet.physics.velocity.y * lerp
-
+            // graphic.graphic.clear()
+            // graphic.graphic.moveTo(graphic.startX, graphic.startY)
+            // graphic.graphic.lineTo(tx, ty)
         }
 
         // Compute camera

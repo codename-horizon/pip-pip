@@ -7,6 +7,7 @@ import { PipPlayer } from "./player"
 import { PipShip } from "./ship"
 import { PipGameMap } from "./map"
 import { PipMapType, PIP_MAPS } from "../maps"
+import { tickDown } from "./utils"
 
 
 export type PipPipGameEventMap = {
@@ -34,6 +35,9 @@ export type PipPipGameEventMap = {
     removeShip: { ship: PipShip },
     playerReloadStart: { player: PipPlayer },
     playerReloadEnd: { player: PipPlayer },
+
+    dealDamage: { dealer: PipPlayer, target: PipPlayer, damage: number },
+    playerKill: { killer: PipPlayer, killed: PipPlayer },
 }
 
 export type PipPipGameOptions = {
@@ -295,6 +299,8 @@ export class PipPipGame{
         player.ship.physics.velocity.x = 0
         player.ship.physics.velocity.y = 0
 
+        player.ship.reset()
+
         player.setSpawned(true)
     }
 
@@ -306,9 +312,19 @@ export class PipPipGame{
     updateSystems(){
         if(this.phase === PipPipGamePhase.MATCH){
             for(const player of Object.values(this.players)){
-                const playerIsClient = player.id === this.clientPlayerId
+                const wasWaitingForSpawn = player.spawned === false && player.timings.spawnTimeout !== 0
                 // update player
                 player.update()
+                if(this.options.triggerSpawns === true){
+                    if(wasWaitingForSpawn && player.timings.spawnTimeout === 0){
+                        this.spawnPlayer(player)
+                    }
+                }
+            }
+
+
+            for(const player of Object.values(this.players)){
+                const playerIsClient = player.id === this.clientPlayerId
 
                 // update bullet stuff
                 const authorizedToShootBullet = playerIsClient === true || this.options.shootPlayerBullets === true
@@ -364,6 +380,36 @@ export class PipPipGame{
         }
         
         // Kill bullets
+    }
+
+    dealDamage(dealer: PipPlayer, target: PipPlayer){
+        if(this.options.triggerDamage === false) return
+
+        // decrease health
+        const damage = dealer.ship.stats.bullet.damage.normal
+        target.ship.capacities.health = tickDown(target.ship.capacities.health, damage)
+
+        // increase damage
+        dealer.score.damage += damage
+
+        // log damage
+        this.events.emit("dealDamage", {
+            dealer,
+            target,
+            damage,
+        })
+
+        // trigger kill
+        if(target.ship.capacities.health === 0){
+            // kill
+            dealer.score.kills += 1
+            target.setSpawned(false)
+            target.timings.spawnTimeout = 20 * 3 // 3 seconds
+            this.events.emit("playerKill", {
+                killer: dealer,
+                killed: target,
+            })
+        }
     }
 
     updateBulletPhysics(){
@@ -499,8 +545,9 @@ export class PipPipGame{
                 const tValid = t >= 0 && t <= 1
 
                 if(tValid === false) continue
-                // colided
-                console.log("collision", player, bullet, t)
+                if(bullet.owner instanceof PipPlayer){
+                    this.dealDamage(bullet.owner, player)
+                }
                 this.bullets.unset(bullet)
             }
         }

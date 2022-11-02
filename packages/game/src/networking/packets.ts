@@ -1,4 +1,4 @@
-import { $bool, $float16, $string, $uint16, $uint8, $varstring } from "@pip-pip/core/src/networking/packets/serializer"
+import { $bool, $float16, $string, $uint16, $uint32, $uint8, $varstring } from "@pip-pip/core/src/networking/packets/serializer"
 import { PacketManager, ExtractSerializerMap } from "@pip-pip/core/src/networking/packets/manager"
 import { Packet } from "@pip-pip/core/src/networking/packets/packet"
 
@@ -79,6 +79,48 @@ export const packetManager = new PacketManager({
         positionY: $float16,
         velocityX: $float16,
         velocityY: $float16,
+    }),
+
+    playerShipTimings: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        weaponReload: $uint8,
+        weaponRate: $uint8,
+        tacticalReload: $uint8,
+        tacticalRate: $uint8,
+        healthRegenerationRest: $uint8,
+        healthRegenerationHeal: $uint8,
+        invincibility: $uint8,
+    }),
+
+    playerShipCapacities: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        weapon: $uint8,
+        tactical: $uint8,
+        health: $uint8,
+    }),
+
+    playerTimings: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        spawnTimeout: $uint8,
+    }),
+
+    playerScores: new Packet({
+        playerId: $string(CONNECTION_ID_LENGTH),
+        kills: $uint8,
+        assists: $uint8,
+        deaths: $uint8,
+        damage: $uint32,
+    }),
+
+    playerDamage: new Packet({
+        dealerId: $string(CONNECTION_ID_LENGTH),
+        targetId: $string(CONNECTION_ID_LENGTH),
+        damage: $uint32,
+    }),
+
+    playerKill: new Packet({
+        killerId: $string(CONNECTION_ID_LENGTH),
+        killedId: $string(CONNECTION_ID_LENGTH),
     }),
 
     setHost: new Packet({
@@ -187,6 +229,44 @@ export const encode = {
         useWeapon: player.inputs.useWeapon,
         useTactical: player.inputs.useTactical,
         doReload: player.inputs.doReload,
+    }),
+    playerShipTimings: (player: PipPlayer) => packetManager.serializers.playerShipTimings.encode({
+        playerId: player.id,
+        weaponReload: player.ship.timings.weaponReload,
+        weaponRate: player.ship.timings.weaponRate,
+        tacticalReload: player.ship.timings.tacticalReload,
+        tacticalRate: player.ship.timings.tacticalRate,
+        healthRegenerationRest: player.ship.timings.healthRegenerationRest,
+        healthRegenerationHeal: player.ship.timings.healthRegenerationHeal,
+        invincibility: player.ship.timings.invincibility,
+    }),
+    playerShipCapacities: (player: PipPlayer) => packetManager.serializers.playerShipCapacities.encode({
+        playerId: player.id,
+        weapon: player.ship.capacities.weapon,
+        tactical: player.ship.capacities.tactical,
+        health: player.ship.capacities.health,
+    }),
+    playerTimings: (player: PipPlayer) => packetManager.serializers.playerTimings.encode({
+        playerId: player.id,
+        spawnTimeout: player.timings.spawnTimeout,
+    }),
+    playerScores: (player: PipPlayer) => packetManager.serializers.playerScores.encode({
+        playerId: player.id,
+        kills: player.score.kills,
+        assists: player.score.assists,
+        deaths: player.score.deaths,
+        damage: player.score.damage,
+    }),
+
+    playerDamage: (dealer: PipPlayer, target: PipPlayer, damage: number) => packetManager.serializers.playerDamage.encode({
+        dealerId: dealer.id,
+        targetId: target.id,
+        damage,
+    }),
+
+    playerKill: (killer: PipPlayer, killed: PipPlayer) => packetManager.serializers.playerKill.encode({
+        killerId: killer.id,
+        killedId: killed.id,
     }),
     
     playerShootBullet: (player: PipPlayer, bullet: Bullet) => packetManager.serializers.playerShootBullet.encode({

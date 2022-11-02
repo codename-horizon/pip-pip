@@ -3,6 +3,7 @@ import { PipPipGame } from "."
 import { PIP_SHIPS, ShipType } from "../ships"
 
 import { PipShip } from "./ship"
+import { tickDown } from "./utils"
 
 export type PlayerInputs = {
     movementAngle: number,
@@ -18,7 +19,7 @@ export type PlayerInputs = {
 }
 
 export type PlayerTimings = {
-    spawnTime: number,
+    spawnTimeout: number,
 }
 
 export type PlayerPositionState = {
@@ -74,7 +75,7 @@ export class PipPlayer{
     }
 
     timings: PlayerTimings = {
-        spawnTime: 0,
+        spawnTimeout: 0,
     }
 
     spectator = false
@@ -96,7 +97,7 @@ export class PipPlayer{
     get canSpawn(){
         if(this.spectator === true) return false
         if(this.spawned === true) return false
-        if(this.timings.spawnTime > 0) return false
+        if(this.timings.spawnTimeout > 0) return false
         return true
     }
 
@@ -226,6 +227,7 @@ export class PipPlayer{
     }
 
     update(){
+        this.timings.spawnTimeout = tickDown(this.timings.spawnTimeout, 1)
         this.ship?.update()
     }
 }

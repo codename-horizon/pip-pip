@@ -123,6 +123,49 @@ export const processPackets = (gameContext: GameContext) => {
             player.ship.physics.velocity.y = pos.velocityY
         }
 
+        // update player ship timings
+        for(const values of packets.playerShipTimings || []){
+            const player = game.players[values.playerId]
+            if(typeof player !== "undefined"){
+                player.ship.timings.weaponReload = values.weaponReload
+                player.ship.timings.weaponRate = values.weaponRate
+                player.ship.timings.tacticalReload = values.tacticalReload
+                player.ship.timings.tacticalRate = values.tacticalRate
+                player.ship.timings.healthRegenerationRest = values.healthRegenerationRest
+                player.ship.timings.healthRegenerationHeal = values.healthRegenerationHeal
+                player.ship.timings.invincibility = values.invincibility
+            }
+        }
+
+        // update player ship capacities
+        for(const values of packets.playerShipCapacities || []){
+            const player = game.players[values.playerId]
+            if(typeof player !== "undefined"){
+                player.ship.capacities.weapon = values.weapon
+                player.ship.capacities.tactical = values.tactical
+                player.ship.capacities.health = values.health
+            }
+        }
+
+        // update player timings
+        for(const values of packets.playerTimings || []){
+            const player = game.players[values.playerId]
+            if(typeof player !== "undefined"){
+                player.timings.spawnTimeout = values.spawnTimeout
+            }
+        }
+
+        // update player scores
+        for(const values of packets.playerScores || []){
+            const player = game.players[values.playerId]
+            if(typeof player !== "undefined"){
+                player.score.kills = values.kills
+                player.score.assists = values.assists
+                player.score.deaths = values.deaths
+                player.score.damage = values.damage
+            }
+        }
+
         // set player inputs
         for(const inputs of packets.playerInputs || []){
             if(inputs.playerId === gameContext.client.connectionId) continue

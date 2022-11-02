@@ -50,6 +50,10 @@ export function getFullGameState(context: ConnectionContext): number[][] {
         messages.push(encode.playerPositionSync(player))
         messages.push(encode.playerPosition(player))
         messages.push(encode.playerPing(player))
+        messages.push(encode.playerShipTimings(player))
+        messages.push(encode.playerShipCapacities(player))
+        messages.push(encode.playerTimings(player))
+        messages.push(encode.playerScores(player))
 
         if(player.spawned){
             messages.push(encode.spawnPlayer(player))
@@ -77,8 +81,39 @@ export function getFullGameState(context: ConnectionContext): number[][] {
     return messages
 }
 
+type PlayerUpdateObject = {
+    shipTimings: boolean,
+    shipCapacities: boolean,
+    playerTimings: boolean,
+    playerScores: boolean,
+}
+type PlayerUpdateType = Record<string, PlayerUpdateObject>
+
+class PlayerUpdateTracker{
+    states: PlayerUpdateType = {}
+    
+    track<K extends keyof PlayerUpdateObject>(id: string, key: K, value: PlayerUpdateObject[K] = true){
+        if(id in this.states){
+            this.states[id] = {
+                ...this.states[id],
+                [key]: value,
+            }
+        } else{
+            this.states[id] = {
+                shipTimings: false,
+                shipCapacities: false,
+                playerTimings: false,
+                playerScores: false,
+                [key]: value,
+            }
+        }
+    }
+}
+
 export function getPartialGameState(context: ConnectionContext): number[][] {
     const { game, gameEvents, connection, lobbyEvents } = context
+
+    const playerUpdates = new PlayerUpdateTracker()
 
     const messages = []
     
@@ -88,6 +123,10 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         messages.push(encode.addPlayer(player))
         messages.push(encode.playerName(player))
         messages.push(encode.playerIdle(player))
+        playerUpdates.track(player.id, "playerScores")
+        playerUpdates.track(player.id, "playerTimings")
+        playerUpdates.track(player.id, "shipCapacities")
+        playerUpdates.track(player.id, "shipTimings")
     }
 
     // Send player details
@@ -108,14 +147,20 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         messages.push(encode.playerSetShip(player))
     }
 
-    
+    // player spawned
     for(const event of gameEvents.filter("playerSpawned")){
         const { player } = event.playerSpawned
         if(player.spawned === true){
+            // player spawned
             messages.push(encode.spawnPlayer(player))
         } else{
+            // player despawned
             messages.push(encode.despawnPlayer(player))
         }
+        playerUpdates.track(player.id, "playerScores")
+        playerUpdates.track(player.id, "playerTimings")
+        playerUpdates.track(player.id, "shipCapacities")
+        playerUpdates.track(player.id, "shipTimings")
     }
 
     // Send host
@@ -147,6 +192,29 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         }
     }
 
+    // TODO: Reload
+
+    // Deal damage
+    for(const event of gameEvents.filter("dealDamage") || []){
+        const { dealer, target, damage } = event.dealDamage
+        if(connection.id === dealer.id){
+            messages.push(encode.playerDamage(dealer, target, damage))
+        }
+        playerUpdates.track(dealer.id, "playerScores")
+        playerUpdates.track(dealer.id, "shipCapacities")
+        playerUpdates.track(target.id, "shipCapacities")
+    }
+
+    // Track kill
+    for(const event of gameEvents.filter("playerKill") || []){
+        const { killer, killed } = event.playerKill
+        messages.push(encode.playerKill(killer, killed))
+        playerUpdates.track(killer.id, "playerScores")
+        playerUpdates.track(killed.id, "playerScores")
+        playerUpdates.track(killer.id, "playerTimings")
+        playerUpdates.track(killed.id, "playerTimings")
+    }
+
     for(const events of lobbyEvents.filter("packetMessage")){
         const { packets, connection } = events.packetMessage
 
@@ -159,6 +227,24 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         }
     }
 
+    for(const playerId in playerUpdates.states){
+        const player = game.players[playerId]
+        if(typeof player === "undefined") continue
+        const update = playerUpdates.states[playerId]
+
+        if(update.playerScores === true){
+            messages.push(encode.playerScores(player))
+        }
+        if(update.playerTimings === true){
+            messages.push(encode.playerTimings(player))
+        }
+        if(update.shipCapacities === true){
+            messages.push(encode.playerShipCapacities(player))
+        }
+        if(update.shipTimings === true){
+            messages.push(encode.playerShipTimings(player))
+        }
+    }
     
     if(game.phase !== PipPipGamePhase.SETUP){
         const connectionPlayer = game.players[connection.id]

@@ -207,12 +207,15 @@ export class PipShip{
         this.id = id
         this.game = game
 
-        // Reload and heal
+        this.reset()
+        this.setupPhysics()
+    }
+
+    reset(){
         this.capacities.health = this.stats.health.capacity.normal
         this.capacities.tactical = this.stats.tactical.capcity
         this.capacities.weapon = this.stats.weapon.capacity
 
-        this.setupPhysics()
     }
 
     setPlayer(player: PipPlayer){
