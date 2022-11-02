@@ -45,6 +45,11 @@ export const useGameStore = defineStore("game", () => {
 
     const clientPlayerShipIndex = ref(0)
     const clientPlayerShipType = computed(() => PIP_SHIPS[clientPlayerShipIndex.value])
+    const clientPlayerStats = ref({
+        reloading: false,
+        ammo: 0, ammoMax: 0,
+        health: 0, healthMax: 0,
+    })
     
     const players = ref<GameStorePlayer[]>([])
 
@@ -53,8 +58,11 @@ export const useGameStore = defineStore("game", () => {
     const isPhaseMatch = computed(() => phase.value === PipPipGamePhase.MATCH)
     const isPhaseResults = computed(() => phase.value === PipPipGamePhase.RESULTS)
 
+
     const chatMessages = ref<ChatMessage[]>([])
     const outgoingMessages = ref<string[]>([])
+
+    const showPlayerList = ref(false)
 
     function addOutgoingMessage(text: string){
         outgoingMessages.value.push(text.trim().substring(0, CHAT_MAX_MESSAGE_LENGTH))
@@ -74,7 +82,14 @@ export const useGameStore = defineStore("game", () => {
             isHost.value = game.host?.id === gameClientPlayer.id
             ping.value = gameClientPlayer.ping
             clientPlayerShipIndex.value = gameClientPlayer.shipIndex
+            clientPlayerStats.value.reloading = gameClientPlayer.ship.isReloading
+            clientPlayerStats.value.ammo = gameClientPlayer.ship.capacities.weapon
+            clientPlayerStats.value.ammoMax = gameClientPlayer.ship.stats.weapon.capacity
+            clientPlayerStats.value.health = gameClientPlayer.ship.capacities.health
+            clientPlayerStats.value.healthMax = gameClientPlayer.ship.maxHealth
         }
+
+        showPlayerList.value = GAME_CONTEXT.keyboard.state.Tab
 
         players.value = Object.values(game.players).map(playerToGameStore)
     }
@@ -88,6 +103,8 @@ export const useGameStore = defineStore("game", () => {
         ping,
         clientPlayerShipIndex,
         clientPlayerShipType,
+        clientPlayerStats,
+
         players,
         
         phase,
@@ -95,6 +112,8 @@ export const useGameStore = defineStore("game", () => {
         isPhaseCountdown,
         isPhaseMatch,
         isPhaseResults,
+
+        showPlayerList,
 
         chatMessages,
 

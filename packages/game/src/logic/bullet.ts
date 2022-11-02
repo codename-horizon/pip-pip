@@ -38,13 +38,8 @@ export class Bullet{
         this.physics.position.y = params.position.y
         
         if(typeof params.velocity === "undefined"){
-            let velocityX = Math.cos(params.rotation) * params.speed
-            let velocityY = Math.sin(params.rotation) * params.speed
-            
-            if(params.owner instanceof PipPlayer){
-                velocityX += params.owner.ship.physics.velocity.x
-                velocityY += params.owner.ship.physics.velocity.y
-            }
+            const velocityX = Math.cos(params.rotation) * params.speed
+            const velocityY = Math.sin(params.rotation) * params.speed
             
             this.physics.velocity.x = velocityX
             this.physics.velocity.y = velocityY

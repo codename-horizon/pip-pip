@@ -65,7 +65,7 @@ export function processLobbyPackets(context: GameTickContext){
             const player = game.players[connection.id]
             if(typeof player !== "undefined"){
                 const lookbackRaw = player.ping / game.deltaMs
-                const state = player.getLastPositionState(lookbackRaw)
+                const state = player.getLastTickState(lookbackRaw)
                 const x = forgivingEqual((state.positionX + state.velocityX), (pos.positionX), PLAYER_POSITION_TOLERANCE)
                 const y = forgivingEqual((state.positionY + state.velocityY), (pos.positionY), PLAYER_POSITION_TOLERANCE)
                 if(x && y){

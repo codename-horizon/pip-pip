@@ -1,3 +1,4 @@
+import { radianDifference } from "@pip-pip/core/src/math"
 import { PointPhysicsObject, Vector2 } from "@pip-pip/core/src/physics"
 import { PipPipGame } from "."
 import { PIP_SHIPS, ShipType } from "../ships"
@@ -22,11 +23,12 @@ export type PlayerTimings = {
     spawnTimeout: number,
 }
 
-export type PlayerPositionState = {
+export type PlayerTickState = {
     positionX: number,
     positionY: number,
     velocityX: number,
     velocityY: number,
+    rotation: number,
 }
 
 export type PlayerScores = {
@@ -81,7 +83,7 @@ export class PipPlayer{
     spectator = false
     spawned = false
 
-    positionStates: PlayerPositionState[] = []
+    positionStates: PlayerTickState[] = []
 
     constructor(game: PipPipGame, id: string){
         this.game = game
@@ -189,17 +191,18 @@ export class PipPlayer{
         })
     }
 
-    getPositionState(): PlayerPositionState{
+    getTickState(): PlayerTickState{
         return {
             positionX: this.ship.physics.position.x,
             positionY: this.ship.physics.position.y,
             velocityX: this.ship.physics.velocity.x,
             velocityY: this.ship.physics.velocity.y,
+            rotation: this.ship.rotation,
         }
     }
 
     trackPositionState(){
-        const state = this.getPositionState()
+        const state = this.getTickState()
 
         if(this.positionStates.length >= MAX_PLAYER_POSITION_STATES){
             this.positionStates.pop()
@@ -207,9 +210,9 @@ export class PipPlayer{
         this.positionStates.unshift(state)
     }
 
-    getLastPositionState(index: number){
+    getLastTickState(index: number){
         if(this.positionStates.length === 0){
-            return this.getPositionState()
+            return this.getTickState()
         }
         index = Math.max(0, Math.min(index, this.positionStates.length - 1))
         const fromIndex = Math.floor(index)
@@ -223,6 +226,7 @@ export class PipPlayer{
             positionY: from.positionY + (to.positionY - from.positionY) * dist,
             velocityX: from.velocityX + (to.velocityX - from.velocityX) * dist,
             velocityY: from.velocityY + (to.velocityY - from.velocityY) * dist,
+            rotation: from.rotation + radianDifference(from.rotation, to.rotation) * dist,
         }
     }
 

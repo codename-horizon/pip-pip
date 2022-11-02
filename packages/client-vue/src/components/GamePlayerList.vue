@@ -5,9 +5,10 @@ import { GameStorePlayer } from '../game/store';
 
 function getPlayerListPriority(player: GameStorePlayer) {
   let score = 0
-  if(player.isClient) score += 2
-  if(player.isHost) score += 1
-  if(player.idle) score -= 5
+  if(player.isClient) score = 10000
+  if(player.isHost) score = 1000
+  score += player.score.kills
+  if(player.idle) score -= 100
   return score
 }
 
@@ -57,9 +58,9 @@ function getRowTags(player: GameStorePlayer): string[] {
           v-for="tag in getRowTags(player)">{{tag}}</span>
       </td>
       <td class="ship" :class="player.shipType.id">{{ player.shipType.name }}</td>
-      <th class="deaths">{{ player.score.deaths }}</th>
-      <th class="kills">{{ player.score.kills }}</th>
       <th class="damage">{{ player.score.damage }}</th>
+      <th class="kills">{{ player.score.kills }}</th>
+      <th class="deaths">{{ player.score.deaths }}</th>
       <th class="wins">{{ 0 }}</th>
     </tr>
   </table>

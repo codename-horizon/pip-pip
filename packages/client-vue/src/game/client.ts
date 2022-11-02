@@ -108,7 +108,7 @@ export const processPackets = (gameContext: GameContext) => {
             if(pos.playerId === gameContext.client.connectionId){
                 // TODO: Improve server reconciliation
                 const lookbackRaw = player.ping / game.deltaMs
-                const state = player.getLastPositionState(lookbackRaw)
+                const state = player.getLastTickState(lookbackRaw)
                 const x = forgivingEqual((state.positionX + state.velocityX), (pos.positionX), PLAYER_POSITION_TOLERANCE)
                 const y = forgivingEqual((state.positionY + state.velocityY), (pos.positionY), PLAYER_POSITION_TOLERANCE)
                 if(x && y) continue

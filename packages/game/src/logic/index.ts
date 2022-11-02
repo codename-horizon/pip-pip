@@ -300,6 +300,7 @@ export class PipPipGame{
         player.ship.physics.velocity.y = 0
 
         player.ship.reset()
+        player.positionStates = []
 
         player.setSpawned(true)
     }
@@ -328,19 +329,28 @@ export class PipPipGame{
 
                 // update bullet stuff
                 const authorizedToShootBullet = playerIsClient === true || this.options.shootPlayerBullets === true
-                if(authorizedToShootBullet && player.inputs.useWeapon === true){
+                if(authorizedToShootBullet && player.inputs.useWeapon === true && player.spawned === true){
                     // shoot bullets
                     if(player.ship.shoot()){
                         // shoot bullet
+                        let positionX = player.ship.physics.position.x
+                        let positionY = player.ship.physics.position.y
+                        let rotation = player.ship.rotation
+
+                        if(this.options.considerPlayerPing){
+                            const lookbackRaw = player.ping / this.deltaMs
+                            const prev = player.getLastTickState(lookbackRaw)
+                            positionX = prev.positionX
+                            positionY = prev.positionY
+                            rotation = prev.rotation
+                        }
+
                         this.bullets.new({
-                            position: new Vector2(
-                                player.ship.physics.position.x, 
-                                player.ship.physics.position.y,
-                            ),
+                            position: new Vector2(positionX, positionY),
                             owner: player,
                             speed: player.ship.stats.bullet.velocity,
                             radius: player.ship.stats.bullet.radius,
-                            rotation: player.ship.rotation,
+                            rotation,
                         })
                     }
                 }
@@ -403,6 +413,7 @@ export class PipPipGame{
         if(target.ship.capacities.health === 0){
             // kill
             dealer.score.kills += 1
+            target.score.deaths += 1
             target.setSpawned(false)
             target.timings.spawnTimeout = 20 * 3 // 3 seconds
             this.events.emit("playerKill", {
@@ -516,11 +527,11 @@ export class PipPipGame{
 
                 if(this.options.considerPlayerPing === true){
                     const lookbackRaw = player.ping / this.deltaMs
-                    const prevPos = player.getLastPositionState(lookbackRaw)
-                    playerPositionX = prevPos.positionX
-                    playerPositionY = prevPos.positionY
-                    playerVelocityX = prevPos.velocityX
-                    playerVelocityY = prevPos.velocityY
+                    const prev = player.getLastTickState(lookbackRaw)
+                    playerPositionX = prev.positionX
+                    playerPositionY = prev.positionY
+                    playerVelocityX = prev.velocityX
+                    playerVelocityY = prev.velocityY
                 }
 
                 const Vx = bullet.physics.velocity.x - playerVelocityX

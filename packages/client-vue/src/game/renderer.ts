@@ -229,9 +229,9 @@ export class PipPipRenderer{
         this.app.stage.addChild(this.viewportContainer)
         
         this.viewportContainer.addChild(this.starsContainer)
+        this.viewportContainer.addChild(this.bulletsContainer)
         this.viewportContainer.addChild(this.mapBackgroundContainer)
         this.viewportContainer.addChild(this.playersContainer)
-        this.viewportContainer.addChild(this.bulletsContainer)
         this.viewportContainer.addChild(this.mapForegroundContainer)
 
         this.bullets = new GraphicPool(this.bulletsContainer, BulletGraphic)
@@ -431,11 +431,11 @@ export class PipPipRenderer{
             if(typeof graphic.bullet === "undefined") continue
             const tx = graphic.bullet.physics.position.x + graphic.bullet.physics.velocity.x * lerp
             const ty = graphic.bullet.physics.position.y + graphic.bullet.physics.velocity.y * lerp
-            graphic.container.position.x = graphic.bullet.physics.position.x + graphic.bullet.physics.velocity.x * lerp
-            graphic.container.position.y = graphic.bullet.physics.position.y + graphic.bullet.physics.velocity.y * lerp
+            // graphic.container.position.x = graphic.bullet.physics.position.x + graphic.bullet.physics.velocity.x * lerp
+            // graphic.container.position.y = graphic.bullet.physics.position.y + graphic.bullet.physics.velocity.y * lerp
             // graphic.graphic.clear()
-            // graphic.graphic.moveTo(graphic.startX, graphic.startY)
-            // graphic.graphic.lineTo(tx, ty)
+            graphic.graphic.moveTo(graphic.startX, graphic.startY)
+            graphic.graphic.lineTo(tx, ty)
         }
 
         // Compute camera

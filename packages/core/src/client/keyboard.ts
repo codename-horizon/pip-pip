@@ -27,6 +27,7 @@ export class KeyboardListener extends EventEmitter<KeyboardListenerEventMap>{
         this.emit("down", {
             key: e.code,
         })
+        e.preventDefault()
     }
 
     upHandler(e: KeyboardEvent){
@@ -34,6 +35,7 @@ export class KeyboardListener extends EventEmitter<KeyboardListenerEventMap>{
         this.emit("up", {
             key: e.code,
         })
+        e.preventDefault()
     }
 
     setState(id: string, state: boolean){
