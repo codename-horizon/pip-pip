@@ -3,7 +3,7 @@ import { Vector2 } from "@pip-pip/core/src/physics"
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { CHAT_MAX_MESSAGE_LENGTH, PLAYER_POSITION_TOLERANCE } from "@pip-pip/game/src/logic/constants"
 import { encode } from "@pip-pip/game/src/networking/packets"
-import { GAME_CONTEXT, GameContext, getClientPlayer } from "."
+import { GameContext, getClientPlayer } from "."
 
 export const processPackets = (gameContext: GameContext) => {
     const { game } = gameContext
