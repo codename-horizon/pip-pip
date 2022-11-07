@@ -166,6 +166,15 @@ export const processPackets = (gameContext: GameContext) => {
             }
         }
 
+        // show player kill
+        for(const kill of packets.playerKill || []){
+            const killer = game.players[kill.killerId]
+            const killed = game.players[kill.killedId]
+            if(typeof killer !== "undefined" && typeof killed !== "undefined"){
+                game.events.emit("playerKill", { killer, killed })
+            }
+        }
+
         // render player damage
         for(const damage of packets.playerDamage || []){
             const dealer = game.players[damage.dealerId]

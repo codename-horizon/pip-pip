@@ -247,11 +247,16 @@ export class PipShip{
 
     get canReload(){
         if(this.isReloading) return false
+        if(this.weaponFull) return false
         return true
     }
 
     get weaponEmpty(){
         return this.capacities.weapon === 0
+    }
+
+    get weaponFull(){
+        return this.capacities.weapon === this.stats.weapon.capacity
     }
 
     get canUseWeapon(){

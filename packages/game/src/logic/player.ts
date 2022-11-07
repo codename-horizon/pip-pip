@@ -232,6 +232,9 @@ export class PipPlayer{
 
     update(){
         this.timings.spawnTimeout = tickDown(this.timings.spawnTimeout, 1)
-        this.ship?.update()
+
+        if(typeof this.ship !== "undefined"){
+            this.ship.update()
+        }
     }
 }

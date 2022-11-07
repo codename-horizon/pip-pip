@@ -205,6 +205,24 @@ export function processChat(gameContext: GameContext){
         }
     }
 
+    
+    // player kill
+    for(const event of gameContext.gameEvents.filter("playerKill")){
+        const { killed, killer } = event.playerKill
+        gameContext.store.chatMessages.push({
+            text: [{
+                style: "player",
+                text: killer.name,
+            }, CHAT_SPACE, {
+                style: "bad",
+                text: "killed",
+            }, CHAT_SPACE, {
+                style: "player",
+                text: killed.name,
+            }],
+        })
+    }
+
     // send phase change
     if(gameContext.gameEvents.filter("phaseChange").length > 0){
         if(gameContext.game.phase === PipPipGamePhase.SETUP){

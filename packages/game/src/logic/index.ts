@@ -312,7 +312,10 @@ export class PipPipGame{
 
     updateSystems(){
         if(this.phase === PipPipGamePhase.MATCH){
+
             for(const player of Object.values(this.players)){
+                const playerIsClient = player.id === this.clientPlayerId
+                const authorizedToShootBullet = playerIsClient === true || this.options.shootPlayerBullets === true
                 const wasWaitingForSpawn = player.spawned === false && player.timings.spawnTimeout !== 0
                 // update player
                 player.update()
@@ -321,14 +324,19 @@ export class PipPipGame{
                         this.spawnPlayer(player)
                     }
                 }
+
+                // reload input
+                if(authorizedToShootBullet && player.ship.canReload && player.inputs.doReload){
+                    player.ship.reload()
+                }
             }
 
 
             for(const player of Object.values(this.players)){
                 const playerIsClient = player.id === this.clientPlayerId
+                const authorizedToShootBullet = playerIsClient === true || this.options.shootPlayerBullets === true
 
                 // update bullet stuff
-                const authorizedToShootBullet = playerIsClient === true || this.options.shootPlayerBullets === true
                 if(authorizedToShootBullet && player.inputs.useWeapon === true && player.spawned === true){
                     // shoot bullets
                     if(player.ship.shoot()){

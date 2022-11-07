@@ -192,7 +192,23 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         }
     }
 
-    // TODO: Reload
+    // Reload
+    for(const event of gameEvents.filter("playerReloadStart") || []){
+        const { player } = event.playerReloadStart
+        if(connection.id === player.id){
+            playerUpdates.track(player.id, "playerTimings")
+            playerUpdates.track(player.id, "shipCapacities")
+            playerUpdates.track(player.id, "shipTimings")
+        }
+    }
+    for(const event of gameEvents.filter("playerReloadEnd") || []){
+        const { player } = event.playerReloadEnd
+        if(connection.id === player.id){
+            playerUpdates.track(player.id, "playerTimings")
+            playerUpdates.track(player.id, "shipCapacities")
+            playerUpdates.track(player.id, "shipTimings")
+        }
+    }
 
     // Deal damage
     for(const event of gameEvents.filter("dealDamage") || []){
