@@ -396,7 +396,10 @@ export class PipPipGame{
         if(this.options.triggerDamage === false) return
 
         // decrease health
-        const damage = Math.min(dealer.ship.stats.bullet.damage.normal, target.ship.capacities.health)
+        const dealerDamage = dealer.ship.stats.bullet.damage.normal
+        const defenseRatio = 2 - target.ship.defense
+        const rawDamage = Math.max(1, Math.round(defenseRatio * dealerDamage))
+        const damage = Math.min(rawDamage, target.ship.capacities.health)
         target.ship.capacities.health = tickDown(target.ship.capacities.health, damage)
 
         // increase damage

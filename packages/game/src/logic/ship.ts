@@ -101,11 +101,7 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
         radius:  4,
         damage: createRange(4),
     },
-    defense: {
-        low: 0.8,
-        normal: 1,
-        high: 1.2,
-    },
+    defense: createRange(1),
     health: {
         capacity: createRange(100),
         regeneration: {
@@ -232,6 +228,11 @@ export class PipShip{
 
     get maxHealth(){
         return this.stats.health.capacity.normal
+    }
+
+    get defense(){
+        const def = this.stats.defense.normal
+        return Math.max(0, Math.min(2, def))
     }
 
     get isDead(){

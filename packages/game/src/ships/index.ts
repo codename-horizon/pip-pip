@@ -23,6 +23,7 @@ PIP_SHIPS.push({
                 velocity: 50,
                 damage: createRange(2),
             },
+            defense: createRange(0.5),
         })
     },
 })
