@@ -2,6 +2,7 @@ import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
 import { CACHE_NAME_KEY, sanitize } from "@pip-pip/game/src/logic/utils"
 import { PIP_MAPS } from "@pip-pip/game/src/maps"
+import { PIP_SHIPS } from "@pip-pip/game/src/ships"
 import { GameContext, GAME_CONTEXT } from "."
 
 export type ChatCommand = {
@@ -90,6 +91,41 @@ GAME_COMMANDS.push({
         if(safeName.length !== 0){
             GAME_CONTEXT.getClientPlayer()?.setName(safeName)
             localStorage.setItem(CACHE_NAME_KEY, safeName)
+        }
+    }
+})
+
+GAME_COMMANDS.push({
+    command: "ship",
+    name: "Set ship",
+    inputs: ["name|index"],
+    description: "Set ship",
+    callback(message, [nameIndex]){
+        let index = 0
+        if(typeof nameIndex === "string" && isNaN(Number(nameIndex))){
+            const name = nameIndex.trim().toLowerCase()
+            index = PIP_SHIPS.findIndex(ship => ship.name === name || ship.id === name)
+            if(index === -1){
+                return createErrorChatMessage("UNKNOWN", `Cannot find ship "${name}".`)
+            }
+        } else if(typeof nameIndex === "number" || (typeof nameIndex === "string" && !isNaN(Number(nameIndex)))){
+            // check bounds
+            const seekIndex = Number(nameIndex)
+            if(seekIndex <= 0 || seekIndex > PIP_SHIPS.length){
+                return createErrorChatMessage("OUT_OF_BOUNDS", `Ship index ${seekIndex} not within range (1..=${PIP_SHIPS.length}).`)
+            }
+            index = seekIndex - 1
+        }
+
+        const ship = PIP_SHIPS[index]
+        GAME_CONTEXT.getClientPlayer()?.setShip(index)
+        return {
+            text: [{
+                style: "info",
+                text: "Ship chosen:"
+            }, CHAT_SPACE, {
+                text: ship.name,
+            }],
         }
     }
 })
