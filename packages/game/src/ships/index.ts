@@ -4,6 +4,7 @@ export type ShipType = {
     id: string,
     name: string,
     texture: string,
+    description: string,
     Ship: typeof PipShip,
 }
 
@@ -13,6 +14,7 @@ PIP_SHIPS.push({
     id: "mono",
     name: "Mono",
     texture: "ship_1",
+    description: "Machine gun but fragile",
     Ship: class extends PipShip{
         stats = createShipStats({
             weapon: {
@@ -32,6 +34,7 @@ PIP_SHIPS.push({
     id: "hugo",
     name: "Hugo",
     texture: "ship_2",
+    description: "Agile",
     Ship: class extends PipShip{
         stats = createShipStats({
             movement: {
@@ -46,6 +49,7 @@ PIP_SHIPS.push({
     id: "gotchi",
     name: "Gotchi",
     texture: "ship_3",
+    description: "Very fast",
     Ship: class extends PipShip{
         stats = createShipStats({
             movement: {
@@ -67,6 +71,7 @@ PIP_SHIPS.push({
     id: "blu",
     name: "Blu",
     texture: "ship_4",
+    description: "Nothing special yet",
     Ship: class extends PipShip{
         stats = createShipStats()
     },
@@ -76,6 +81,7 @@ PIP_SHIPS.push({
     id: "flora",
     name: "Flora",
     texture: "ship_5",
+    description: "Nothing special yet",
     Ship: class extends PipShip{
         stats = createShipStats()
     },
@@ -85,6 +91,7 @@ PIP_SHIPS.push({
     id: "djibouti",
     name: "Djibouti",
     texture: "ship_6",
+    description: "Nothing special yet",
     Ship: class extends PipShip{
         stats = createShipStats()
     },

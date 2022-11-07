@@ -131,6 +131,28 @@ GAME_COMMANDS.push({
 })
 
 GAME_COMMANDS.push({
+    command: "ships",
+    name: "List ships",
+    inputs: [],
+    description: "List ships",
+    callback(){
+        for(const [index, ship] of PIP_SHIPS.entries()){
+            GAME_CONTEXT.store.chatMessages.push({
+                text: [{
+                    style: "info",
+                    text: (index + 1).toString(),
+                }, CHAT_SPACE,{
+                    style: "info",
+                    text: ship.name,
+                }, CHAT_SPACE, {
+                    text: `${ship.description}`
+                }],
+            })
+        }
+    },
+})
+
+GAME_COMMANDS.push({
     command: "map",
     name: "Select a map",
     inputs: ["name|index"],

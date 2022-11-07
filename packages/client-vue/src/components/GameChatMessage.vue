@@ -25,7 +25,7 @@ const props = defineProps({
     &.player
       color: $color-main
     &.info
-      color: blue
+      color: skyblue
     &.bad
       color: red
     &.good
