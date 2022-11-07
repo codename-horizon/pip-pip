@@ -14,7 +14,16 @@ PIP_SHIPS.push({
     name: "Mono",
     texture: "ship_1",
     Ship: class extends PipShip{
-        stats = createShipStats()
+        stats = createShipStats({
+            weapon: {
+                rate: 1,
+                capacity: 120,
+            },
+            bullet: {
+                velocity: 50,
+                damage: createRange(2),
+            },
+        })
     },
 })
 

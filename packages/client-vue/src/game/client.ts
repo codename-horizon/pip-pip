@@ -166,6 +166,15 @@ export const processPackets = (gameContext: GameContext) => {
             }
         }
 
+        // render player damage
+        for(const damage of packets.playerDamage || []){
+            const dealer = game.players[damage.dealerId]
+            const target = game.players[damage.targetId]
+            if(typeof dealer !== "undefined" && typeof target !== "undefined"){
+                game.events.emit("dealDamage", { dealer, target, damage: damage.damage })
+            }
+        }
+
         // set player inputs
         for(const inputs of packets.playerInputs || []){
             if(inputs.playerId === gameContext.client.connectionId) continue

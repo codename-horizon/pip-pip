@@ -99,7 +99,7 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
     bullet: {
         velocity: 100,
         radius:  4,
-        damage: createRange(10),
+        damage: createRange(4),
     },
     defense: {
         low: 0.8,

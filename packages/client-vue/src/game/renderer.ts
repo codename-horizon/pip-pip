@@ -12,6 +12,7 @@ import { SHIP_DAIMETER, TILE_SIZE } from "@pip-pip/game/src/logic/constants"
 import { PipGameTile } from "@pip-pip/game/src/logic/map"
 import { COLORS, DIMS } from "./styles"
 import { Bullet } from "@pip-pip/game/src/logic/bullet"
+import { tickDown } from "@pip-pip/game/src/logic/utils"
 
 const SMOOTHING = {
     CAMERA_MOVEMENT: 5,
@@ -134,6 +135,52 @@ export class BulletGraphic extends PoolableGraphic{
     }
 }
 
+export class DamageGraphic extends PoolableGraphic {
+    static LIFESPAN = 500
+    lifespan = 0
+    positionX = 0
+    positionY = 0
+    id?: string
+    count = 0
+    text: PIXI.Text
+
+    constructor(){
+        super()
+        this.text = new PIXI.Text("DAMAGE HERE", {
+            fontFamily: "VT323",
+            fontSize: 28,
+            fill: 0xE6AE10,
+            align: "center",
+        })
+        this.text.anchor.set(0.5)
+        this.container.addChild(this.text)
+    }
+
+    setup(player: PipPlayer){
+        this.id = player.id
+    }
+
+    add(player:PipPlayer, count: number){
+        this.lifespan = DamageGraphic.LIFESPAN // ms
+        this.count += count
+        this.text.text = this.count.toString()
+
+        this.positionX = player.ship.physics.position.x
+        this.positionY = player.ship.physics.position.y - player.ship.physics.radius * 1.75
+
+        this.container.position.x = this.positionX
+        this.container.position.y = this.positionY
+    }
+
+    cleanUp() {
+        this.lifespan = 0
+        this.positionX = 0
+        this.positionY = 0
+        this.count = 0
+        this.id = undefined
+    }
+}
+
 export class MapTileGraphic { 
     id: string
     sprite: PIXI.Sprite
@@ -194,10 +241,12 @@ export class PipPipRenderer{
     viewportContainer = new PIXI.Container()
     playersContainer = new PIXI.Container()
     bulletsContainer = new PIXI.Container()
+    damagesContainer = new PIXI.Container()
 
     mapBackgroundContainer = new PIXI.Container()
     mapForegroundContainer = new PIXI.Container()
 
+    damages: GraphicPool<DamageGraphic>
     bullets: GraphicPool<BulletGraphic>
     players: Record<string, PlayerGraphic> = {}
     mapTiles: MapTileGraphic[] = []
@@ -233,8 +282,10 @@ export class PipPipRenderer{
         this.viewportContainer.addChild(this.mapBackgroundContainer)
         this.viewportContainer.addChild(this.playersContainer)
         this.viewportContainer.addChild(this.mapForegroundContainer)
+        this.viewportContainer.addChild(this.damagesContainer)
 
         this.bullets = new GraphicPool(this.bulletsContainer, BulletGraphic)
+        this.damages = new GraphicPool(this.damagesContainer, DamageGraphic)
 
         this.crtFilter.enabled = true
         this.crtFilter.curvature = 100
@@ -318,6 +369,14 @@ export class PipPipRenderer{
             if(typeof graphic !== "undefined"){
                 this.bullets.free(graphic)
             }
+        })
+
+        this.game.events.on("dealDamage", ({ target, damage }) => {
+            let graphic = this.damages.active.find(g => g.id === target.id)
+            if(typeof graphic === "undefined"){
+                graphic = this.damages.use(g => g.setup(target))
+            }
+            graphic.add(target, damage)
         })
     }
 
@@ -436,6 +495,22 @@ export class PipPipRenderer{
             // graphic.graphic.clear()
             graphic.graphic.moveTo(graphic.startX, graphic.startY)
             graphic.graphic.lineTo(tx, ty)
+        }
+
+        // update damage graphics
+        for(const graphic of this.damages.active){
+            graphic.lifespan -= deltaMs
+            graphic.lifespan = Math.max(0, graphic.lifespan)
+            const life = graphic.lifespan / DamageGraphic.LIFESPAN
+
+            graphic.container.position.x = graphic.positionX
+            graphic.container.position.y = graphic.positionY + 10 * life
+            graphic.container.scale.set(1 + 0.5 * life)
+            graphic.container.alpha = Math.min(1, life * 5)
+
+            if(graphic.lifespan <= 0){
+                this.damages.free(graphic)
+            }
         }
 
         // Compute camera

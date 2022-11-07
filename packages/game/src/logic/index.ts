@@ -396,7 +396,7 @@ export class PipPipGame{
         if(this.options.triggerDamage === false) return
 
         // decrease health
-        const damage = dealer.ship.stats.bullet.damage.normal
+        const damage = Math.min(dealer.ship.stats.bullet.damage.normal, target.ship.capacities.health)
         target.ship.capacities.health = tickDown(target.ship.capacities.health, damage)
 
         // increase damage
