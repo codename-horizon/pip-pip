@@ -53,10 +53,10 @@ type TileSet []TilePoint
 type TileHash = map[string]bool
 
 type GameMap struct {
-	WallTiles        TileSet       `json:"wallTiles"`
-	SpawnTiles       TileSet       `json:"spawnTiles"`
-	WallSegments     []TileSegment `json:"wallSegments"`
-	WallSegmentTiles TileSet       `json:"wallSegmentTiles"`
+	WallTiles        TileSet       `json:"wall_tiles"`
+	SpawnTiles       TileSet       `json:"spawn_tiles"`
+	WallSegments     []TileSegment `json:"wall_segments"`
+	WallSegmentTiles TileSet       `json:"wall_segment_tiles"`
 }
 
 func translateTileSet(t TileSet, x int, y int) TileSet {
