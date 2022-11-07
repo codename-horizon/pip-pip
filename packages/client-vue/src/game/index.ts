@@ -13,6 +13,7 @@ import { Ticker } from "@pip-pip/core/src/common/ticker"
 import { processPackets, sendPackets } from "./client"
 import { processInputs } from "./ui"
 import { processChat } from "./chat"
+import { CACHE_NAME_KEY } from "@pip-pip/game/src/logic/utils"
 
 export class GameContext{
     game!: PipPipGame
@@ -75,7 +76,25 @@ export class GameContext{
             this.renderer.render(this, deltaMs)
         })
 
+        let setNameFirstTime = false
+
         this.updateTick.on("tick", () => {
+            // set name the first time
+            if(setNameFirstTime === false){
+                const name = localStorage.getItem(CACHE_NAME_KEY)
+                if(typeof name === "string"){
+                    const player = this.getClientPlayer()
+                    if(typeof player === "undefined"){
+                        setNameFirstTime = false
+                    } else{
+                        player.setName(name)
+                        setNameFirstTime = true
+                    }
+                } else{
+                    setNameFirstTime = true
+                }
+            }
+
             // Apply messages
             processPackets(this)
             processChat(this)

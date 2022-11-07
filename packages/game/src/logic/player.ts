@@ -103,6 +103,11 @@ export class PipPlayer{
         return true
     }
 
+    setName(name: string){
+        this.name = name
+        this.game.events.emit("playerDetailsChange", { player: this })
+    }
+
     remove(){
         if(!(this.id in this.game.players)) return
         this.setSpawned(false)

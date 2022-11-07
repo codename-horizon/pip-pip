@@ -1,6 +1,7 @@
 import { forgivingEqual } from "@pip-pip/core/src/math"
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { PLAYER_POSITION_TOLERANCE } from "@pip-pip/game/src/logic/constants"
+import { sanitize } from "@pip-pip/game/src/logic/utils"
 import { PIP_MAPS } from "@pip-pip/game/src/maps"
 import { GameTickContext } from "."
 
@@ -44,6 +45,15 @@ export function processLobbyPackets(context: GameTickContext){
             const player = game.players[connection.id]
             if(typeof player !== "undefined" && connection.id === playerId){
                 player.setShip(shipIndex)
+            }
+        }
+
+        // set player name
+        for(const { playerId, name } of packets.playerName || []){
+            const player = game.players[playerId]
+            if(typeof player !== "undefined" && connection.id === playerId){
+                const safeName = sanitize(name)
+                player.setName(safeName)
             }
         }
 

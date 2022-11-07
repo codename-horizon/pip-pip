@@ -12,8 +12,8 @@ const inputComponent = ref<typeof GameInput>()
 function sendMessage(){
   const message = chatMessage.value.trim()
   if(message.startsWith("/")){
-    const [command, ...inputs] = message.toLowerCase().substring(1).split(/\s+/gmi)
-    const chatCommand = GAME_COMMANDS.find(chatCommand => chatCommand.command === command)
+    const [command, ...inputs] = message.substring(1).split(/\s+/gmi)
+    const chatCommand = GAME_COMMANDS.find(chatCommand => chatCommand.command === command.toLowerCase())
     if(typeof chatCommand === "undefined"){
         GAME_CONTEXT.store.chatMessages.push(MESSAGE_ERROR_COMMAND_404)
     } else{

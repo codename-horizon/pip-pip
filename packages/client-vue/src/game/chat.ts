@@ -1,5 +1,6 @@
 import { PipPipGamePhase } from "@pip-pip/game/src/logic"
 import { PipPlayer } from "@pip-pip/game/src/logic/player"
+import { CACHE_NAME_KEY, sanitize } from "@pip-pip/game/src/logic/utils"
 import { PIP_MAPS } from "@pip-pip/game/src/maps"
 import { GameContext, GAME_CONTEXT } from "."
 
@@ -75,6 +76,20 @@ GAME_COMMANDS.push({
             GAME_CONTEXT.sendGamePhase(PipPipGamePhase.SETUP)
         } else{
             return MESSAGE_ERROR_NOT_HOST
+        }
+    }
+})
+
+GAME_COMMANDS.push({
+    command: "name",
+    name: "Set name",
+    inputs: ["name"],
+    description: "Set name",
+    callback(message){
+        const safeName = sanitize(message.substring(5))
+        if(safeName.length !== 0){
+            GAME_CONTEXT.getClientPlayer()?.setName(safeName)
+            localStorage.setItem(CACHE_NAME_KEY, safeName)
         }
     }
 })
@@ -205,7 +220,6 @@ export function processChat(gameContext: GameContext){
         }
     }
 
-    
     // player kill
     for(const event of gameContext.gameEvents.filter("playerKill")){
         const { killed, killer } = event.playerKill

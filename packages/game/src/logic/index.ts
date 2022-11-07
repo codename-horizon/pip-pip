@@ -15,6 +15,8 @@ export type PipPipGameEventMap = {
     removePlayer: { player: PipPlayer },
     playerIdleChange: { player: PipPlayer },
 
+    playerDetailsChange: { player: PipPlayer },
+
     playerSetShip: { player: PipPlayer, ship: PipShip },
     playerRemoveShip: { player: PipPlayer, ship: PipShip },
     playerSpawned: { player: PipPlayer },

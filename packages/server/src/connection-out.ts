@@ -129,10 +129,17 @@ export function getPartialGameState(context: ConnectionContext): number[][] {
         playerUpdates.track(player.id, "shipTimings")
     }
 
-    // Send player details
+    // Send player idle
     for(const event of gameEvents.filter("playerIdleChange")){
         const { player } = event.playerIdleChange
         messages.push(encode.playerIdle(player))
+    }
+
+    // Send player details to other players
+    for(const event of gameEvents.filter("playerDetailsChange")){
+        const { player } = event.playerDetailsChange
+        if(connection.id === player.id) continue // prevent update loop
+        messages.push(encode.playerName(player))
     }
 
     // Send removed players

@@ -29,7 +29,7 @@ export const processPackets = (gameContext: GameContext) => {
         // Set player name
         for(const { playerId, name } of packets.playerName || []){
             const player = game.players[playerId]
-            if(typeof player !== "undefined") player.name = name
+            if(typeof player !== "undefined") player.setName(name)
         }
 
         // Set player idle
@@ -243,7 +243,7 @@ export const processPackets = (gameContext: GameContext) => {
 
 
 export const sendPackets = (gameContext: GameContext) => {
-    const { game, gameEvents } = gameContext
+    const { game, gameEvents, client } = gameContext
 
     const messages: number[][] = []
     const clientPlayer = getClientPlayer(game)
@@ -271,6 +271,14 @@ export const sendPackets = (gameContext: GameContext) => {
             messages.push(encode.sendChat(text))
         }
         gameContext.store.outgoingMessages = []
+    }
+    
+    // name change
+    for(const event of gameEvents.filter("playerDetailsChange")){
+        const { player } = event.playerDetailsChange
+        if(player.id === client.connectionId){
+            messages.push(encode.playerName(player))
+        }
     }
     
 
