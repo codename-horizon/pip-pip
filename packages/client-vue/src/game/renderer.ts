@@ -117,7 +117,7 @@ export type BulletGraphicPosition = {
 }
 
 export class BulletGraphic extends PoolableGraphic{
-    static MAX_POSITION_AGE = 1000
+    static MAX_POSITION_AGE = 500
     static DOZE = 10
     bullet?: Bullet
     graphic = new PIXI.Graphics()
@@ -535,7 +535,7 @@ export class PipPipRenderer{
                 graphic.graphic.lineStyle({
                     width: CT * 5,
                     color: 0xFFFFFF,
-                    alpha: CT,
+                    alpha: Math.max(0.1, CT),
                 })
                 graphic.graphic.moveTo(
                     prev.x + prev.dx * (1 - PT), 
