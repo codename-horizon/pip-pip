@@ -13,6 +13,7 @@ import { PipGameTile } from "@pip-pip/game/src/logic/map"
 import { COLORS, DIMS } from "./styles"
 import { Bullet } from "@pip-pip/game/src/logic/bullet"
 import { tickDown } from "@pip-pip/game/src/logic/utils"
+import { Vector2 } from "@pip-pip/core/src/physics"
 
 const SMOOTHING = {
     CAMERA_MOVEMENT: 5,
@@ -20,6 +21,7 @@ const SMOOTHING = {
     PLAYER_MOVEMENT: 2,
     PLAYER_ROTATION: 1,
     MAX_PLAYER_DISTANCE: 250,
+    BULLET_POSITION: 0.5,
 }
 
 export const STAR_BG = {
@@ -108,24 +110,40 @@ export class PoolableGraphic{
     container = new PIXI.Container()
 }
 
+export type BulletGraphicPosition = {
+    x: number, y: number,
+    dx: number, dy: number,
+    age: number,
+}
+
 export class BulletGraphic extends PoolableGraphic{
+    static MAX_POSITION_AGE = 1000
+    static DOZE = 10
     bullet?: Bullet
     graphic = new PIXI.Graphics()
-    startX = 0
-    startY = 0
+    positions: BulletGraphicPosition[] = []
+    positionX = 0
+    positionY = 0
 
     setup(bullet: Bullet){
         this.bullet = bullet
         this.container.addChild(this.graphic)
-        this.graphic.lineStyle({
-            width: 1,
-            color: 0xFFFFFF,
-        })
-        this.startX = bullet.physics.position.x
-        this.startY = bullet.physics.position.y
-        this.graphic.beginFill(0xFFFFFF)
-        this.graphic.arc(0, 0, bullet.physics.radius, 0, Math.PI * 2)
-        this.graphic.endFill()
+        this.setPosition(bullet.physics.position.x, bullet.physics.position.y)
+    }
+
+    setPosition(x: number, y: number){
+        this.positionX = x
+        this.positionY = y
+
+        const angle = Math.random() * Math.PI * 2
+        const pos = {
+            x: this.positionX, y: this.positionY,
+            dx: Math.cos(angle) * BulletGraphic.DOZE,
+            dy: Math.sin(angle) * BulletGraphic.DOZE,
+            age: Date.now(),
+        }
+
+        this.positions.push(pos)
     }
 
     cleanUp(){
@@ -367,7 +385,7 @@ export class PipPipRenderer{
         this.game.events.on("removeBullet", ({ bullet }) => {
             const graphic = this.bullets.graphics.find(graphic => graphic.bullet === bullet)
             if(typeof graphic !== "undefined"){
-                this.bullets.free(graphic)
+                graphic.bullet = undefined
             }
         })
 
@@ -428,6 +446,9 @@ export class PipPipRenderer{
         const timeDiff = Date.now() - this.game.lastTick
         const lerp = timeDiff / this.game.deltaMs
 
+        // bullets
+        const bulletSmoothing = deltaTime / SMOOTHING.BULLET_POSITION
+
         // camera
         const cameraSmoothing = deltaTime / SMOOTHING.CAMERA_MOVEMENT
 
@@ -487,14 +508,53 @@ export class PipPipRenderer{
 
         // update bullets
         for(const graphic of this.bullets.active){
-            if(typeof graphic.bullet === "undefined") continue
-            const tx = graphic.bullet.physics.position.x + graphic.bullet.physics.velocity.x * lerp
-            const ty = graphic.bullet.physics.position.y + graphic.bullet.physics.velocity.y * lerp
-            // graphic.container.position.x = graphic.bullet.physics.position.x + graphic.bullet.physics.velocity.x * lerp
-            // graphic.container.position.y = graphic.bullet.physics.position.y + graphic.bullet.physics.velocity.y * lerp
-            // graphic.graphic.clear()
-            graphic.graphic.moveTo(graphic.startX, graphic.startY)
-            graphic.graphic.lineTo(tx, ty)
+            graphic.positions = graphic.positions.filter(pos => {
+                const dif = Date.now() - pos.age
+                return dif < BulletGraphic.MAX_POSITION_AGE
+            })
+            if(typeof graphic.bullet !== "undefined"){
+                const tx = graphic.bullet.physics.position.x + graphic.bullet.physics.velocity.x * lerp
+                const ty = graphic.bullet.physics.position.y + graphic.bullet.physics.velocity.y * lerp
+
+                graphic.setPosition(
+                    graphic.positionX + (tx - graphic.positionX) * bulletSmoothing,
+                    graphic.positionY + (ty - graphic.positionY) * bulletSmoothing,
+                )                
+            } else {
+                graphic.positions.shift()
+            }
+            graphic.graphic.clear()
+
+            for(let i = 1; i < graphic.positions.length; i++){
+                const prev = graphic.positions[i - 1]
+                const cur = graphic.positions[i]
+                
+                const CT = Math.pow(i / graphic.positions.length, 2)
+                const PT = Math.pow((i - 1) / graphic.positions.length, 2)
+
+                graphic.graphic.lineStyle({
+                    width: CT * 5,
+                    color: 0xFFFFFF,
+                    alpha: CT,
+                })
+                graphic.graphic.moveTo(
+                    prev.x + prev.dx * (1 - PT), 
+                    prev.y + prev.dy * (1 - PT),
+                )
+                graphic.graphic.lineTo(
+                    cur.x + cur.dx * (1 - CT) ,
+                    cur.y + cur.dy * (1 - CT),
+                )
+            }
+
+            // graphic.graphic.beginFill(0xFFFFFF)
+            // graphic.graphic.moveTo(graphic.positionX, graphic.positionY)
+            // graphic.graphic.arc(graphic.positionX, graphic.positionY, 3, 0, Math.PI * 2)
+            // graphic.graphic.endFill()
+
+            if(graphic.positions.length === 0){
+                this.bullets.free(graphic)
+            }
         }
 
         // update damage graphics
