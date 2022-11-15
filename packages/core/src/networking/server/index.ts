@@ -42,7 +42,7 @@ export class Server<
     options: ServerOptions = {
         authHeader: SERVER_DEFAULT_HEADER_KEY,
         baseRoute: SERVER_DEFAULT_BASE_ROUTE,
-        port: 3000,
+        port: 8443,
         connectionIdLength: 4,
         lobbyIdLength: 4,
         connectionIdleLifespan: 1000 * 60 * 5,

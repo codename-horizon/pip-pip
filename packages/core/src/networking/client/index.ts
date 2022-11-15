@@ -26,7 +26,7 @@ export class Client<T extends PacketManagerSerializerMap>{
         authHeader: SERVER_DEFAULT_HEADER_KEY,
         baseRoute: SERVER_DEFAULT_BASE_ROUTE,
 
-        port: 3000,
+        port: 8443,
         host: "localhost",
         
         https: false,
