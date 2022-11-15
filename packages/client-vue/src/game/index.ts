@@ -42,9 +42,12 @@ export class GameContext{
 
     initializeClient(){
         this.client?.disconnect()
+        const useSecure = window.location.protocol.includes("s")
         this.client = new Client(packetManager, {
             host: window.location.hostname,
             port: 3000,
+            https: useSecure,
+            wss: useSecure,
         })
 
         this.clientEvents?.destroy()
