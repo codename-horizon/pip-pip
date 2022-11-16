@@ -1,11 +1,13 @@
 {
   "name": "pip-pip",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "index.js",
   "repository": "git@github.com:codename-horizon/pip-pip.git",
   "author": "mikedelcastillo <johnmichaeldc@gmail.com>",
   "license": "MIT",
-  "workspaces": [ "./packages/*" ],
+  "workspaces": [
+    "./packages/*"
+  ],
   "private": true,
   "scripts": {
     "uninstall": "rm -rf node_modules/ packages/*/node_modules",
