@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "composite": true,
+        "target": "es2016",
+        "module": "commonjs",
+        "strict": true,
+        "skipLibCheck": true,
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true
+    }
+}

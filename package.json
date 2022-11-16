@@ -1,14 +1,26 @@
 {
   "name": "pip-pip",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "index.js",
   "repository": "git@github.com:codename-horizon/pip-pip.git",
   "author": "mikedelcastillo <johnmichaeldc@gmail.com>",
   "license": "MIT",
-  "workspaces": [ "./packages/*" ],
+  "workspaces": [
+    "./packages/*"
+  ],
   "private": true,
   "scripts": {
+    "uninstall": "rm -rf node_modules/ packages/*/node_modules",
+    "clear": "rm -rf ./packages/*/dist ./packages/*/tsconfig.tsbuildinfo",
     "server": "yarn workspace @pip-pip/server",
-    "server:dev": "yarn server dev"
+    "client": "yarn workspace @pip-pip/client-vue",
+    "game": "yarn workspace @pip-pip/game",
+    "core": "yarn workspace @pip-pip/core",
+    "map": "yarn workspace @pip-pip/map-maker",
+    "build": "bash ./scripts/build.sh",
+    "deploy": "bash ./scripts/deploy.sh",
+    "lint": "yarn client lint && yarn core lint && yarn game lint && yarn server lint",
+    "generate-maps": "cd tools/game_maps && cargo run",
+    "clear-maps": "rm ./packages/game/src/maps/*.map.json"
   }
 }
